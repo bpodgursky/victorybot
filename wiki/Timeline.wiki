@@ -13,9 +13,9 @@ Milestone 1: Connect to DAIDE server, send orders
 
 2) Framework for each module
 
-  *Game State
-  *Diplomizer
-  *Game search
-  *etc
+  *  Game State
+  *  Diplomizer
+  *  Game search
+  *  etc
 
   Modules can be empty shells which only send stub/really dumb results, but so we can see the whole system workflow
