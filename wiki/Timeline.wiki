@@ -7,7 +7,15 @@ Add your content here.
 
 = Details =
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+1) Interfacting with DAIDE
+  
+Milestone 1: Connect to DAIDE server, send orders
+
+2) Framework for each module
+
+  -Game State
+  -Diplomizer
+  -Game search
+  -etc
+
+  Modules can be empty shells which only send stub/really dumb results, but so we can see the whole system workflow
