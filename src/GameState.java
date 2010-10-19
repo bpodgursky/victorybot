@@ -103,117 +103,111 @@ public class GameState {
 
 		//ocean adjacencies
 		
-		border("NAO", "NRG");
-		border("NAO", "CLY");
-		border("NAO", "IRI");
-		border("NAO", "MID");
+		border("NAO", "NRG", true);
+		border("NAO", "CLY", true);
+		border("NAO", "IRI", true);
+		border("NAO", "MID", true);
 		
-		border("NRG", "BAR");
-		border("NRG", "NWY");
-		border("NRG", "NTH");
-		border("NRG", "EDI");
+		border("NRG", "BAR", true);
+		border("NRG", "NWY", true);
+		border("NRG", "NTH", true);
+		border("NRG", "EDI", true);
 		
-		border("BAR", "STP");
-		border("BAR", "NWY");
+		border("BAR", "STP", true);
+		border("BAR", "NWY", true);
 		
-		border("MID", "IRI");
-		border("MID", "ENG");
-		border("MID", "BRE");
-		border("MID", "GAS");
-		border("MID", "SPA");
-		border("MID", "POR");
+		border("MID", "IRI", true);
+		border("MID", "ENG", true);
+		border("MID", "BRE", true);
+		border("MID", "GAS", true);
+		border("MID", "SPA", true);
+		border("MID", "POR", true);
 		
-		border("IRI", "CLY");
-		border("IRI", "LVP");
-		border("IRI", "WAL");
-		border("IRI", "ENG");
+		border("IRI", "CLY", true);
+		border("IRI", "LVP", true);
+		border("IRI", "WAL", true);
+		border("IRI", "ENG", true);
 		
-		border("NTH", "SKA");
-		border("NTH", "NWY");
-		border("NTH", "DEN");
-		border("NTH", "HOL");
-		border("NTH", "BEL");
-		border("NTH", "LON");
-		border("NTH", "YOR");
-		border("NTH", "EDI");
-		border("NTH", "HEL");
-		border("NTH", "ENG");
+		border("NTH", "SKA", true);
+		border("NTH", "NWY", true);
+		border("NTH", "DEN", true);
+		border("NTH", "HOL", true);
+		border("NTH", "BEL", true);
+		border("NTH", "LON", true);
+		border("NTH", "YOR", true);
+		border("NTH", "EDI", true);
+		border("NTH", "HEL", true);
+		border("NTH", "ENG", true);
 		
-		border("SKA", "NWY");
-		border("SKA", "SWE");
-		border("SKA", "DEN");
+		border("SKA", "NWY", true);
+		border("SKA", "SWE", true);
+		border("SKA", "DEN", true);
 		
-		border("BAL", "SWE");
-		border("BAL", "BOT");
-		border("BAL", "LVN");
-		border("BAL", "PRU");
-		border("BAL", "BER");
-		border("BAL", "KIE");
-		border("BAL", "DEN");
+		border("BAL", "SWE", true);
+		border("BAL", "BOT", true);
+		border("BAL", "LVN", true);
+		border("BAL", "PRU", true);
+		border("BAL", "BER", true);
+		border("BAL", "KIE", true);
+		border("BAL", "DEN", true);
 		
-		border("BOT", "SWE");
-		border("BOT", "FIN");
-		border("BOT", "STP");
-		border("BOT", "LVN");
+		border("BOT", "SWE", true);
+		border("BOT", "FIN", true);
+		border("BOT", "STP", true);
+		border("BOT", "LVN", true);
 		
-		border("ENG", "WAL");
-		border("ENG", "LON");
-		border("ENG", "BEL");
-		border("ENG", "PIC");
-		border("ENG", "BRE");
+		border("ENG", "WAL", true);
+		border("ENG", "LON", true);
+		border("ENG", "BEL", true);
+		border("ENG", "PIC", true);
+		border("ENG", "BRE", true);
 		
-		border("MID", "BRE");
-		border("MID", "GAS");
-		border("MID", "SPA");
-		border("MID", "POR");
-		border("MID", "NAF");
+		border("WES", "SPA", true);
+		border("WES", "LYO", true);
+		border("WES", "TYN", true);
+		border("WES", "TUN", true);
+		border("WES", "NAF", true);
 		
-		border("WES", "SPA");
-		border("WES", "LYO");
-		border("WES", "TYN");
-		border("WES", "TUN");
-		border("WES", "NAF");
+		border("LYO", "SPA", true);
+		border("LYO", "MAR", true);
+		border("LYO", "PIE", true);
+		border("LYO", "TUS", true);
+		border("LYO", "TYN", true);
 		
-		border("LYO", "SPA");
-		border("LYO", "MAR");
-		border("LYO", "PIE");
-		border("LYO", "TUS");
-		border("LYO", "TYN");
+		border("TYN", "TUS", true);
+		border("TYN", "ROM", true);
+		border("TYN", "NAP", true);
+		border("TYN", "ION", true);
+		border("TYN", "TUN", true);
 		
-		border("TYN", "TUS");
-		border("TYN", "ROM");
-		border("TYN", "NAP");
-		border("TYN", "ION");
-		border("TYN", "TUN");
+		border("ION", "NAP", true);
+		border("ION", "ADR", true);
+		border("ION", "ALB", true);
+		border("ION", "GRE", true);
+		border("ION", "AEG", true);
+		border("ION", "EAS", true);
+		border("ION", "TUN", true);
 		
-		border("ION", "NAP");
-		border("ION", "ADR");
-		border("ION", "ALB");
-		border("ION", "GRE");
-		border("ION", "AEG");
-		border("ION", "EAS");
-		border("ION", "TUN");
+		border("ADR", "APU", true);
+		border("ADR", "VEN", true);
+		border("ADR", "TRI", true);
+		border("ADR", "ALB", true);
 		
-		border("ADR", "APU");
-		border("ADR", "VEN");
-		border("ADR", "TRI");
-		border("ADR", "ALB");
+		border("AEG", "GRE", true);
+		border("AEG", "BUL", true);
+		border("AEG", "CON", true);
+		border("AEG", "SMY", true);
+		border("AEG", "EAS", true);
+		border("AEG", "BLA", true);
 		
-		border("AEG", "GRE");
-		border("AEG", "BUL");
-		border("AEG", "CON");
-		border("AEG", "SMY");
-		border("AEG", "EAS");
-		border("AEG", "BLA");
+		border("EAS", "SMY", true);
+		border("EAS", "SYR", true);
 		
-		border("EAS", "SMY");
-		border("EAS", "SYR");
-		
-		border("BLA", "BUL");
-		border("BLA", "RUM");
-		border("BLA", "SEV");
-		border("BLA", "ANK");
-		border("BLA", "CON");
+		border("BLA", "BUL", true);
+		border("BLA", "RUM", true);
+		border("BLA", "SEV", true);
+		border("BLA", "ANK", true);
+		border("BLA", "CON", true);
 		
 		//england
 		
