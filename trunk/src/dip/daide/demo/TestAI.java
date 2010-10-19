@@ -1,7 +1,7 @@
 /*****************************************************************************
  * $Id: TestAI.java,v 1.1 2004/09/09 06:32:18 heb Exp $ 
  *
- * Copyright ï¿½ 2002, 2004 by Henrik Bylund
+ * Copyright © 2002, 2004 by Henrik Bylund
  * This code is released in the public domain.
  *****************************************************************************/
 package dip.daide.demo;
@@ -126,8 +126,8 @@ public class TestAI implements MessageListener {
 
 	public static void main(String[] args) {
 		try {
-			new TestAI(InetAddress.getByName(args[0]), Integer
-					.parseInt(args[1]), args[2]);
+			new TestAI(InetAddress.getByName(args[0]),
+					Integer.parseInt(args[1]), args[2]);
 		} catch (ArrayIndexOutOfBoundsException be) {
 			usage();
 		} catch (UnknownHostException uhe) {
