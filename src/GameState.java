@@ -211,24 +211,100 @@ public class GameState {
 		
 		//england
 		
-		border("CLY", "EDI");
-		border("CLY", "LVP");
+		border("CLY", "EDI", true);
+		border("CLY", "LVP", true);
 		
-		border("EDI", "YOR");
-		border("EDI", "LVP");
+		border("EDI", "YOR", true);
+		border("EDI", "LVP", false);
 		
-		border("LVP", "YOR");
-		border("LVP", "WAL");
-		border("YOR", "LON");
-		border("YOR", "WAL");
+		border("LVP", "YOR", false);
+		border("LVP", "WAL", true);
+		border("YOR", "LON", true);
+		border("YOR", "WAL", false);
 		
-		border("WAL", "LON");
+		border("WAL", "LON", true);
 		
-		//other
+		//scandanavia
 		
-		border("NOR", "STP");
-		border("NOR", "FIN");
+		border("NOR", "STP", true);
+		border("NOR", "FIN", false);
+		border("NOR", "SWE", true);
 		
+		border("SWE", "FIN", true);
+		border("SWE", "DEN", true);
+		
+		border("FIN", "STP", true);
+		
+		border("DEN", "KIE", true);
+		
+		//Russia
+		
+		border("STP", "LVN", true);
+		border("STP", "MOS", false);
+		
+		border("LVN", "PRU", true);
+		border("LVN", "WAR", false);
+		border("LVN", "MOS", false);
+		
+		border("MOS", "WAR", false);
+		border("MOS", "UKR", false);
+		border("MOS", "SEV", false);
+		
+		border("WAR", "PRU", false);
+		border("WAR", "SIL", false);
+		border("WAR", "GAL", false);
+		border("WAR", "UKR", false);
+		
+		border("UKR", "GAL", false);
+		border("UKR", "RUM", false);
+		border("UKR", "SEV", false);
+		
+		border("SEV", "RUM", true);
+		border("SEV", "ARM", true);
+		
+		//germany
+		
+		border("KIE", "HOL", true);
+		border("KIE", "RUH", false);
+		border("KIE", "MUN", false);
+		border("KIE", "BER", true);
+		
+		border("BER", "MUN", false);
+		border("BER", "SIL", false);
+		border("BER", "PRU", true);
+		
+		border("PRU", "SIL", false);
+		
+		border("RUH", "HOL", false);
+		border("RUH", "BEL", false);
+		border("RUH", "BUR", false);
+		border("RUH", "MUN", false);
+		
+		border("MUN", "BUR", false);
+		border("MUN", "TRL", false);
+		border("MUN", "BOH", false);
+		border("MUN", "SIL", false);
+		
+		border("SIL", "BOH", false);
+		border("SIL", "GAL", false);
+
+		//low countries
+
+		border("HOL", "BEL", true);
+		
+		border("BEL", "PIC", true);
+		border("BEL", "BUR", false);
+		
+		//france
+		
+		border("BRE", "GAS", true);
+		border("BRE", "PAR", false);
+		border("BRE", "PIC", true);
+		
+		border("PIC", "PAR", false);
+		border("PIC", "BUR", false);
+		
+		//border("GAS", "")
 		
 	}
 	
