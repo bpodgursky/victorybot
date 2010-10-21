@@ -45,7 +45,6 @@ public class GameState {
 		terrs.put("ANK", new TerritorySquare("ANK", true, true, Player.TUR, Player.TUR));
 		terrs.put("SMY", new TerritorySquare("SMY", true, true, Player.TUR, Player.TUR));
 		
-		
 		//other supply centers
 		terrs.put("NWY", new TerritorySquare("NWY", true, true, null, null));
 		terrs.put("SWE", new TerritorySquare("SWE", true, true, null, null));
@@ -84,8 +83,6 @@ public class GameState {
 		terrs.put("PIC", new TerritorySquare("PIC", false, true, null, null));
 		terrs.put("TRL", new TerritorySquare("TRL", false, true, null, null));
 				
-
-		
 		//sea territories
 		terrs.put("NAO", new TerritorySquare("NAO",	false, false, null, null));
 		terrs.put("NRG", new TerritorySquare("NRG",	false, false, null, null));
