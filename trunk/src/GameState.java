@@ -605,7 +605,7 @@ public class GameState {
 	}
 	
 	void update(String moves){
-		
+		System.out.println(moves);
 	}
 	
 	public String toString(){
