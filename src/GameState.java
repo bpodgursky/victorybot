@@ -1,3 +1,6 @@
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +15,7 @@ public class GameState {
 		terrs.put("LON", new TerritorySquare("LON", true, true, Player.ENG, Player.ENG));
 		
 		//russia
-		terrs.put("STP", new TerritorySquare("STP", true, true, Player.RUS, Player.RUS));
+		terrs.put("STP", new TerritorySquare("STP", true, true, Player.RUS, Player.RUS, Arrays.asList("NC", "SC")));
 		terrs.put("MOS", new TerritorySquare("MOS", true, true, Player.RUS, Player.RUS));
 		terrs.put("WAR", new TerritorySquare("WAR", true, true, Player.RUS, Player.RUS));
 		terrs.put("SEV", new TerritorySquare("SEV", true, true, Player.RUS, Player.RUS));
@@ -49,12 +52,12 @@ public class GameState {
 		terrs.put("DEN", new TerritorySquare("DEN", true, true, null, null));
 		terrs.put("HOL", new TerritorySquare("HOL", true, true, null, null));
 		terrs.put("BEL", new TerritorySquare("BEL", true, true, null, null));
-		terrs.put("SPA", new TerritorySquare("SPA", true, true, null, null));
+		terrs.put("SPA", new TerritorySquare("SPA", true, true, null, null, Arrays.asList("NC", "SC")));
 		terrs.put("POR", new TerritorySquare("POR", true, true, null, null));
 		terrs.put("TUN", new TerritorySquare("TUN", true, true, null, null));
 		terrs.put("SER", new TerritorySquare("SER", true, true, null, null));
 		terrs.put("RUM", new TerritorySquare("RUM", true, true, null, null));
-		terrs.put("BUL", new TerritorySquare("BUL", true, true, null, null));
+		terrs.put("BUL", new TerritorySquare("BUL", true, true, null, null, Arrays.asList("EC", "WC")));
 		terrs.put("GRE", new TerritorySquare("GRE", true, true, null, null));
 			
 		//other non supply center land
@@ -78,6 +81,9 @@ public class GameState {
 		terrs.put("CLY", new TerritorySquare("CLY",	false, true, null, null));
 		terrs.put("YOR", new TerritorySquare("YOR",	false, true, null, null));
 		terrs.put("WAL", new TerritorySquare("WAL",	false, true, null, null));
+		terrs.put("PIC", new TerritorySquare("PIC", false, true, null, null));
+		terrs.put("TRL", new TerritorySquare("TRL", false, true, null, null));
+				
 
 		
 		//sea territories
@@ -113,14 +119,14 @@ public class GameState {
 		border("NRG", "NTH", true);
 		border("NRG", "EDI", true);
 		
-		border("BAR", "STP", true);
+		border("BAR", "STP", "DEFAULT", "NC");
 		border("BAR", "NWY", true);
 		
 		border("MID", "IRI", true);
 		border("MID", "ENG", true);
 		border("MID", "BRE", true);
 		border("MID", "GAS", true);
-		border("MID", "SPA", true);
+		border("MID", "SPA", "DEFAULT", "NC");
 		border("MID", "POR", true);
 		
 		border("IRI", "CLY", true);
@@ -153,7 +159,7 @@ public class GameState {
 		
 		border("BOT", "SWE", true);
 		border("BOT", "FIN", true);
-		border("BOT", "STP", true);
+		border("BOT", "STP", "DEFAULT", "SC");
 		border("BOT", "LVN", true);
 		
 		border("ENG", "WAL", true);
@@ -162,13 +168,13 @@ public class GameState {
 		border("ENG", "PIC", true);
 		border("ENG", "BRE", true);
 		
-		border("WES", "SPA", true);
+		border("WES", "SPA", "DEFAULT", "SC");
 		border("WES", "LYO", true);
 		border("WES", "TYN", true);
 		border("WES", "TUN", true);
 		border("WES", "NAF", true);
 		
-		border("LYO", "SPA", true);
+		border("LYO", "SPA", "DEFAULT", "SC");
 		border("LYO", "MAR", true);
 		border("LYO", "PIE", true);
 		border("LYO", "TUS", true);
@@ -194,7 +200,7 @@ public class GameState {
 		border("ADR", "ALB", true);
 		
 		border("AEG", "GRE", true);
-		border("AEG", "BUL", true);
+		border("AEG", "BUL", "DEFAULT", "WC");
 		border("AEG", "CON", true);
 		border("AEG", "SMY", true);
 		border("AEG", "EAS", true);
@@ -203,7 +209,7 @@ public class GameState {
 		border("EAS", "SMY", true);
 		border("EAS", "SYR", true);
 		
-		border("BLA", "BUL", true);
+		border("BLA", "BUL", "DEFAULT", "EC");
 		border("BLA", "RUM", true);
 		border("BLA", "SEV", true);
 		border("BLA", "ANK", true);
@@ -226,20 +232,20 @@ public class GameState {
 		
 		//scandanavia
 		
-		border("NOR", "STP", true);
-		border("NOR", "FIN", false);
-		border("NOR", "SWE", true);
+		border("NWY", "STP", "DEFAULT", "NC");
+		border("NWY", "FIN", false);
+		border("NWY", "SWE", true);
 		
 		border("SWE", "FIN", true);
 		border("SWE", "DEN", true);
 		
-		border("FIN", "STP", true);
+		border("FIN", "STP", "DEFAULT", "SC");
 		
 		border("DEN", "KIE", true);
 		
 		//Russia
 		
-		border("STP", "LVN", true);
+		border("STP", "LVN", "SC", "DEFAULT");
 		border("STP", "MOS", false);
 		
 		border("LVN", "PRU", true);
@@ -304,16 +310,131 @@ public class GameState {
 		border("PIC", "PAR", false);
 		border("PIC", "BUR", false);
 		
-		//border("GAS", "")
+		border("GAS", "SPA", "DEFAULT", "NC");
+		border("GAS", "MAR", false);
+		border("GAS", "BUR", false);
 		
+		border("PAR", "BUR", false);
+		
+		border("MAR", "PIE", true);
+		border("MAR", "BUR", false);
+		border("MAR", "SPA", "DEFAULT", "SC");
+		
+		//italy
+		
+		border("PIE", "VEN", false);
+		border("PIE", "TUS", true);
+		
+		border("TUS", "ROM", true);
+		border("TUS", "VEN", false);
+		
+		border("ROM", "VEN", false);
+		border("ROM", "APU", false);
+		border("ROM", "NAP", true);
+		
+		border("NAP", "APU", true);
+		
+		border("APU", "VEN", true);
+		
+		border("VEN", "TRI", true);
+		border("VEN", "TRL", false);
+		
+		//austro hungary
+		
+		border("TRL", "BOH", false);
+		border("TRL", "VIE", false);
+		border("TRL", "TRI", false);
+		
+		border("BOH", "GAL", false);
+		border("BOH", "VIE", false);
+		
+		border("GAL", "RUM", false);
+		border("GAL", "BUD", false);
+		border("GAL", "VIE", false);
+		
+		border("VIE", "BUD", false);
+		border("VIE", "TRI", false);
+		
+		border("BUD", "RUM", false);
+		border("BUD", "SER", false);
+		border("BUD", "TRI", false);
+		
+		border("TRI", "SER", false);
+		border("TRI", "ALB", true);
+		
+		//turkey
+		
+		border("CON", "BUL", "DEFAULT", "WC");
+		border("CON", "BUL", "DEFAULT", "EC");		
+		border("CON", "ANK", true);
+		border("CON", "SMY", true);
+		
+		border("ANK", "ARM", true);
+		border("ANK", "SMY", false);
+		
+		border("SMY", "ARM", false);
+		border("SMY", "SYR", true);
+		
+		border("SYR", "ARM", false);
+		
+		//balkans
+		
+		border("RUM", "SER", false);
+		border("RUM", "BUL", "DEFAULT", "EC");
+		
+		border("BUL", "SER", false);
+		border("BUL", "GRE", "WC", "DEFAULT");
+		
+		border("SER", "GRE", false);
+		border("GRE", "ALB", true);
+		
+		//spain and africa
+
+		border("SPA", "POR", "NC", "DEFAULT");
+		border("SPA", "POR", "SC", "DEFAULT");
+		
+		border("NAF", "TUN", true);
+	}
+	
+	private String mapAsDotFile(){
+	    String str = "digraph clusters {";
+	    
+	    
+	    for(String s: this.terrs.keySet()){
+	    	
+	    	TerritorySquare sqr = terrs.get(s);
+	    	for(TerritorySquare neighbor: sqr.borders){
+	    		
+	    		//just to make sure there is only one of each border
+	    		if(s.compareTo(neighbor.name) > 0){
+	    			
+	    			
+	    			if(sqr.isLand && neighbor.isLand)
+	    				str+="\""+s+"\" -> \""+neighbor.name+"\"[dir=none weight=100];\n";
+	    			else
+	    				str+="\""+s+"\" -> \""+neighbor.name+"\"[dir=none weight=1];\n";
+	    		}
+	    	}
+	    	
+	    }
+	    
+	    return str+"}";
 	}
 	
 	private void border(String t1, String t2, boolean shareCoast){
 		TerritorySquare sq1 = get(t1);
 		TerritorySquare sq2 = get(t2);
 		
-		sq1.borders(sq2);
-		sq2.borders(sq1);
+		sq1.borders(sq2, shareCoast);
+		sq2.borders(sq1, shareCoast);
+	}
+	
+	private void border(String t1, String t2, String sharedCoast1, String sharedCoast2){
+		TerritorySquare sq1 = get(t1);
+		TerritorySquare sq2 = get(t2);
+		
+		sq1.borders(sq2, sharedCoast1);
+		sq2.borders(sq1, sharedCoast2);
 	}
 	
 	//Holds the current location of all units
@@ -326,4 +447,9 @@ public class GameState {
 		
 	}
 	
+	public static void main(String[] args) throws IOException{
+		FileWriter fwriter = new FileWriter("map.gviz");
+		fwriter.write(new GameState().mapAsDotFile());
+		fwriter.close();
+	}	
 }
