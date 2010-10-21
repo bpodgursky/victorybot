@@ -31,6 +31,7 @@ public class Bot implements MessageListener {
 	String name;
 	Server serv;
 	boolean atPrompt;
+	GameState board;
 
 	void printPrompt() {
 		if (!atPrompt) {
@@ -63,6 +64,7 @@ public class Bot implements MessageListener {
 	public Bot(InetAddress ip, int port, String name) {
 		this.name = name;
 		try {
+			board = new GameState();
 			serv = new Server(ip, port);
 			serv.addMessageListener(this);
 			serv.connect();
@@ -70,24 +72,7 @@ public class Bot implements MessageListener {
 					"(", "'" + VERSION + "'", ")" };
 			printMsg(name, nme);
 			serv.send(nme);
-			BufferedReader br = new BufferedReader(new InputStreamReader(
-					System.in));
-			while (true) {
-				printPrompt();
-				String line = br.readLine();
-				String[] order = line.split(" ");
-				atPrompt = false;
-				try {
-					printMsg(name, order);
-					serv.send(order);
-				} catch (UnknownTokenException ute) {
-					System.err.println("Unknown token '" + ute.getToken()
-							+ "' - Message not sent.");
-				} catch (DisconnectedException de) {
-					System.err.println("Disconnected from server, "
-							+ "command not sent");
-				}
-			}
+			
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
 		} catch (DisconnectedException de) {
@@ -96,6 +81,9 @@ public class Bot implements MessageListener {
 		} catch (UnknownTokenException ute) {
 			System.err.println("Unknown token '" + ute.getToken() + "'");
 			System.exit(1);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 	}
@@ -121,20 +109,51 @@ public class Bot implements MessageListener {
 				System.exit(1);
 			}
 		}
+		if (message[0].equals("ORD")) {
+			StringBuilder move = new StringBuilder();
+			for(int i = 0; i < message.length; i++)
+			{
+				move.append(message[i]);
+				move.append(" ");
+			}
+			board.update(move.toString());
+		}
 		printPrompt();
 	}
 
 	public static void main(String[] args) {
 		try {
-			new Bot(InetAddress.getByName(args[0]), Integer
+			Bot victoryBot = new Bot(InetAddress.getByName(args[0]), Integer
 					.parseInt(args[1]), args[2]);
+			BufferedReader br = new BufferedReader(new InputStreamReader(
+					System.in));
+			
+			while (true) {
+				victoryBot.printPrompt();
+				String line = br.readLine();
+				String[] order = line.split(" ");
+				victoryBot.atPrompt = false;
+				try {
+					victoryBot.printMsg(victoryBot.name, order);
+					victoryBot.serv.send(order);
+				} catch (UnknownTokenException ute) {
+					System.err.println("Unknown token '" + ute.getToken()
+							+ "' - Message not sent.");
+				} catch (DisconnectedException de) {
+					System.err.println("Disconnected from server, "
+							+ "command not sent");
+				}
+			}
+			
 		} catch (ArrayIndexOutOfBoundsException be) {
 			usage();
 		} catch (UnknownHostException uhe) {
 			System.err.println("Unknown host: " + uhe.getMessage());
 		} catch (NumberFormatException nfe) {
 			usage();
-		}
+		} catch (Exception ex) {
+			System.out.println("Error");
+		} 
 	}
 
 	public static void usage() {
