@@ -683,6 +683,26 @@ public class GameState {
 		return true;
 	}
 	
+	public static boolean canConvoy(TerritorySquare convoyer, TerritorySquare from, TerritorySquare to){
+		
+		if(convoyer.getOccupier() == null || from.getOccupier() == null){
+			return false;
+		}
+		
+		Unit convoyingUnit = convoyer.getOccupier();
+		Unit convoyedUnit = from.getOccupier();
+		
+		if(convoyer.isLand || convoyingUnit.army || !convoyedUnit.army){
+			return false;
+		}
+		
+		if(!from.hasAnySeaBorders() || !to.hasAnySeaBorders()){
+			return false;
+		}
+		
+		return true;
+	}
+	
 	public static void main(String[] args) throws Exception{
 		
 //		FileWriter fwriter = new FileWriter("map.gviz");
