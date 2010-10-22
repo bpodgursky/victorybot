@@ -1,5 +1,6 @@
 package order;
 
+import gamestate.GameState;
 import gamestate.TerritorySquare;
 import gamestate.Unit;
 
@@ -12,10 +13,18 @@ public class SupportMove {
 	public final Unit supporter;
 	public final Unit supported;
 	
-	public SupportMove(TerritorySquare supportFrom, Unit supporter, TerritorySquare supportOrig, Unit supported){
+	public SupportMove(TerritorySquare supportFrom, TerritorySquare supportOrig, TerritorySquare supportInto) throws Exception{
+		
+		if(!GameState.canSupportMove(supportFrom, supportOrig, supportInto)){
+			throw new Exception("cannot support with "+supportFrom+" from "+supportOrig+" to "+ supportInto);
+		}
 		
 		this.supportFrom = supportFrom;
-		//TODO the rest
+		this.supportOrig = supportOrig;
+		this.supportInto = supportInto;
+		
+		this.supporter = supportFrom.getOccupier();
+		this.supported = supportOrig.getOccupier();
 	}
 	
 }

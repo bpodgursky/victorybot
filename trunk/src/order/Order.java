@@ -1,5 +1,5 @@
 package order;
 
-public class Order {
+public abstract class Order {
 	
 }

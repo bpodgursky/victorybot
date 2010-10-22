@@ -1,5 +1,6 @@
 package order;
 
+import gamestate.GameState;
 import gamestate.TerritorySquare;
 import gamestate.Unit;
 
@@ -16,10 +17,18 @@ public class Move {
 	public final TerritorySquare from;
 	public final TerritorySquare to;
 	
-	public Move(Unit unit, TerritorySquare from, TerritorySquare to){
-		this.unit = unit;
+	public Move(TerritorySquare from, TerritorySquare to) throws Exception{
+		this(from, to, "NA");
+	}
+
+	public Move( TerritorySquare from, TerritorySquare to, String destinationCoast) throws Exception{
+
+		if(!GameState.canMove(from, to, destinationCoast)){
+			throw new Exception("cannot move from "+ from+ " "+to+" on coast "+destinationCoast);
+		}
+		
+		this.unit = from.getOccupier();
 		this.from = from;
 		this.to = to;
 	}
-
 }

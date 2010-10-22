@@ -1,5 +1,6 @@
 package order;
 
+import gamestate.GameState;
 import gamestate.TerritorySquare;
 import gamestate.Unit;
 
@@ -17,13 +18,19 @@ public class SupportHold {
 	public final Unit supporter;
 	public final Unit supported;
 	
-	public SupportHold(TerritorySquare supportFrom, Unit supporter, TerritorySquare supportTo, Unit supported){
+
+	public SupportHold(TerritorySquare supportFrom, TerritorySquare supportTo) throws Exception{
+		
+		if(!GameState.canSupportHold(supportFrom, supportTo)){
+			throw new Exception("cannot support hold from "+supportFrom+" to "+supportTo);
+		}
 		
 		this.supportFrom = supportFrom;
 		this.supportTo = supportTo;
 		
-		this.supporter = supporter;
-		this.supported = supported;
+		this.supporter = supportFrom.getOccupier();
+		this.supported = supportTo.getOccupier();
 		
+
 	}
 }

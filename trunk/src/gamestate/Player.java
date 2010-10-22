@@ -68,6 +68,10 @@ public class Player {
 		this.occupiedTerritories.remove(sqr);
 	}
 	
+	public String getName(){
+		return this.power.toString();
+	}
+	
 	public String toString(){
 		String str = power+": ";
 		

@@ -65,7 +65,7 @@ public class TerritorySquare {
 	}
 	
 	//only call if there is only one coast
-	public void borders(TerritorySquare other, boolean sharesCoast){
+	public void setBorders(TerritorySquare other, boolean sharesCoast){
 		borders.add(other);
 		
 		if(sharesCoast){
@@ -78,21 +78,45 @@ public class TerritorySquare {
 		}
 	}
 	
-	public void borders(TerritorySquare other, String borderCoastName){
+	public void setBorders(TerritorySquare other, String borderCoastName){
 		borders.add(other);
 		
 		seaBorders.get(borderCoastName).add(other);
+		seaBorders.get("EITHER").add(other);
+		
 		allSeaBorders.add(other);
 	
 		if(other.isLand){
 			landBorders.add(other);
 		}
 	}
+	
+	public String getOccupiedCoast(){
+		return this.occupiedCoast;
+	}
+	
+	public boolean isLandBorder(TerritorySquare other){
+		return landBorders.contains(other);
+	}
+	
+	public boolean isAnySeaBorder(TerritorySquare other){
+		return this.allSeaBorders.contains(other);
+	}
 
+	public boolean isSeaBorder(TerritorySquare other, String thisCoast, String otherCoast){
+		
+		return this.seaBorders.get(thisCoast).contains(other) &&
+			  other.seaBorders.get(otherCoast).contains(this);
+	}
+	
 	public TerritorySquare(String name, 
 			boolean isSupply, boolean isLand,
 			Player homeSupplyFor){
 		this(name, isSupply, isLand, homeSupplyFor, null);
+	}
+	
+	public Unit getOccupier(){
+		return this.occupier;
 	}
 
 	public TerritorySquare(String name, 
@@ -107,6 +131,7 @@ public class TerritorySquare {
 		
 		if(coasts != null){
 			this.coasts.addAll(coasts);
+			this.coasts.add("EITHER");
 		}
 		
 		this.coasts.add("NA");
@@ -114,6 +139,10 @@ public class TerritorySquare {
 		for(String s: this.coasts){
 			this.seaBorders.put(s, new HashSet<TerritorySquare>());
 		}
+	}
+	
+	public String toString(){
+		return "[Territory "+name+" controlled by "+ controller.getName() + " occupied by "+ this.occupier +" coast " + this.occupiedCoast+"]";
 	}
 }
 

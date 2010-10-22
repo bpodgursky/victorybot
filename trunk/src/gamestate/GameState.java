@@ -588,16 +588,16 @@ public class GameState {
 		TerritorySquare sq1 = get(t1);
 		TerritorySquare sq2 = get(t2);
 		
-		sq1.borders(sq2, shareCoast);
-		sq2.borders(sq1, shareCoast);
+		sq1.setBorders(sq2, shareCoast);
+		sq2.setBorders(sq1, shareCoast);
 	}
 	
 	private void border(String t1, String t2, String sharedCoast1, String sharedCoast2){
 		TerritorySquare sq1 = get(t1);
 		TerritorySquare sq2 = get(t2);
 		
-		sq1.borders(sq2, sharedCoast1);
-		sq2.borders(sq1, sharedCoast2);
+		sq1.setBorders(sq2, sharedCoast1);
+		sq2.setBorders(sq1, sharedCoast2);
 	}
 	
 	//Holds the current location of all units
@@ -623,7 +623,68 @@ public class GameState {
 		return str;
 	}
 	
+	//utility methods for game mechanics
+	
+	public static boolean canMove(TerritorySquare from, TerritorySquare to){
+		return canMove(from, to, "NA");
+	}
+	
+	public static boolean canMove(TerritorySquare from, TerritorySquare to, String destinationCoast){
+		//make sure unit is there
+		if(from.getOccupier() == null){
+			return false;
+		}
+		
+		if(from.getOccupier().army){
+			
+			//if the unit moving is an army, make sure it can do this
+			if(!from.isLandBorder(to)){
+				return false;
+			}
+		}else{
+			String occupiedCoast = from.getOccupiedCoast();			
+			
+			//if it's a fleet, make sure the coasts match up
+			if(!from.isSeaBorder(to, occupiedCoast, destinationCoast)){
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	public static boolean canSupportHold(TerritorySquare from, TerritorySquare to){
+		
+		if(to.getOccupier() == null){
+			return false;
+		}
+		
+		return canMove(from, to);	
+	}
+	
+	public static boolean canSupportMove(TerritorySquare supporter, TerritorySquare from, TerritorySquare to){
+		
+		if(supporter.getOccupier() == null){
+			return false;
+		}
+		
+		if(from.getOccupier() == null){
+			return false;
+		}
+		
+		if(!canMove(supporter, to)){
+			return false;
+		}
+		
+		if(!canMove(to, from)){
+			return false;
+		}
+		
+		return true;
+	}
+	
 	public static void main(String[] args) throws Exception{
+		
 //		FileWriter fwriter = new FileWriter("map.gviz");
 //		fwriter.write(new GameState().mapAsDotFile());
 //		fwriter.close();
