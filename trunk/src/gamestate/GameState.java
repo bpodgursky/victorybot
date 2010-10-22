@@ -1,3 +1,5 @@
+package gamestate;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
@@ -604,7 +606,7 @@ public class GameState {
 		return terrs.get(name);
 	}
 	
-	void update(String moves){
+	public void update(String moves){
 		System.out.println(moves);
 	}
 	
