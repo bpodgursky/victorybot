@@ -102,6 +102,10 @@ public class TerritorySquare {
 	public boolean isAnySeaBorder(TerritorySquare other){
 		return this.allSeaBorders.contains(other);
 	}
+	
+	public boolean hasAnySeaBorders(){
+		return !allSeaBorders.isEmpty();
+	}
 
 	public boolean isSeaBorder(TerritorySquare other, String thisCoast, String otherCoast){
 		
