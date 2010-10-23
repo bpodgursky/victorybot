@@ -11,13 +11,14 @@ import dip.daide.comm.MessageListener;
 import dip.daide.comm.DisconnectedException;
 import dip.daide.comm.UnknownTokenException;
 import dip.daide.comm.Server;
-import gamestate.GameState;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+
+import state.BoardState;
 
 /**
  * An interactive client for testing the communication. Lines are read from
@@ -33,7 +34,7 @@ public class Bot implements MessageListener {
 	String name;
 	Server serv;
 	boolean atPrompt;
-	GameState board;
+	BoardState board;
 
 	void printPrompt() {
 		if (!atPrompt) {
@@ -66,7 +67,7 @@ public class Bot implements MessageListener {
 	public Bot(InetAddress ip, int port, String name) {
 		this.name = name;
 		try {
-			board = new GameState();
+			board = new BoardState();
 			serv = new Server(ip, port);
 			serv.addMessageListener(this);
 			serv.connect();

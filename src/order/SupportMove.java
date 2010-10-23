@@ -1,8 +1,8 @@
 package order;
 
-import gamestate.GameState;
-import gamestate.TerritorySquare;
-import gamestate.Unit;
+import representation.TerritorySquare;
+import representation.Unit;
+import state.BoardState;
 
 public class SupportMove {
 
@@ -15,7 +15,7 @@ public class SupportMove {
 	
 	public SupportMove(TerritorySquare supportFrom, TerritorySquare supportOrig, TerritorySquare supportInto) throws Exception{
 		
-		if(!GameState.canSupportMove(supportFrom, supportOrig, supportInto)){
+		if(!BoardState.canSupportMove(supportFrom, supportOrig, supportInto)){
 			throw new Exception("cannot support with "+supportFrom+" from "+supportOrig+" to "+ supportInto);
 		}
 		
@@ -27,4 +27,7 @@ public class SupportMove {
 		this.supported = supportOrig.getOccupier();
 	}
 	
+	public String toString(){
+		return "[support move with "+supportFrom+" from "+supportFrom+" to "+supportInto+"]";
+	}
 }

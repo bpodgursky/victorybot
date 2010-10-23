@@ -1,4 +1,5 @@
-package gamestate;
+package representation;
+
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -7,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 
 
 public class TerritorySquare {
@@ -64,7 +66,7 @@ public class TerritorySquare {
 		setOccupier(u, "NA");
 	}
 	
-	//only call if there is only one coast
+	//	only call if there is only one coast
 	public void setBorders(TerritorySquare other, boolean sharesCoast){
 		borders.add(other);
 		
@@ -147,6 +149,38 @@ public class TerritorySquare {
 	
 	public String toString(){
 		return "[Territory "+name+" controlled by "+ controller.getName() + " occupied by "+ this.occupier +" coast " + this.occupiedCoast+"]";
+	}
+	
+	public boolean hasMultipleCoasts(){
+		return this.coasts.size() > 1;
+	}
+	
+	public boolean isSupplyCenter(){
+		return this.isSupplyCenter;
+	}
+	
+	public boolean isControlled(){
+		return this.controller != null;
+	}
+	
+	public Player getController(){
+		return this.controller;
+	}
+	
+	public boolean hasCoast(String coast){
+		return this.coasts.contains(coast);
+	}
+	
+	public boolean isLand(){
+		return this.isLand;
+	}
+	
+	public Set<TerritorySquare> getBorders(){
+		return new HashSet<TerritorySquare>(this.borders);
+	}
+	
+	public String getName(){
+		return this.name;
 	}
 }
 

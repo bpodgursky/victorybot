@@ -1,8 +1,8 @@
 package order;
 
-import gamestate.GameState;
-import gamestate.TerritorySquare;
-import gamestate.Unit;
+import representation.TerritorySquare;
+import representation.Unit;
+import state.BoardState;
 
 public class Move {
 	
@@ -23,12 +23,16 @@ public class Move {
 
 	public Move( TerritorySquare from, TerritorySquare to, String destinationCoast) throws Exception{
 
-		if(!GameState.canMove(from, to, destinationCoast)){
+		if(!BoardState.canMove(from, to, destinationCoast)){
 			throw new Exception("cannot move from "+ from+ " "+to+" on coast "+destinationCoast);
 		}
 		
 		this.unit = from.getOccupier();
 		this.from = from;
 		this.to = to;
+	}
+	
+	public String toString(){
+		return "[ move from " +from+" to "+to+"]";
 	}
 }
