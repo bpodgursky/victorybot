@@ -1,15 +1,19 @@
-package gamestate;
+package state;
 
-import java.io.FileWriter;
-import java.io.IOException;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import representation.Country;
+import representation.Player;
+import representation.TerritorySquare;
+import representation.Unit;
 
-public class GameState {
+
+public class BoardState {
 	
 	final static boolean SUPPLY = true;
 	final static boolean NO_SUPPLY = false;
@@ -23,7 +27,7 @@ public class GameState {
 	Map<String, TerritorySquare> terrs = new HashMap<String, TerritorySquare>();
 	Set<Player> activePlayers = new HashSet<Player>();
 	
-	public GameState() throws Exception{
+	public BoardState() throws Exception{
 		initialize();
 	}
 	
@@ -32,12 +36,12 @@ public class GameState {
 	//need a remove method
 	private void setControl(Player p, TerritorySquare terr) throws Exception{
 		
-		if(!terr.isSupplyCenter){
+		if(!terr.isSupplyCenter()){
 			throw new Exception("Territory not supply center");
 		}
 		
-		if(terr.controller != null){
-			terr.controller.removeSupply(terr);
+		if(terr.isControlled()){
+			terr.getController().removeSupply(terr);
 		}
 		
 		p.addSupply(terr);
@@ -46,11 +50,11 @@ public class GameState {
 	
 	private void setOccupier(Unit u, TerritorySquare terr, String coast) throws Exception{
 		
-		if(!terr.coasts.contains(coast)){
+		if(!terr.hasCoast(coast)){
 			throw new Exception("Invalid coast!");
 		}
 		
-		if(u.army && !terr.isLand){
+		if(u.army && !terr.isLand()){
 			throw new Exception("Invalid occupier");
 		}
 		
@@ -60,7 +64,7 @@ public class GameState {
 	
 	private void setOccupier(Unit u, TerritorySquare terr) throws Exception{
 		
-		if(!u.army && terr.coasts.size() > 1){
+		if(!u.army && terr.hasMultipleCoasts()){
 			throw new Exception("Must specify a coast!");
 		}
 		
@@ -69,7 +73,7 @@ public class GameState {
 	
 	private Unit removeOccupier(TerritorySquare terr) throws Exception{
 		
-		Unit removed = terr.occupier;
+		Unit removed = terr.getOccupier();
 		
 		if(removed == null){
 			throw new Exception("Territory not occupied!");
@@ -77,7 +81,7 @@ public class GameState {
 		
 		removed.belongsTo.removeOccupy(terr);
 		
-		terr.occupier = null;
+		terr.setOccupier(null);
 		
 		return removed;
 	}
@@ -556,8 +560,8 @@ public class GameState {
 		
 	} 
 	
-	public void placeUnit(Unit u, TerritorySquare location){
-		location.occupier = u;
+	public void placeUnit(Unit u, TerritorySquare location) throws Exception{
+		location.setOccupier(u);
 	}
 	
 	private String mapAsDotFile(){
@@ -567,15 +571,15 @@ public class GameState {
 	    for(String s: this.terrs.keySet()){
 	    	
 	    	TerritorySquare sqr = get(s);
-	    	for(TerritorySquare neighbor: sqr.borders){
+	    	for(TerritorySquare neighbor: sqr.getBorders()){
 	    		
 	    		//just to make sure there is only one of each border
-	    		if(s.compareTo(neighbor.name) > 0){
+	    		if(s.compareTo(neighbor.getName()) > 0){
 	    			
-	    			if(sqr.isLand && neighbor.isLand)
-	    				str+="\""+s+"\" -> \""+neighbor.name+"\"[dir=none weight=100];\n";
+	    			if(sqr.isLand() && neighbor.isLand())
+	    				str+="\""+s+"\" -> \""+neighbor.getName()+"\"[dir=none weight=100];\n";
 	    			else
-	    				str+="\""+s+"\" -> \""+neighbor.name+"\"[dir=none weight=1];\n";
+	    				str+="\""+s+"\" -> \""+neighbor.getName()+"\"[dir=none weight=1];\n";
 	    		}
 	    	}
 	    	
@@ -692,7 +696,7 @@ public class GameState {
 		Unit convoyingUnit = convoyer.getOccupier();
 		Unit convoyedUnit = from.getOccupier();
 		
-		if(convoyer.isLand || convoyingUnit.army || !convoyedUnit.army){
+		if(convoyer.isLand() || convoyingUnit.army || !convoyedUnit.army){
 			return false;
 		}
 		
@@ -709,7 +713,7 @@ public class GameState {
 //		fwriter.write(new GameState().mapAsDotFile());
 //		fwriter.close();
 		
-		GameState g = new GameState();
+		BoardState g = new BoardState();
 		System.out.println(g.toString());
 	}	
 }

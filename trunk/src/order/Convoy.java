@@ -1,8 +1,8 @@
 package order;
 
-import gamestate.GameState;
-import gamestate.TerritorySquare;
-import gamestate.Unit;
+import representation.TerritorySquare;
+import representation.Unit;
+import state.BoardState;
 
 public class Convoy {
 
@@ -15,7 +15,7 @@ public class Convoy {
 	
 	public Convoy(TerritorySquare convoyer, TerritorySquare from, TerritorySquare to) throws Exception{
 	
-		if(!GameState.canConvoy(convoyer, from, to)){
+		if(!BoardState.canConvoy(convoyer, from, to)){
 			throw new Exception("cannot convoy with "+convoyer+" from "+from+" to "+to);
 		}
 		
@@ -28,4 +28,7 @@ public class Convoy {
 		
 	}
 	
+	public String toString(){
+		return "[ convoy with "+convoyer+" from "+from+ " to "+to+"]";
+	}
 }

@@ -1,8 +1,8 @@
 package order;
 
-import gamestate.GameState;
-import gamestate.TerritorySquare;
-import gamestate.Unit;
+import representation.TerritorySquare;
+import representation.Unit;
+import state.BoardState;
 
 
 public class SupportHold {
@@ -21,7 +21,7 @@ public class SupportHold {
 
 	public SupportHold(TerritorySquare supportFrom, TerritorySquare supportTo) throws Exception{
 		
-		if(!GameState.canSupportHold(supportFrom, supportTo)){
+		if(!BoardState.canSupportHold(supportFrom, supportTo)){
 			throw new Exception("cannot support hold from "+supportFrom+" to "+supportTo);
 		}
 		
@@ -31,6 +31,9 @@ public class SupportHold {
 		this.supporter = supportFrom.getOccupier();
 		this.supported = supportTo.getOccupier();
 		
-
+	}
+	
+	public String toString(){
+		return "[support hold with "+supporter + " to "+supported+"]";
 	}
 }
