@@ -4,7 +4,7 @@ import representation.TerritorySquare;
 import representation.Unit;
 import state.BoardState;
 
-public class SupportMove {
+public class SupportMove extends Order{
 
 	public final TerritorySquare supportFrom;
 	public final TerritorySquare supportOrig;

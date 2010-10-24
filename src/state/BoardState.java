@@ -24,8 +24,10 @@ public class BoardState {
 	final static boolean LAND = true;
 	final static boolean SEA = false;
 	
-	Map<String, TerritorySquare> terrs = new HashMap<String, TerritorySquare>();
-	Set<Player> activePlayers = new HashSet<Player>();
+	//constant
+	
+	final Map<String, TerritorySquare> terrs = new HashMap<String, TerritorySquare>();
+	final Set<Player> activePlayers = new HashSet<Player>();
 	
 	public BoardState() throws Exception{
 		initialize();
@@ -705,6 +707,17 @@ public class BoardState {
 		}
 		
 		return true;
+	}
+	
+	public static boolean canHold(TerritorySquare holder){
+		
+		if(holder.getOccupier() == null){
+			return false;
+		}
+		
+		//	as long as there's a unit there it can hold...
+		return true;
+		
 	}
 	
 	public static void main(String[] args) throws Exception{

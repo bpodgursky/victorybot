@@ -4,7 +4,7 @@ import representation.TerritorySquare;
 import representation.Unit;
 import state.BoardState;
 
-public class Convoy {
+public class Convoy extends Order{
 
 	public final Unit convoyedUnit;
 	public final Unit convoyingUnit;

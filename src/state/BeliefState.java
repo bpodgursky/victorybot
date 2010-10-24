@@ -8,5 +8,10 @@ public class BeliefState {
 	public double getProbability(String fact){
 		return .5;
 	}
+	
+	//	TODO stub
+	public void update(String moves){
+		
+	}
 
 }
