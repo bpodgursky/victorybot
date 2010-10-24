@@ -35,4 +35,9 @@ public class Move extends Order{
 	public String toString(){
 		return "[ move from " +from+" to "+to+"]";
 	}
+
+	public void execute() {
+		// TODO Auto-generated method stub
+		
+	}
 }

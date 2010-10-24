@@ -21,4 +21,10 @@ public class Hold extends Order{
 		
 	}
 
+
+	public void execute() {
+		System.out.println("Doing Hold!");
+		
+	}
+
 }

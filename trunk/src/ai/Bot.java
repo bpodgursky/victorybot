@@ -202,8 +202,8 @@ public class Bot implements MessageListener {
 
 	public static void main(String[] args) throws InterruptedException {
 
-		Thread[] bots = new Thread[7];
-		for(int i = 0; i < 7; i++){
+		Thread[] bots = new Thread[1];
+		for(int i = 0; i < 1; i++){
 			bots[i] = new Thread(new BotLauncher(args));
 			bots[i].start();
 		}

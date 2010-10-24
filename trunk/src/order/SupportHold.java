@@ -36,4 +36,9 @@ public class SupportHold extends Order{
 	public String toString(){
 		return "[support hold with "+supporter + " to "+supported+"]";
 	}
+
+	public void execute() {
+		// TODO Auto-generated method stub
+		
+	}
 }

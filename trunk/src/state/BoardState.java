@@ -7,6 +7,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import order.Hold;
+import order.Order;
+import order.OrderToken;
+
 import representation.Country;
 import representation.Player;
 import representation.TerritorySquare;
@@ -613,7 +617,29 @@ public class BoardState {
 	}
 	
 	public void update(String moves){
-		System.out.println(moves);
+		Order order = buildOrder(moves);
+		order.execute();
+	}
+	
+	private Order buildOrder(String order)
+	{
+		OrderToken token = new OrderToken(order, terrs);
+		try
+		{
+			if(token.order.equals("HLD"))
+			{
+				return new Hold(token.unitLoc);
+			}
+			else
+			{
+				throw new Exception();
+			}
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
+		return null;
 	}
 	
 	public String toString(){
