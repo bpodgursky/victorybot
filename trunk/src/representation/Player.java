@@ -30,6 +30,10 @@ public class Player {
 		this.homeCenters.addAll(homeCenters);
 	}
 	
+	public Set<TerritorySquare> getOccupiedTerritories(){
+		return this.occupiedTerritories;
+	}
+	
 	public void setHomeSupply(Collection<TerritorySquare> homeSupply){
 		this.homeCenters.addAll(homeSupply);
 	}

@@ -11,6 +11,7 @@ import dip.daide.comm.MessageListener;
 import dip.daide.comm.DisconnectedException;
 import dip.daide.comm.UnknownTokenException;
 import dip.daide.comm.Server;
+import gamesearch.GameSearch;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -18,7 +19,9 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
+import state.BeliefState;
 import state.BoardState;
+import state.DiplomaticState;
 
 /**
  * An interactive client for testing the communication. Lines are read from
@@ -34,8 +37,13 @@ public class Bot implements MessageListener {
 	String name;
 	Server serv;
 	boolean atPrompt;
-	BoardState board;
-
+	
+	private final BoardState board;
+	private final DiplomaticState diplomaticState;
+	private final BeliefState beliefs;
+	
+	private GameSearch search;
+	
 	void printPrompt() {
 		if (!atPrompt) {
 			System.out.print("Enter message: ");
@@ -64,30 +72,21 @@ public class Bot implements MessageListener {
 		System.out.println("<" + who + ">: " + sbuf.toString());
 	}
 
-	public Bot(InetAddress ip, int port, String name) {
+	public Bot(InetAddress ip, int port, String name) throws Exception {
 		this.name = name;
-		try {
-			board = new BoardState();
-			serv = new Server(ip, port);
-			serv.addMessageListener(this);
-			serv.connect();
-			String[] nme = new String[] { "NME", "(", "'" + name + "'", ")",
-					"(", "'" + VERSION + "'", ")" };
-			printMsg(name, nme);
-			serv.send(nme);
+
+		board = new BoardState();
+		diplomaticState = new DiplomaticState();
+		beliefs = new BeliefState();
+		
+		serv = new Server(ip, port);
+		serv.addMessageListener(this);
+		serv.connect();
+		String[] nme = new String[] { "NME", "(", "'" + name + "'", ")",
+				"(", "'" + VERSION + "'", ")" };
+		printMsg(name, nme);
+		serv.send(nme);
 			
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		} catch (DisconnectedException de) {
-			System.out.println("Ok, we're disconnected. Exiting...");
-			System.exit(0);
-		} catch (UnknownTokenException ute) {
-			System.err.println("Unknown token '" + ute.getToken() + "'");
-			System.exit(1);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 
 	}
 
@@ -112,6 +111,13 @@ public class Bot implements MessageListener {
 				System.exit(1);
 			}
 		}
+		
+		//TODO where are we told what country we are?  can instantiate the game search
+		//	as soon as we are told that.  Make that the condition for this, fill null with that
+		if(false){
+			search = new GameSearch(null, board, diplomaticState, beliefs);
+		}
+		
 		if (message[0].equals("ORD")) {
 			StringBuilder move = new StringBuilder();
 			for(int i = 0; i < message.length; i++)
@@ -119,7 +125,17 @@ public class Bot implements MessageListener {
 				move.append(message[i]);
 				move.append(" ");
 			}
-			board.update(move.toString());
+			
+			String moves = move.toString();
+			
+			board.update(moves);
+			diplomaticState.update(moves);
+			beliefs.update(moves);
+			
+			search.noteBoardUpdate();
+			search.noteDiplomaticUpdate();
+			search.noteBeliefUpdate();
+			
 		}
 		printPrompt();
 	}

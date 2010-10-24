@@ -4,7 +4,7 @@ import representation.TerritorySquare;
 import representation.Unit;
 import state.BoardState;
 
-public class Move {
+public class Move extends Order{
 	
 	//	for now let these be full instantiated since it's easy to deal with.  as long as the 
 	//	game search is only forward, there shouldn't be any need to leave values (like player or unit)
