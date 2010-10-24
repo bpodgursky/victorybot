@@ -64,6 +64,7 @@ public class GameSearch {
 		this.beliefUpdate = true;
 	}
 	
+	
 	public Set<Order> currentOrders(){
 		return currentOrders;
 	}

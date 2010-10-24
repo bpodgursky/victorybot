@@ -27,7 +27,7 @@ public class BoardState {
 	//constant
 	
 	final Map<String, TerritorySquare> terrs = new HashMap<String, TerritorySquare>();
-	final Set<Player> activePlayers = new HashSet<Player>();
+	final Map<Country, Player> activePlayers = new HashMap<Country, Player>();
 	
 	public BoardState() throws Exception{
 		initialize();
@@ -99,13 +99,13 @@ public class BoardState {
 		Player aus = new Player(Country.AUS);
 		Player tur = new Player(Country.TUR);
 		
-		activePlayers.add(eng);
-		activePlayers.add(fra);
-		activePlayers.add(ger);
-		activePlayers.add(rus);
-		activePlayers.add(ita);
-		activePlayers.add(aus);
-		activePlayers.add(tur);
+		activePlayers.put(Country.ENG, eng);
+		activePlayers.put(Country.FRA, fra);
+		activePlayers.put(Country.GER, ger);
+		activePlayers.put(Country.RUS, rus);
+		activePlayers.put(Country.ITA, ita);
+		activePlayers.put(Country.AUS, aus);
+		activePlayers.put(Country.TUR, tur);
 		
 		//england
 		terrs.put("EDI", new TerritorySquare("EDI", SUPPLY, LAND, eng));
@@ -622,7 +622,7 @@ public class BoardState {
 		
 		str+="\tPlayers:\n";
 		
-		for(Player p: this.activePlayers){
+		for(Player p: this.activePlayers.values()){
 			str+="\t"+p.toString()+"\n";
 		}
 		
@@ -633,6 +633,10 @@ public class BoardState {
 	
 	public static boolean canMove(TerritorySquare from, TerritorySquare to){
 		return canMove(from, to, "NA");
+	}
+	
+	public Player getPlayer(Country power){
+		return this.activePlayers.get(power);
 	}
 	
 	public static boolean canMove(TerritorySquare from, TerritorySquare to, String destinationCoast){
