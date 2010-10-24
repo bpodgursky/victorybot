@@ -31,4 +31,10 @@ public class Convoy extends Order{
 	public String toString(){
 		return "[ convoy with "+convoyer+" from "+from+ " to "+to+"]";
 	}
+
+
+	public void execute() {
+		// TODO Auto-generated method stub
+		
+	}
 }

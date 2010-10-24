@@ -30,4 +30,9 @@ public class SupportMove extends Order{
 	public String toString(){
 		return "[support move with "+supportFrom+" from "+supportFrom+" to "+supportInto+"]";
 	}
+
+	public void execute() {
+		// TODO Auto-generated method stub
+		
+	}
 }
