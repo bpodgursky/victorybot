@@ -84,7 +84,7 @@ public class TerritorySquare {
 		borders.add(other);
 		
 		seaBorders.get(borderCoastName).add(other);
-		seaBorders.get("EITHER").add(other);
+		seaBorders.get("NA").add(other);
 		
 		allSeaBorders.add(other);
 	
@@ -137,7 +137,7 @@ public class TerritorySquare {
 		
 		if(coasts != null){
 			this.coasts.addAll(coasts);
-			this.coasts.add("EITHER");
+
 		}
 		
 		this.coasts.add("NA");
