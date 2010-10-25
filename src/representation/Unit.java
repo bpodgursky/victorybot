@@ -13,10 +13,6 @@ public class Unit {
 		this.army = isArmy;
 	}
 	
-//	public String toString(){
-//		return (army)?"A ":"F "+belongsTo.getName();
-//	}
-	
 	public String toString(){
 		return belongsTo.getName()+" "+(army?"AMY":"FLT");
 	}

@@ -10,7 +10,7 @@ import java.util.Set;
 
 import order.Hold;
 import order.Order;
-import order.OrderToken;
+import order.OrderFactory;
 
 import representation.Country;
 import representation.Player;
@@ -681,7 +681,7 @@ public class BoardState {
 	
 	private Order buildOrder(String order)
 	{
-		OrderToken token = new OrderToken(order, terrs);
+		OrderFactory token = new OrderFactory(order, terrs);
 		try
 		{
 			if(token.order.equals("HLD"))
