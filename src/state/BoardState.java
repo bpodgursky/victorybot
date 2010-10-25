@@ -4,6 +4,7 @@ package state;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,19 +29,71 @@ public class BoardState {
 	final static boolean LAND = true;
 	final static boolean SEA = false;
 	
+	public enum Phase{SPR, SUM, FAL, AUT, WIN}
+	
+	//spring = first moves
+	//sum = retreats after first
+	//fall = second moves
+	//aut = retreats after fall
+	//win = builds and disbands
+	Phase currentPhase;
+	
+	int currentYear;
+	
 	//constant
 	
 	final Map<String, TerritorySquare> terrs = new HashMap<String, TerritorySquare>();
 	final Map<Country, Player> activePlayers = new HashMap<Country, Player>();
 	
+	//	state
+	
+	//	a map of territories which have to retreat this turn.  A little awkward; the territory's state will already
+	//	have been updated, so a new unit will be in the territory.  So this map is from the territory to the unit
+	//	which needs to retreat from there.  To make things more annoying, we need to remember which coast to retreat
+	//	from for the countries with multiple coasts.  This class encompasses all of that
+	
+	class RetreatSituation{
+	
+		public RetreatSituation(Unit u, TerritorySquare sqr, String orig){
+			this.retreating = u;
+			this.from = sqr;
+			this.originCoast = orig;
+		}
+		
+		Unit retreating;
+		TerritorySquare from;
+		
+		String originCoast;
+	}
+	
+	Map<TerritorySquare, RetreatSituation> retreats = new HashMap<TerritorySquare, RetreatSituation>();
+	
+	MoveHistory history = new MoveHistory();
+	
+	//TODO this is just here for testing...
+	public void setRetreatingUnit(Unit retreating, TerritorySquare sqr, String originCoast){
+		retreats.put(sqr, new RetreatSituation(retreating, sqr, originCoast));
+	}
+	
+	public Unit getRetreatingUnit(TerritorySquare sq){
+		return retreats.get(sq).retreating;
+	}
+	
 	public BoardState() throws Exception{
 		initialize();
 	}
 	
+	public void setTime(String phase, int year){
+		this.currentPhase = Phase.valueOf(phase);
+		this.currentYear = year;
+	}
+	
+	//these are public, but only really for testing.  
+	
 	//set the controller of a territory
 	//once controlled, control is only lost by someone else taking control.  So don't
 	//need a remove method
-	private void setControl(Player p, TerritorySquare terr) throws Exception{
+	public void setControl(Player p, TerritorySquare terr) throws Exception{
 		
 		if(!terr.isSupplyCenter()){
 			throw new Exception("Territory not supply center");
@@ -54,7 +107,7 @@ public class BoardState {
 		terr.setController(p);
 	}
 	
-	private void setOccupier(Unit u, TerritorySquare terr, String coast) throws Exception{
+	public void setOccupier(Unit u, TerritorySquare terr, String coast) throws Exception{
 		
 		if(!terr.hasCoast(coast)){
 			throw new Exception("Invalid coast!");
@@ -68,7 +121,7 @@ public class BoardState {
 		terr.setOccupier(u, coast);
 	}
 	
-	private void setOccupier(Unit u, TerritorySquare terr) throws Exception{
+	public void setOccupier(Unit u, TerritorySquare terr) throws Exception{
 		
 		if(!u.army && terr.hasMultipleCoasts()){
 			throw new Exception("Must specify a coast!");
@@ -77,7 +130,7 @@ public class BoardState {
 		setOccupier(u, terr, "NA");
 	}
 	
-	private Unit removeOccupier(TerritorySquare terr) throws Exception{
+	public Unit removeOccupier(TerritorySquare terr) throws Exception{
 		
 		Unit removed = terr.getOccupier();
 		
@@ -94,6 +147,8 @@ public class BoardState {
 	
 	
 	private void initialize() throws Exception{
+		
+		currentPhase = Phase.SPR;
 		
 		Player eng = new Player(Country.ENG);
 		Player fra = new Player(Country.FRA);
@@ -112,108 +167,113 @@ public class BoardState {
 		activePlayers.put(Country.TUR, tur);
 		
 		//england
-		terrs.put("EDI", new TerritorySquare("EDI", SUPPLY, LAND, eng));
-		terrs.put("LVP", new TerritorySquare("LVP", SUPPLY, LAND, eng));
-		terrs.put("LON", new TerritorySquare("LON", SUPPLY, LAND, eng));
+		terrs.put("EDI", new TerritorySquare("EDI", SUPPLY, LAND, eng, this));
+		terrs.put("LVP", new TerritorySquare("LVP", SUPPLY, LAND, eng, this));
+		terrs.put("LON", new TerritorySquare("LON", SUPPLY, LAND, eng, this));
 		
 		eng.setHomeSupply(Arrays.asList(get("EDI"), get("LVP"), get("LON")));
 		
 		//russia
-		terrs.put("STP", new TerritorySquare("STP", SUPPLY, LAND, rus, Arrays.asList("NC", "SC")));
-		terrs.put("MOS", new TerritorySquare("MOS", SUPPLY, LAND, rus));
-		terrs.put("WAR", new TerritorySquare("WAR", SUPPLY, LAND, rus));
-		terrs.put("SEV", new TerritorySquare("SEV", SUPPLY, LAND, rus));
+		terrs.put("STP", new TerritorySquare("STP", SUPPLY, LAND, rus, Arrays.asList("NCS", "SCS"), this));
+		terrs.put("MOS", new TerritorySquare("MOS", SUPPLY, LAND, rus, this));
+		terrs.put("WAR", new TerritorySquare("WAR", SUPPLY, LAND, rus, this));
+		terrs.put("SEV", new TerritorySquare("SEV", SUPPLY, LAND, rus, this));
 		
 		rus.setHomeSupply(Arrays.asList(get("STP"), get("MOS"), get("WAR"), get("SEV")));
 
-		
 		//france
-		terrs.put("BRE", new TerritorySquare("BRE", SUPPLY, LAND, fra));
-		terrs.put("PAR", new TerritorySquare("PAR", SUPPLY, LAND, fra));
-		terrs.put("MAR", new TerritorySquare("MAR", SUPPLY, LAND, fra));
+		terrs.put("BRE", new TerritorySquare("BRE", SUPPLY, LAND, fra, this));
+		terrs.put("PAR", new TerritorySquare("PAR", SUPPLY, LAND, fra, this));
+		terrs.put("MAR", new TerritorySquare("MAR", SUPPLY, LAND, fra, this));
 
+		fra.setHomeSupply(Arrays.asList(get("BRE"), get("PAR"), get("MAR")));
 		
 		//germany
-		terrs.put("KIE", new TerritorySquare("KIE", SUPPLY, LAND, ger));
-		terrs.put("BER", new TerritorySquare("BER", SUPPLY, LAND, ger));
-		terrs.put("MUN", new TerritorySquare("MUN", SUPPLY, LAND, ger));
+		terrs.put("KIE", new TerritorySquare("KIE", SUPPLY, LAND, ger, this));
+		terrs.put("BER", new TerritorySquare("BER", SUPPLY, LAND, ger, this));
+		terrs.put("MUN", new TerritorySquare("MUN", SUPPLY, LAND, ger, this));
 
+		ger.setHomeSupply(Arrays.asList(get("KIE"), get("BER"), get("MUN")));
 		
 		//italy
-		terrs.put("ROM", new TerritorySquare("ROM", SUPPLY, LAND, ita));
-		terrs.put("NAP", new TerritorySquare("NAP", SUPPLY, LAND, ita));
-		terrs.put("VEN", new TerritorySquare("VEN", SUPPLY, LAND, ita));
+		terrs.put("ROM", new TerritorySquare("ROM", SUPPLY, LAND, ita, this));
+		terrs.put("NAP", new TerritorySquare("NAP", SUPPLY, LAND, ita, this));
+		terrs.put("VEN", new TerritorySquare("VEN", SUPPLY, LAND, ita, this));
 
+		ita.setHomeSupply(Arrays.asList(get("ROM"), get("NAP"), get("VEN")));
 		
 		//austria
-		terrs.put("VIE", new TerritorySquare("VIE", SUPPLY, LAND, aus));
-		terrs.put("TRI", new TerritorySquare("TRI", SUPPLY, LAND, aus));
-		terrs.put("BUD", new TerritorySquare("BUD", SUPPLY, LAND, aus));
-
+		terrs.put("VIE", new TerritorySquare("VIE", SUPPLY, LAND, aus, this));
+		terrs.put("TRI", new TerritorySquare("TRI", SUPPLY, LAND, aus, this));
+		terrs.put("BUD", new TerritorySquare("BUD", SUPPLY, LAND, aus, this));
+		
+		aus.setHomeSupply(Arrays.asList(get("VIE"), get("TRI"), get("BUD")));
+		
 		//turkey
-		terrs.put("CON", new TerritorySquare("CON", SUPPLY, LAND, tur));
-		terrs.put("ANK", new TerritorySquare("ANK", SUPPLY, LAND, tur));
-		terrs.put("SMY", new TerritorySquare("SMY", SUPPLY, LAND, tur));
+		terrs.put("CON", new TerritorySquare("CON", SUPPLY, LAND, tur, this));
+		terrs.put("ANK", new TerritorySquare("ANK", SUPPLY, LAND, tur, this));
+		terrs.put("SMY", new TerritorySquare("SMY", SUPPLY, LAND, tur, this));
 
+		tur.setHomeSupply(Arrays.asList(get("CON"), get("ANK"), get("SMY")));
 		
 		//other supply centers
-		terrs.put("NWY", new TerritorySquare("NWY", SUPPLY, LAND, null));
-		terrs.put("SWE", new TerritorySquare("SWE", SUPPLY, LAND, null));
-		terrs.put("DEN", new TerritorySquare("DEN", SUPPLY, LAND, null));
-		terrs.put("HOL", new TerritorySquare("HOL", SUPPLY, LAND, null));
-		terrs.put("BEL", new TerritorySquare("BEL", SUPPLY, LAND, null));
-		terrs.put("SPA", new TerritorySquare("SPA", SUPPLY, LAND, null, Arrays.asList("NC", "SC")));
-		terrs.put("POR", new TerritorySquare("POR", SUPPLY, LAND, null));
-		terrs.put("TUN", new TerritorySquare("TUN", SUPPLY, LAND, null));
-		terrs.put("SER", new TerritorySquare("SER", SUPPLY, LAND, null));
-		terrs.put("RUM", new TerritorySquare("RUM", SUPPLY, LAND, null));
-		terrs.put("BUL", new TerritorySquare("BUL", SUPPLY, LAND, null, Arrays.asList("EC", "WC")));
-		terrs.put("GRE", new TerritorySquare("GRE", SUPPLY, LAND, null));
-			
+		terrs.put("NWY", new TerritorySquare("NWY", SUPPLY, LAND, null, this));
+		terrs.put("SWE", new TerritorySquare("SWE", SUPPLY, LAND, null, this));
+		terrs.put("DEN", new TerritorySquare("DEN", SUPPLY, LAND, null, this));
+		terrs.put("HOL", new TerritorySquare("HOL", SUPPLY, LAND, null, this));
+		terrs.put("BEL", new TerritorySquare("BEL", SUPPLY, LAND, null, this));
+		terrs.put("SPA", new TerritorySquare("SPA", SUPPLY, LAND, null, Arrays.asList("NCS", "SCS"), this));
+		terrs.put("POR", new TerritorySquare("POR", SUPPLY, LAND, null, this));
+		terrs.put("TUN", new TerritorySquare("TUN", SUPPLY, LAND, null, this));
+		terrs.put("SER", new TerritorySquare("SER", SUPPLY, LAND, null, this));
+		terrs.put("RUM", new TerritorySquare("RUM", SUPPLY, LAND, null, this));
+		terrs.put("BUL", new TerritorySquare("BUL", SUPPLY, LAND, null, Arrays.asList("ECS", "WCS"), this));
+		terrs.put("GRE", new TerritorySquare("GRE", SUPPLY, LAND, null, this));
+		
 		//other non supply center land
-		terrs.put("FIN", new TerritorySquare("FIN",	NO_SUPPLY, LAND, null));
-		terrs.put("LVN", new TerritorySquare("LVN",	NO_SUPPLY, LAND, null));		
-		terrs.put("PRU", new TerritorySquare("PRU",	NO_SUPPLY, LAND, null));
-		terrs.put("SIL", new TerritorySquare("SIL",	NO_SUPPLY, LAND, null));
-		terrs.put("GAL", new TerritorySquare("GAL",	NO_SUPPLY, LAND, null));		
-		terrs.put("UKR", new TerritorySquare("UKR",	NO_SUPPLY, LAND, null));
-		terrs.put("BOH", new TerritorySquare("BOH",	NO_SUPPLY, LAND, null));
-		terrs.put("RUH", new TerritorySquare("RUH",	NO_SUPPLY, LAND, null));
-		terrs.put("BUR", new TerritorySquare("BUR",	NO_SUPPLY, LAND, null));
-		terrs.put("GAS", new TerritorySquare("GAS",	NO_SUPPLY, LAND, null));
-		terrs.put("NAF", new TerritorySquare("NAF",	NO_SUPPLY, LAND, null));
-		terrs.put("PIE", new TerritorySquare("PIE",	NO_SUPPLY, LAND, null));
-		terrs.put("TUS", new TerritorySquare("TUS",	NO_SUPPLY, LAND, null));
-		terrs.put("APU", new TerritorySquare("APU",	NO_SUPPLY, LAND, null));
-		terrs.put("ALB", new TerritorySquare("ALB",	NO_SUPPLY, LAND, null));
-		terrs.put("ARM", new TerritorySquare("ARM",	NO_SUPPLY, LAND, null));
-		terrs.put("SYR", new TerritorySquare("SYR",	NO_SUPPLY, LAND, null));
-		terrs.put("CLY", new TerritorySquare("CLY",	NO_SUPPLY, LAND, null));
-		terrs.put("YOR", new TerritorySquare("YOR",	NO_SUPPLY, LAND, null));
-		terrs.put("WAL", new TerritorySquare("WAL",	NO_SUPPLY, LAND, null));
-		terrs.put("PIC", new TerritorySquare("PIC", NO_SUPPLY, LAND, null));
-		terrs.put("TRL", new TerritorySquare("TRL", NO_SUPPLY, LAND, null));
+		terrs.put("FIN", new TerritorySquare("FIN",	NO_SUPPLY, LAND, null, this));
+		terrs.put("LVN", new TerritorySquare("LVN",	NO_SUPPLY, LAND, null, this));		
+		terrs.put("PRU", new TerritorySquare("PRU",	NO_SUPPLY, LAND, null, this));
+		terrs.put("SIL", new TerritorySquare("SIL",	NO_SUPPLY, LAND, null, this));
+		terrs.put("GAL", new TerritorySquare("GAL",	NO_SUPPLY, LAND, null, this));		
+		terrs.put("UKR", new TerritorySquare("UKR",	NO_SUPPLY, LAND, null, this));
+		terrs.put("BOH", new TerritorySquare("BOH",	NO_SUPPLY, LAND, null, this));
+		terrs.put("RUH", new TerritorySquare("RUH",	NO_SUPPLY, LAND, null, this));
+		terrs.put("BUR", new TerritorySquare("BUR",	NO_SUPPLY, LAND, null, this));
+		terrs.put("GAS", new TerritorySquare("GAS",	NO_SUPPLY, LAND, null, this));
+		terrs.put("NAF", new TerritorySquare("NAF",	NO_SUPPLY, LAND, null, this));
+		terrs.put("PIE", new TerritorySquare("PIE",	NO_SUPPLY, LAND, null, this));
+		terrs.put("TUS", new TerritorySquare("TUS",	NO_SUPPLY, LAND, null, this));
+		terrs.put("APU", new TerritorySquare("APU",	NO_SUPPLY, LAND, null, this));
+		terrs.put("ALB", new TerritorySquare("ALB",	NO_SUPPLY, LAND, null, this));
+		terrs.put("ARM", new TerritorySquare("ARM",	NO_SUPPLY, LAND, null, this));
+		terrs.put("SYR", new TerritorySquare("SYR",	NO_SUPPLY, LAND, null, this));
+		terrs.put("CLY", new TerritorySquare("CLY",	NO_SUPPLY, LAND, null, this));
+		terrs.put("YOR", new TerritorySquare("YOR",	NO_SUPPLY, LAND, null, this));
+		terrs.put("WAL", new TerritorySquare("WAL",	NO_SUPPLY, LAND, null, this));
+		terrs.put("PIC", new TerritorySquare("PIC", NO_SUPPLY, LAND, null, this));
+		terrs.put("TRL", new TerritorySquare("TRL", NO_SUPPLY, LAND, null, this));
 				
 		//sea territories
-		terrs.put("NAO", new TerritorySquare("NAO",	NO_SUPPLY, SEA, null));
-		terrs.put("NRG", new TerritorySquare("NRG",	NO_SUPPLY, SEA, null));
-		terrs.put("NTH", new TerritorySquare("NTH",	NO_SUPPLY, SEA, null));
-		terrs.put("BAR", new TerritorySquare("BAR",	NO_SUPPLY, SEA, null));
-		terrs.put("BAL", new TerritorySquare("BAL",	NO_SUPPLY, SEA, null));
-		terrs.put("BOT", new TerritorySquare("BOT",	NO_SUPPLY, SEA, null));
-		terrs.put("IRI", new TerritorySquare("IRI",	NO_SUPPLY, SEA, null));
-		terrs.put("SKA", new TerritorySquare("SKA",	NO_SUPPLY, SEA, null));
-		terrs.put("HEL", new TerritorySquare("HEL",	NO_SUPPLY, SEA, null));
-		terrs.put("ENG", new TerritorySquare("ENG",	NO_SUPPLY, SEA, null));
-		terrs.put("MID", new TerritorySquare("MID",	NO_SUPPLY, SEA, null));
-		terrs.put("WES", new TerritorySquare("WES",	NO_SUPPLY, SEA, null));
-		terrs.put("LYO", new TerritorySquare("LYO",	NO_SUPPLY, SEA, null));
-		terrs.put("TYN", new TerritorySquare("TYN",	NO_SUPPLY, SEA, null));
-		terrs.put("ION", new TerritorySquare("ION",	NO_SUPPLY, SEA, null));
-		terrs.put("ADR", new TerritorySquare("ADR",	NO_SUPPLY, SEA, null));
-		terrs.put("AEG", new TerritorySquare("AEG",	NO_SUPPLY, SEA, null));
-		terrs.put("EAS", new TerritorySquare("EAS",	NO_SUPPLY, SEA, null));
-		terrs.put("BLA", new TerritorySquare("BLA",	NO_SUPPLY, SEA, null));
+		terrs.put("NAO", new TerritorySquare("NAO",	NO_SUPPLY, SEA, null, this));
+		terrs.put("NRG", new TerritorySquare("NRG",	NO_SUPPLY, SEA, null, this));
+		terrs.put("NTH", new TerritorySquare("NTH",	NO_SUPPLY, SEA, null, this));
+		terrs.put("BAR", new TerritorySquare("BAR",	NO_SUPPLY, SEA, null, this));
+		terrs.put("BAL", new TerritorySquare("BAL",	NO_SUPPLY, SEA, null, this));
+		terrs.put("BOT", new TerritorySquare("BOT",	NO_SUPPLY, SEA, null, this));
+		terrs.put("IRI", new TerritorySquare("IRI",	NO_SUPPLY, SEA, null, this));
+		terrs.put("SKA", new TerritorySquare("SKA",	NO_SUPPLY, SEA, null, this));
+		terrs.put("HEL", new TerritorySquare("HEL",	NO_SUPPLY, SEA, null, this));
+		terrs.put("ENG", new TerritorySquare("ENG",	NO_SUPPLY, SEA, null, this));
+		terrs.put("MID", new TerritorySquare("MID",	NO_SUPPLY, SEA, null, this));
+		terrs.put("WES", new TerritorySquare("WES",	NO_SUPPLY, SEA, null, this));
+		terrs.put("LYO", new TerritorySquare("LYO",	NO_SUPPLY, SEA, null, this));
+		terrs.put("TYN", new TerritorySquare("TYN",	NO_SUPPLY, SEA, null, this));
+		terrs.put("ION", new TerritorySquare("ION",	NO_SUPPLY, SEA, null, this));
+		terrs.put("ADR", new TerritorySquare("ADR",	NO_SUPPLY, SEA, null, this));
+		terrs.put("AEG", new TerritorySquare("AEG",	NO_SUPPLY, SEA, null, this));
+		terrs.put("EAS", new TerritorySquare("EAS",	NO_SUPPLY, SEA, null, this));
+		terrs.put("BLA", new TerritorySquare("BLA",	NO_SUPPLY, SEA, null, this));
 
 		//ocean adjacencies
 		
@@ -227,14 +287,14 @@ public class BoardState {
 		border("NRG", "NTH", true);
 		border("NRG", "EDI", true);
 		
-		border("BAR", "STP", "NA", "NC");
+		border("BAR", "STP", "NA", "NCS");
 		border("BAR", "NWY", true);
 		
 		border("MID", "IRI", true);
 		border("MID", "ENG", true);
 		border("MID", "BRE", true);
 		border("MID", "GAS", true);
-		border("MID", "SPA", "NA", "NC");
+		border("MID", "SPA", "NA", "NCS");
 		border("MID", "POR", true);
 		
 		border("IRI", "CLY", true);
@@ -267,7 +327,7 @@ public class BoardState {
 		
 		border("BOT", "SWE", true);
 		border("BOT", "FIN", true);
-		border("BOT", "STP", "NA", "SC");
+		border("BOT", "STP", "NA", "SCS");
 		border("BOT", "LVN", true);
 		
 		border("ENG", "WAL", true);
@@ -276,13 +336,13 @@ public class BoardState {
 		border("ENG", "PIC", true);
 		border("ENG", "BRE", true);
 		
-		border("WES", "SPA", "NA", "SC");
+		border("WES", "SPA", "NA", "SCS");
 		border("WES", "LYO", true);
 		border("WES", "TYN", true);
 		border("WES", "TUN", true);
 		border("WES", "NAF", true);
 		
-		border("LYO", "SPA", "NA", "SC");
+		border("LYO", "SPA", "NA", "SCS");
 		border("LYO", "MAR", true);
 		border("LYO", "PIE", true);
 		border("LYO", "TUS", true);
@@ -308,7 +368,7 @@ public class BoardState {
 		border("ADR", "ALB", true);
 		
 		border("AEG", "GRE", true);
-		border("AEG", "BUL", "NA", "WC");
+		border("AEG", "BUL", "NA", "WCS");
 		border("AEG", "CON", true);
 		border("AEG", "SMY", true);
 		border("AEG", "EAS", true);
@@ -317,7 +377,7 @@ public class BoardState {
 		border("EAS", "SMY", true);
 		border("EAS", "SYR", true);
 		
-		border("BLA", "BUL", "NA", "EC");
+		border("BLA", "BUL", "NA", "ECS");
 		border("BLA", "RUM", true);
 		border("BLA", "SEV", true);
 		border("BLA", "ANK", true);
@@ -340,20 +400,20 @@ public class BoardState {
 		
 		//scandanavia
 		
-		border("NWY", "STP", "NA", "NC");
+		border("NWY", "STP", "NA", "NCS");
 		border("NWY", "FIN", false);
 		border("NWY", "SWE", true);
 		
 		border("SWE", "FIN", true);
 		border("SWE", "DEN", true);
 		
-		border("FIN", "STP", "NA", "SC");
+		border("FIN", "STP", "NA", "SCS");
 		
 		border("DEN", "KIE", true);
 		
 		//Russia
 		
-		border("STP", "LVN", "SC", "NA");
+		border("STP", "LVN", "SCS", "NA");
 		border("STP", "MOS", false);
 		
 		border("LVN", "PRU", true);
@@ -418,7 +478,7 @@ public class BoardState {
 		border("PIC", "PAR", false);
 		border("PIC", "BUR", false);
 		
-		border("GAS", "SPA", "NA", "NC");
+		border("GAS", "SPA", "NA", "NCS");
 		border("GAS", "MAR", false);
 		border("GAS", "BUR", false);
 		
@@ -426,7 +486,7 @@ public class BoardState {
 		
 		border("MAR", "PIE", true);
 		border("MAR", "BUR", false);
-		border("MAR", "SPA", "NA", "SC");
+		border("MAR", "SPA", "NA", "SCS");
 		
 		//italy
 		
@@ -472,8 +532,8 @@ public class BoardState {
 		
 		//turkey
 		
-		border("CON", "BUL", "NA", "WC");
-		border("CON", "BUL", "NA", "EC");		
+		border("CON", "BUL", "NA", "WCS");
+		border("CON", "BUL", "NA", "ECS");		
 		border("CON", "ANK", true);
 		border("CON", "SMY", true);
 		
@@ -488,18 +548,18 @@ public class BoardState {
 		//balkans
 		
 		border("RUM", "SER", false);
-		border("RUM", "BUL", "NA", "EC");
+		border("RUM", "BUL", "NA", "ECS");
 		
 		border("BUL", "SER", false);
-		border("BUL", "GRE", "WC", "NA");
+		border("BUL", "GRE", "WCS", "NA");
 		
 		border("SER", "GRE", false);
 		border("GRE", "ALB", true);
 		
 		//spain and africa
 
-		border("SPA", "POR", "NC", "NA");
-		border("SPA", "POR", "SC", "NA");
+		border("SPA", "POR", "NCS", "NA");
+		border("SPA", "POR", "SCS", "NA");
 		
 		border("NAF", "TUN", true);
 		
@@ -519,7 +579,7 @@ public class BoardState {
 		setControl(rus, get("WAR"));
 		setControl(rus, get("SEV"));
 		
-		setOccupier(new Unit(rus, FLEET), get("STP"), "SC");
+		setOccupier(new Unit(rus, FLEET), get("STP"), "SCS");
 		setOccupier(new Unit(rus, ARMY), get("MOS"));
 		setOccupier(new Unit(rus, ARMY), get("WAR"));
 		setOccupier(new Unit(rus, FLEET), get("SEV"));
@@ -566,10 +626,6 @@ public class BoardState {
 		
 	} 
 	
-	public void placeUnit(Unit u, TerritorySquare location) throws Exception{
-		location.setOccupier(u);
-	}
-	
 	private String mapAsDotFile(){
 	    String str = "digraph clusters {";
 	    
@@ -612,13 +668,15 @@ public class BoardState {
 	
 	//Holds the current location of all units
 	
-	private TerritorySquare get(String name){
+	public TerritorySquare get(String name){
 		return terrs.get(name);
 	}
 	
 	public void update(String moves){
-		Order order = buildOrder(moves);
-		order.execute();
+		//Order order = buildOrder(moves);
+		//order.execute();
+		
+		//TODO update history
 	}
 	
 	private Order buildOrder(String order)
@@ -628,7 +686,9 @@ public class BoardState {
 		{
 			if(token.order.equals("HLD"))
 			{
-				return new Hold(token.unitLoc);
+				//TODO get player out of the order
+				
+				//return new Hold(this.token.unitLoc);
 			}
 			else
 			{
@@ -655,18 +715,29 @@ public class BoardState {
 		return str;
 	}
 	
-	//utility methods for game mechanics
-	
-	public static boolean canMove(TerritorySquare from, TerritorySquare to){
-		return canMove(from, to, "NA");
-	}
 	
 	public Player getPlayer(Country power){
 		return this.activePlayers.get(power);
 	}
 	
-	public static boolean canMove(TerritorySquare from, TerritorySquare to, String destinationCoast){
-		//make sure unit is there
+	//utility methods for game mechanics
+	
+	public boolean canMove(Player p, TerritorySquare from, TerritorySquare to){
+		return canMove(p, from, to, "NA");
+	}
+	
+	public boolean canMove(Player p, TerritorySquare from, TerritorySquare to, String destinationCoast){
+		
+		if(this.currentPhase == Phase.WIN || this.currentPhase == Phase.SUM || this.currentPhase == Phase.AUT){
+			return false;
+		}
+		
+		//	player correct
+		if(from.getOccupier().belongsTo != p){
+			return false;
+		}
+		
+		//	make sure unit is there
 		if(from.getOccupier() == null){
 			return false;
 		}
@@ -689,16 +760,32 @@ public class BoardState {
 		return true;
 	}
 	
-	public static boolean canSupportHold(TerritorySquare from, TerritorySquare to){
+	public boolean canSupportHold(Player p, TerritorySquare from, TerritorySquare to){
+		
+		if(this.currentPhase == Phase.WIN || this.currentPhase == Phase.SUM || this.currentPhase == Phase.AUT){
+			return false;
+		}
+		
+		if(from.getOccupier().belongsTo != p){
+			return false;
+		}
 		
 		if(to.getOccupier() == null){
 			return false;
 		}
 		
-		return canMove(from, to);	
+		return canMove(p, from, to);	
 	}
 	
-	public static boolean canSupportMove(TerritorySquare supporter, TerritorySquare from, TerritorySquare to){
+	public boolean canSupportMove(Player p, TerritorySquare supporter, TerritorySquare from, TerritorySquare to){
+		
+		if(this.currentPhase == Phase.WIN || this.currentPhase == Phase.SUM || this.currentPhase == Phase.AUT){
+			return false;
+		}
+		
+		if(supporter.getOccupier().belongsTo != p){
+			return false;
+		}
 		
 		if(supporter.getOccupier() == null){
 			return false;
@@ -708,20 +795,28 @@ public class BoardState {
 			return false;
 		}
 		
-		if(!canMove(supporter, to)){
+		if(!canMove(p, supporter, to)){
 			return false;
 		}
 		
-		if(!canMove(to, from)){
+		if(!canMove(p, from, to)){
 			return false;
 		}
 		
 		return true;
 	}
 	
-	public static boolean canConvoy(TerritorySquare convoyer, TerritorySquare from, TerritorySquare to){
+	public boolean canAssistConvoy(Player p, TerritorySquare convoyer, TerritorySquare from, TerritorySquare to){
+		
+		if(this.currentPhase == Phase.WIN || this.currentPhase == Phase.SUM || this.currentPhase == Phase.AUT){
+			return false;
+		}
 		
 		if(convoyer.getOccupier() == null || from.getOccupier() == null){
+			return false;
+		}
+		
+		if(convoyer.getOccupier().belongsTo != p){
 			return false;
 		}
 		
@@ -739,9 +834,60 @@ public class BoardState {
 		return true;
 	}
 	
-	public static boolean canHold(TerritorySquare holder){
+	public boolean canConvoy(Player p, TerritorySquare from, TerritorySquare to, List<TerritorySquare> transit){
+		
+		if(this.currentPhase == Phase.WIN || this.currentPhase == Phase.SUM || this.currentPhase == Phase.AUT){
+			return false;
+		}
+		
+		//	units need to exist, territories have to be sea, only fleets convoy
+		
+		Unit movingUnit = from.getOccupier();
+		
+		if(movingUnit == null || !movingUnit.army){
+			return false;
+		}
+		
+		if(movingUnit.belongsTo != p){
+			return false;
+		}
+		
+		for(TerritorySquare sqr: transit){
+			if(sqr.getOccupier() == null || sqr.isLand() || sqr.getOccupier().army){
+				return false;
+			}
+		}
+		
+		//	make sure that the path is contiguous
+		
+		TerritorySquare start = from;
+		
+		for(TerritorySquare t: transit){
+			if(!t.isAnySeaBorder(start)){
+				return false;
+			}
+			
+			start = t;
+		}
+		
+		if(!start.isAnySeaBorder(to)){
+			return false;
+		}
+		
+		return true;
+	}
+	
+	public boolean canHold(Player p, TerritorySquare holder){
+		
+		if(this.currentPhase == Phase.WIN || this.currentPhase == Phase.SUM || this.currentPhase == Phase.AUT){
+			return false;
+		}
 		
 		if(holder.getOccupier() == null){
+			return false;
+		}
+		
+		if(holder.getOccupier().belongsTo != p){
 			return false;
 		}
 		
@@ -749,6 +895,143 @@ public class BoardState {
 		return true;
 		
 	}
+	
+	public boolean canBuild(Player p, Unit u, TerritorySquare location){
+		
+		//	it must be winter
+		if(this.currentPhase != Phase.WIN){
+			return false;
+		}
+		
+		//	location must be unoccupied
+		if(location.getOccupier() != null){
+			return false;
+		}
+		
+		//	location must be controlled by this player
+		if(location.getController() != p){
+			return false;
+		}
+
+		//	location must be home territory of u.controller
+		if(location.getHomePlayer() != u.belongsTo){
+			return false;
+		}
+		
+		//	controller must have spare builds--fewer occupied territories than controlled territories
+		if(u.belongsTo.getNumberUnits() >= u.belongsTo.getNumberSupplyCenters()){
+			return false;
+		}
+		
+		//	location must controlled by u.controller
+		if(location.getController() != u.belongsTo){
+			return false;
+		}
+		
+		return true;
+	}
+	
+	public boolean canDisband(Player p, TerritorySquare location){
+		
+		//	it must be retreat season
+		if(this.currentPhase != Phase.AUT && this.currentPhase != Phase.SUM){
+			return false;
+		}
+		
+		//	there must be a pending retreat from this location
+		if(!this.retreats.containsKey(location)){
+			return false;
+		}
+		
+		RetreatSituation rSit = this.retreats.get(location);
+		
+		if(rSit.retreating.belongsTo != p){
+			return false;
+		}
+		
+		if(rSit.from != location){
+			return false;
+		}
+		
+		if(rSit.retreating.belongsTo != p){
+			return false;
+		}
+		
+		return true;
+	}
+	
+	public boolean canRetreat(Player p, TerritorySquare from, TerritorySquare to){
+		return canRetreat(p, from, to, "NA");
+	}
+	
+	public boolean canRetreat(Player p, TerritorySquare from, TerritorySquare to, String destinationCoast){
+		
+		if(this.currentPhase != Phase.AUT && this.currentPhase != Phase.SUM){
+			return false;
+		}
+		
+		//	there must be a pending retreat from this location
+		if(!this.retreats.containsKey(from)){
+			return false;
+		}
+		
+		RetreatSituation rSit = this.retreats.get(from);
+		
+		if(rSit.retreating.belongsTo != p){
+			return false;
+		}
+		
+		if(rSit.from != from){
+			return false;
+		}
+
+		
+		if(rSit.retreating.army){
+			
+			//if the unit moving is an army, make sure it can do this
+			if(!from.isLandBorder(to)){
+				return false;
+			}
+		}else{
+			String occupiedCoast = rSit.originCoast;//from.getOccupiedCoast();			
+			
+			//if it's a fleet, make sure the coasts match up
+			if(!from.isSeaBorder(to, occupiedCoast, destinationCoast)){
+				return false;
+			}
+		}
+		
+		if(history.wasTerritoryContested(to)){
+			return false;
+		}
+		
+		return true;
+	}
+	
+	public boolean canRemove(Player p, TerritorySquare location){
+		
+		//	it must be winter
+		if(this.currentPhase != Phase.WIN){
+			return false;
+		}
+		
+		//	location must have a unit
+		if(location.getOccupier() == null){
+			return false;
+		}
+		
+		if(location.getOccupier().belongsTo != p){
+			return false;
+		}
+		
+		//	controller must have spare builds--fewer occupied territories than controlled territories
+		if(location.getOccupier().belongsTo.getNumberUnits() < location.getOccupier().belongsTo.getNumberSupplyCenters()){
+			return false;
+		}
+		
+		return true;
+	}
+
 	
 	public static void main(String[] args) throws Exception{
 		

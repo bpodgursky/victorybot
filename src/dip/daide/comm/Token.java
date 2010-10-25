@@ -1,7 +1,7 @@
 /*****************************************************************************
  * $Id: Token.java,v 1.1 2004/09/09 06:32:18 heb Exp $ 
  *
- * Copyright © 2002, 2003, 2004 by Henrik Bylund
+ * Copyright ï¿½ 2002, 2003, 2004 by Henrik Bylund
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -145,6 +145,7 @@ public final class Token {
     public static byte[] convert(String token) throws UnknownTokenException {
         byte[] bytes = (byte[])tokenMap.get(token);
         if(bytes == null){
+        	System.out.println("Unexpected token \""+token+"\"");
             throw new UnknownTokenException(token);
         } else {
             return bytes;

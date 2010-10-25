@@ -17,9 +17,12 @@ import gamesearch.GameSearch;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Set;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+
+import order.Order;
 
 import representation.Country;
 import state.BeliefState;
@@ -35,7 +38,7 @@ import state.DiplomaticState;
  * @author <a href="mailto:heb@ludd.luth.se">Henrik Bylund</a>
  * @version 1.0
  */
-public class Bot implements MessageListener {
+public class Bot{
 	static String VERSION = "v 0.7";
 	
 	public final String name;
@@ -49,12 +52,8 @@ public class Bot implements MessageListener {
 	private GameSettings settings;
 	private GameSearch search;
 	
-	void printPrompt() {
-		if (!atPrompt) {
-			System.out.print("Enter message: ");
-			atPrompt = true;
-		}
-	}
+	private final Thread messageHandlerThread;
+	private final BotMessageHandler botMessageHandler;
 
 	void printMsg(String who, String[] message) {
 		StringBuffer sbuf = new StringBuffer();
@@ -84,9 +83,14 @@ public class Bot implements MessageListener {
 		diplomaticState = new DiplomaticState();
 		beliefs = new BeliefState();
 		
+		botMessageHandler = new BotMessageHandler();
+		
 		serv = new Server(ip, port);
-		serv.addMessageListener(this);
+		serv.addMessageListener(botMessageHandler);
 		serv.connect();
+		
+		messageHandlerThread = new Thread(botMessageHandler);
+		messageHandlerThread.start();
 		
 		String[] nme = new String[] { "NME", "(", "'" + name + "'", ")",
 				"(", "'" + VERSION + "'", ")" };
@@ -95,115 +99,213 @@ public class Bot implements MessageListener {
 			
 	}
 
-	public void messageReceived(String[] message) {
-		try{
-			// Print the message
-			printMsg("srv", message);
-			// Accept the MAP message
-			if (message[0].equals("MAP")) {
-				try {
-					String[] tokens = new String[message.length + 3];
-					tokens[0] = "YES";
-					tokens[1] = "(";
-					System.arraycopy(message, 0, tokens, 2, message.length);
-					tokens[tokens.length - 1] = ")";
-					printMsg(name, tokens);
-					serv.send(tokens);
-				} catch (UnknownTokenException ute) {
-					ute.printStackTrace();
-					System.exit(1);
-				} catch (DisconnectedException de) {
-					System.err.println("Disconnected, exiting");
-					System.exit(1);
-				}
-			}
+	class BotMessageHandler implements MessageListener, Runnable {
+		
+		public final static long SUBMISSION_BUFFER = 5000; 
+		
+		long nextOrders = -1;
+		boolean submitted = false;
+		
+		public void run(){
 			
-			if(message[0].equals("HLO")){
+			//	for now, all this will do is sit here and wait until orders are almost due, and then submit them
+			while(true){
+				try{
 				
-				Country power = Country.valueOf(message[2]);
-				String password = message[5];
-				
-				int lvl = 0;
-				int mtl = -1;
-				int rtl = -1;
-				int btl = -1;
-				
-				boolean dsd = false;
-				boolean aoa = false;
-				
-				int i = 6;
-				while(i < message.length){
+					long currentTime = System.currentTimeMillis();
 					
-					String s = message[i];
+					if(nextOrders != -1 && currentTime + SUBMISSION_BUFFER > nextOrders && !submitted){
+						submitted = true;
 					
-					if(s.equals("(") || (s.equals(")"))){
-						i++;
-					}
-					else if(s.equals("LVL")){
-						i++;	
-						lvl = Integer.parseInt(message[i]);
-						i++;
-					}
-					else if(s.equals("MTL")){
-						i++;
-						mtl = Integer.parseInt(message[i]);
-						i++;
-					}
-					else if(s.equals("RTL")){
-						i++;
-						rtl = Integer.parseInt(message[i]);
-						i++;
-					}
-					else if(s.equals("BTL")){
-						i++;
-						btl = Integer.parseInt(message[i]);
-						i++;
-					}
-					else if(s.equals("DSD")){
-						dsd = true;
-						i++;
-					}
-					else if(s.equals("AOA")){
-						aoa = true;
-						i++;
-					}else{
-						throw new Exception("Unknown token");
-					}
-				}
-				
-				this.settings = new GameSettings(power, password, lvl, mtl, rtl, btl, dsd, aoa);
-				this.search = new GameSearch(board.getPlayer(power), board, diplomaticState, beliefs);
+						System.out.println("Time to submit");
+						
+						Order[] orders = search.currentOrders().toArray(new Order[0]);
 
+						String orderString = "SUB ";
+						
+						for(int i = 0; i < orders.length; i++){
+							if(i != orders.length -1){
+								orderString+=orders[i].toOrder()+" ";
+							}else{
+								orderString+=orders[i].toOrder();
+							}
+						}
+						
+						String[] tokens = orderString.split(" ");
+						
+						System.out.println("Sending: "+Arrays.toString(tokens));
+						
+						serv.send(tokens);
+						
+						//TODO resubmit only if they have changed
+					}else{
+						Thread.sleep(10);
+					}
+				}catch(Exception e){
+					e.printStackTrace();
+				}
 			}
-			
-			if (message[0].equals("ORD")) {
-				StringBuilder move = new StringBuilder();
-				for(int i = 0; i < message.length; i++){
-					move.append(message[i]);
-					move.append(" ");
+		}
+		
+		public void messageReceived(String[] message) {
+			try{
+				// Print the message
+				System.out.println(Arrays.toString(message));
+				
+				printMsg("srv", message);
+				// Accept the MAP message
+				if (message[0].equals("MAP")) {
+					System.out.println("Map");
+					
+					try {
+						String[] tokens = new String[message.length + 3];
+						tokens[0] = "YES";
+						tokens[1] = "(";
+						System.arraycopy(message, 0, tokens, 2, message.length);
+						tokens[tokens.length - 1] = ")";
+						printMsg(name, tokens);
+						serv.send(tokens);
+					} catch (UnknownTokenException ute) {
+						ute.printStackTrace();
+						System.exit(1);
+					} catch (DisconnectedException de) {
+						System.err.println("Disconnected, exiting");
+						System.exit(1);
+					}
 				}
 				
-				String moves = move.toString();
+				if(message[0].equals("HLO")){
+					System.out.println("Hlo");
+					
+					Country power = Country.valueOf(message[2]);
+					String password = message[5];
+					
+					int lvl = 0;
+					int mtl = -1;
+					int rtl = -1;
+					int btl = -1;
+					
+					boolean dsd = false;
+					boolean aoa = false;
+					
+					int i = 6;
+					while(i < message.length){
+						
+						String s = message[i];
+						
+						if(s.equals("(") || (s.equals(")"))){
+							i++;
+						}
+						else if(s.equals("LVL")){
+							i++;	
+							lvl = Integer.parseInt(message[i]);
+							i++;
+						}
+						else if(s.equals("MTL")){
+							i++;
+							mtl = Integer.parseInt(message[i]);
+							i++;
+						}
+						else if(s.equals("RTL")){
+							i++;
+							rtl = Integer.parseInt(message[i]);
+							i++;
+						}
+						else if(s.equals("BTL")){
+							i++;
+							btl = Integer.parseInt(message[i]);
+							i++;
+						}
+						else if(s.equals("DSD")){
+							dsd = true;
+							i++;
+						}
+						else if(s.equals("AOA")){
+							aoa = true;
+							i++;
+						}else{
+							throw new Exception("Unknown token");
+						}
+					}
+					
+					settings = new GameSettings(power, password, lvl, mtl, rtl, btl, dsd, aoa);
+					search = new GameSearch(board.getPlayer(power), board, diplomaticState, beliefs);
+
+					System.out.println(settings);
+				}
 				
-				board.update(moves);
-				diplomaticState.update(moves);
-				beliefs.update(moves);
+				//TODO there is more to do with a now message, just get the date for now
+				if(message[0].equals("NOW")){
+					System.out.println("Now");
+					
+					
+					board.setTime(message[2], Integer.parseInt(message[3]));
+					
+					if(message[2].equals("SPR") || message[2].equals("FAL")){
+						if(settings.mtl != -1){
+							this.nextOrders = System.currentTimeMillis() + settings.mtl;
+						}else{
+							this.nextOrders = -1;
+						}
+					}else if(message[2].equals("SUM") || message[2].equals("AUT")){
+						if(settings.rtl != -1){
+							this.nextOrders = System.currentTimeMillis() + settings.rtl;
+						}else{
+							this.nextOrders = -1;
+						}
+					}else if(message[2].equals("WIN")){
+						if(settings.btl != -1){
+							this.nextOrders = System.currentTimeMillis() + settings.btl;
+						}else{
+							this.nextOrders = -1;
+						}
+					}else{
+						throw new Exception("Unexpected");
+					}
+
+					System.out.println("Next orders now: "+nextOrders);
+					
+					StringBuilder move = new StringBuilder();
+					for(int i = 0; i < message.length; i++){
+						move.append(message[i]);
+						move.append(" ");
+					}
+					
+					String moves = move.toString();
+					
+					board.update(moves);
+					diplomaticState.update(moves);
+					beliefs.update(moves);
+					
+					search.noteBoardUpdate();
+					search.noteDiplomaticUpdate();
+					search.noteBeliefUpdate();
+					
+
+					submitted = false;
+					
+				}
 				
-				search.noteBoardUpdate();
-				search.noteDiplomaticUpdate();
-				search.noteBeliefUpdate();
-				
+				if (message[0].equals("ORD")) {
+					System.out.println("Ord");
+				}
+			}catch(Exception e){
+				e.printStackTrace();
 			}
-			printPrompt();
-		}catch(Exception e){
-			e.printStackTrace();
 		}
 	}
-
+	
+	
+	
+	
+	
+	///////////////////////////////////////////////////////////////////////////////////////
+	// Main class for launching bot
+	
 	public static void main(String[] args) throws InterruptedException {
 
-		Thread[] bots = new Thread[1];
-		for(int i = 0; i < 1; i++){
+		Thread[] bots = new Thread[7];
+		for(int i = 0; i < 7; i++){
 			bots[i] = new Thread(new BotLauncher(args));
 			bots[i].start();
 		}
@@ -212,8 +314,12 @@ public class Bot implements MessageListener {
 			Thread.sleep(100);
 		}
 	}
+
+	public static void usage() {
+		System.err.println("Usage:\n" + "  TestAI <ip> <port> <name>");
+	}
 	
-	//TODO this is not the right way to do this, but it is easy
+	//TODO this is not a clean way to do this, but it is easy
 	static class BotLauncher implements Runnable{
 		
 		String[] args;
@@ -226,42 +332,13 @@ public class Bot implements MessageListener {
 			try {
 				Bot victoryBot = new Bot(InetAddress.getByName(args[0]), Integer
 						.parseInt(args[1]), args[2]);
-				BufferedReader br = new BufferedReader(new InputStreamReader(
-						System.in));
-				
 				while (true) {
-					victoryBot.printPrompt();
-					String line = br.readLine();
-					String[] order = line.split(" ");
-					victoryBot.atPrompt = false;
-					try {
-						victoryBot.printMsg(victoryBot.name, order);
-						victoryBot.serv.send(order);
-					} catch (UnknownTokenException ute) {
-						System.err.println("Unknown token '" + ute.getToken()
-								+ "' - Message not sent.");
-					} catch (DisconnectedException de) {
-						System.err.println("Disconnected from server, "
-								+ "command not sent");
-					}
+					Thread.sleep(1000);
 				}
 				
-			} catch (ArrayIndexOutOfBoundsException be) {
-				usage();
-			} catch (UnknownHostException uhe) {
-				System.err.println("Unknown host: " + uhe.getMessage());
-			} catch (NumberFormatException nfe) {
-				usage();
-			} catch (Exception ex) {
-				
+			}catch (Exception ex) {
 				ex.printStackTrace();
-				
-				System.out.println("Error");
 			} 
 		}
-	}
-
-	public static void usage() {
-		System.err.println("Usage:\n" + "  TestAI <ip> <port> <name>");
 	}
 }

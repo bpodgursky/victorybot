@@ -1,5 +1,6 @@
 package order;
 
+import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
 import state.BoardState;
@@ -17,19 +18,27 @@ public class Move extends Order{
 	public final TerritorySquare from;
 	public final TerritorySquare to;
 	
-	public Move(TerritorySquare from, TerritorySquare to) throws Exception{
-		this(from, to, "NA");
+	public final String coast;
+	
+	public Move(Player p, TerritorySquare from, TerritorySquare to) throws Exception{
+		this(p, from, to, "NA");
 	}
 
-	public Move( TerritorySquare from, TerritorySquare to, String destinationCoast) throws Exception{
-
-		if(!BoardState.canMove(from, to, destinationCoast)){
-			throw new Exception("cannot move from "+ from+ " "+to+" on coast "+destinationCoast);
+	public Move(Player p, TerritorySquare from, TerritorySquare to, String destinationCoast) throws Exception{
+		super(p);
+		
+		if(from == null || to == null || destinationCoast == null){
+			throw new Exception("null arguments");
+		}
+		if(!from.board.canMove(p, from, to, destinationCoast)){
+			throw new Exception("cannot move from "+ from+ " to "+to+" on coast "+destinationCoast);
 		}
 		
 		this.unit = from.getOccupier();
 		this.from = from;
 		this.to = to;
+		
+		this.coast = destinationCoast;
 	}
 	
 	public String toString(){
@@ -39,5 +48,11 @@ public class Move extends Order{
 	public void execute() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public String toOrder() {
+		return "( ( "+from.getUnitString()+" ) MTO "+
+			TerritorySquare.getDestString(unit, to.getName(), coast)+" )";
 	}
 }

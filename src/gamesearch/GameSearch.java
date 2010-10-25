@@ -86,7 +86,7 @@ public class GameSearch {
 						Set<Order> orders = new HashSet<Order>();
 						
 						for(TerritorySquare ts: unitSquares){
-							orders.add(new Hold(ts));
+							orders.add(new Hold(relevantPlayer, ts));
 						}
 						
 						currentOrders = orders;

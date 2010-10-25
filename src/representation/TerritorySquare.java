@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import state.BoardState;
+
 
 
 public class TerritorySquare {
@@ -37,6 +39,9 @@ public class TerritorySquare {
 	
 	final String name;
 	
+	//not 100% sure this needs to be here, but it's useful when assessing the validity of moves (by phase)
+	public final BoardState board;
+	
 	//dynamic
 	
 	Player controller;		//null if none
@@ -59,7 +64,7 @@ public class TerritorySquare {
 	
 	public void setOccupier(Unit u) throws Exception{
 		
-		if(!u.army && this.coasts.size() > 1){
+		if(u != null && !u.army && this.coasts.size() > 1){
 			throw new Exception("Must specify a coast!");
 		}
 		
@@ -117,8 +122,8 @@ public class TerritorySquare {
 	
 	public TerritorySquare(String name, 
 			boolean isSupply, boolean isLand,
-			Player homeSupplyFor){
-		this(name, isSupply, isLand, homeSupplyFor, null);
+			Player homeSupplyFor, BoardState state){
+		this(name, isSupply, isLand, homeSupplyFor, null, state);
 	}
 	
 	public Unit getOccupier(){
@@ -128,12 +133,14 @@ public class TerritorySquare {
 	public TerritorySquare(String name, 
 			boolean isSupply, boolean isLand,
 			Player homeSupplyFor,
-			Collection<String> coasts){
+			Collection<String> coasts,
+			BoardState state){
 		
 		this.name = name;
 		this.isLand = isLand;
 		this.isSupplyCenter = isSupply;
 		this.homeSupplyFor = homeSupplyFor;
+		this.board = state;
 		
 		if(coasts != null){
 			this.coasts.addAll(coasts);
@@ -147,9 +154,10 @@ public class TerritorySquare {
 		}
 	}
 	
-	public String toString(){
-		return "[Territory "+name+" controlled by "+ controller.getName() + " occupied by "+ this.occupier +" coast " + this.occupiedCoast+"]";
+	public Player getHomePlayer(){
+		return this.homeSupplyFor;
 	}
+
 	
 	public boolean hasMultipleCoasts(){
 		return this.coasts.size() > 1;
@@ -179,8 +187,44 @@ public class TerritorySquare {
 		return new HashSet<TerritorySquare>(this.borders);
 	}
 	
+	
+	public String toString(){
+		return "[Territory "+name+" controlled by "+ ((controller==null)?"":controller.getName()) + " occupied by "+ this.occupier +" coast " + this.occupiedCoast+"]";
+	}
+	
 	public String getName(){
 		return this.name;
+	}
+	
+	public String getUnitString(){
+		if(!this.occupier.army && this.hasMultipleCoasts()){
+			return this.occupier+ " ( "+this.name+" "+this.getOccupiedCoast()+" )";
+		}else{
+			return this.occupier+ " "+this.name;
+		}
+	}
+	
+	//for building orders
+	
+	public static String getDestString(Unit unit, String destination, String coast){
+		if(unit.army || coast.equals("NA")){
+			return destination;
+		}else{
+			return "("+destination+" "+coast+")";
+		}
+	}
+	
+	public static String getUnitString(Player pow, Unit unit, String square){
+		return unit+" "+square;
+	}
+	
+	public static String getUnitString(Player pow, Unit unit, String square, String coast){
+		
+		if(unit.army || coast.equals("NA")){
+			return getUnitString(pow, unit, square);
+		}
+		
+		return unit+" "+square+" "+coast;
 	}
 }
 
