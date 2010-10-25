@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import representation.Country;
 import representation.TerritorySquare;
 import state.BoardState;
 
@@ -37,37 +38,148 @@ public class OrderFactory {
 		
 		String result;
 		String turn = "asdf";
-		String orderType;
+		String orderType = "";
 				
+		order = order.substring(3).trim();
+		System.out.println(order);
+		int parenCount = 0;
+		System.out.println(order.charAt(0));
+		if(order.charAt(0) == '(')
+		{
+			System.out.println("Inside IF");
+			int i = 1;
+			parenCount++;
+			StringBuilder unit = new StringBuilder();
+			while(order.charAt(i+1) != ')' && parenCount != 0)
+			{
+				System.out.println(i);
+				if(order.charAt(i) == '(')
+				{
+					parenCount++;
+					i++;
+				}
+				if(order.charAt(i) == ')')
+				{
+					parenCount--;
+				}
+				unit.append(order.charAt(i));
+				i++;
+			}
+			System.out.println(unit.toString().trim());
+			contentTokens.add(unit.toString().trim());
+			order = order.substring(i+2).trim();
+			orderType = order.substring(0,3);
+			order = order.substring(4);
+			System.out.println(order);
+			if(order.length() == 1)
+			{
+				
+			}else if(order.charAt(0) == '(')
+			{
+				
+			}
+			else
+			{
+				contentTokens.add(order.substring(0,3));
+			}
+		}
+		else
+		{
+			
+		}
+		
 		//1) turn order string into these token parts
 		
 		//2) switch on order type, content tokens parsed depending on 
 		//	order type
 		
 		Order resultOrder = null;
-		
-		if(turn.equals("HLD")){
-			//TODO 
-		}else if(turn.equals("MTO")){
-			//TODO
-		}else if(turn.equals("SUPMTO")){
-			//TODO
-		}else if(turn.equals("CVYCTO")){
-			//TODO
-		}else if(turn.equals("CTOVIA")){
-			//TODO
-		}else if(turn.equals("RTO")){
-			//TODO
-		}else if(turn.equals("DSB")){
-			//TODO
-		}else if(turn.equals("BLD")){
-			//TODO
-		}else if(turn.equals("REM")){
-			//TODO
-		}else if(turn.equals("WVE")){
-			//TODO
+		try
+		{
+			Order newOrder = null;
+			if(orderType.equals("HLD")){
+				String [] unitTokens = contentTokens.get(0).split(" ");
+				Country c = getCountry(unitTokens[0]);
+				TerritorySquare from = state.terrs.get(unitTokens[2]);
+				newOrder = new Hold(state.getPlayer(c), from);
+				System.out.println(newOrder.toOrder());
+				return newOrder;
+			}else if(orderType.equals("MTO")){
+				String [] unitTokens = contentTokens.get(0).split(" ");
+				Country c = getCountry(unitTokens[0]);
+				TerritorySquare from = state.terrs.get(unitTokens[2]);
+				TerritorySquare to = state.terrs.get(contentTokens.get(1));
+				
+				newOrder = new Move(state.getPlayer(c), from, to);
+				System.out.println(newOrder.toOrder());
+				return newOrder;
+			}else if(orderType.equals("SUPMTO")){
+				//TODO
+			}else if(orderType.equals("CVYCTO")){
+				//TODO
+			}else if(orderType.equals("CTOVIA")){
+				//TODO
+			}else if(orderType.equals("RTO")){
+				//TODO
+			}else if(orderType.equals("DSB")){
+				//TODO
+			}else if(orderType.equals("BLD")){
+				//TODO
+			}else if(orderType.equals("REM")){
+				//TODO
+			}else if(orderType.equals("WVE")){
+				//TODO
+			}
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
 		}
 		
+		
 		return resultOrder;
+	}
+	
+	private Country getCountry(String con) throws Exception
+	{
+		if(con.equals("AUS"))
+		{
+			return Country.AUS;
+		}else if(con.equals("GER"))
+		{
+			return Country.GER;
+		}else if(con.equals("ENG"))
+		{
+			return Country.ENG;
+		}else if(con.equals("FRA"))
+		{
+			return Country.FRA;
+		}else if(con.equals("RUS"))
+		{
+			return Country.RUS;
+		}else if(con.equals("TUR"))
+		{
+			return Country.TUR;
+		}else if(con.equals("ITA"));
+		else
+		{
+			throw new Exception();
+		}
+		return null;
+	}
+	
+	public static void main(String[] args)
+	{
+		System.out.println("Why?");
+		BoardState temp = null;
+		try {
+			System.out.println("Inside");
+			temp = new BoardState();
+			OrderFactory test = new OrderFactory(temp);
+			System.out.println("Before Order");
+			Order testOrder = test.buildOrder("ORD ( ( ENG FLT LON ) HLD )");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
