@@ -21,14 +21,27 @@ public class GameSettings {
 		this.password = password;
 		
 		this.lvl = lvl;
-		this.mtl = mtl;
-		this.rtl = rtl;
-		this.btl = btl;
+		this.mtl = mtl*1000;
+		this.rtl = rtl*1000;
+		this.btl = btl*1000;
 		
 		this.dsd = dsd;
 		this.aoa = aoa;
 
 	}
 	
+	public String toString(){
+		String str = "Settings:\n";
+		str+=" power = "+power+"\n";
+		str+=" pass = "+password+"\n";
+		str+=" lvl = "+lvl+"\n";
+		str+=" mtl = "+mtl+"\n";
+		str+=" rtl = "+rtl+"\n";
+		str+=" btl = "+btl+"\n";
+		str+=" dsd = "+dsd+"\n";
+		str+=" aoa = "+aoa+"\n";
+		
+		return str;
+	}
 	
 }

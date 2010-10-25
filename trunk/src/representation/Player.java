@@ -34,6 +34,18 @@ public class Player {
 		return this.occupiedTerritories;
 	}
 	
+	public int getNumberUnits(){
+		return this.occupiedTerritories.size();
+	}
+	
+	public Set<TerritorySquare> getControlledTerritories(){
+		return this.supplyCenters;
+	}
+	
+	public int getNumberSupplyCenters(){
+		return this.supplyCenters.size();
+	}
+	
 	public void setHomeSupply(Collection<TerritorySquare> homeSupply){
 		this.homeCenters.addAll(homeSupply);
 	}

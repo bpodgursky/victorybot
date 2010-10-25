@@ -1,8 +1,8 @@
 package order;
 
+import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
-import state.BoardState;
 
 public class Hold extends Order{
 	
@@ -10,9 +10,14 @@ public class Hold extends Order{
 	
 	public final TerritorySquare holdingSquare;
 	
-	public Hold(TerritorySquare square) throws Exception{
+	public Hold(Player p, TerritorySquare square) throws Exception{
+		super(p);
 		
-		if(!BoardState.canHold(square)){
+		if(square == null){
+			throw new Exception("null arguments");
+		}
+		
+		if(!square.board.canHold(p, square)){
 			throw new Exception("hold is not valid for "+square);
 		}
 		
@@ -27,4 +32,9 @@ public class Hold extends Order{
 		
 	}
 
+
+	@Override
+	public String toOrder() {
+		return "( ( "+holdingSquare.getUnitString()+" ) HLD )";
+	}
 }

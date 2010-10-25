@@ -1,5 +1,6 @@
 package order;
 
+import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
 import state.BoardState;
@@ -18,10 +19,14 @@ public class SupportHold extends Order{
 	public final Unit supporter;
 	public final Unit supported;
 	
-
-	public SupportHold(TerritorySquare supportFrom, TerritorySquare supportTo) throws Exception{
+	public SupportHold(Player p, TerritorySquare supportFrom, TerritorySquare supportTo) throws Exception{
+		super(p);
 		
-		if(!BoardState.canSupportHold(supportFrom, supportTo)){
+		if(supportFrom == null || supportTo == null){
+			throw new Exception("null arguments");
+		}
+		
+		if(!supportFrom.board.canSupportHold(p, supportFrom, supportTo)){
 			throw new Exception("cannot support hold from "+supportFrom+" to "+supportTo);
 		}
 		
@@ -36,6 +41,10 @@ public class SupportHold extends Order{
 	public String toString(){
 		return "[support hold with "+supporter + " to "+supported+"]";
 	}
+	
+	public String toOrder(){
+		return "( ( "+supportFrom.getUnitString()+" ) SUP ( "+supportTo.getUnitString()+" ) )";
+	} 
 
 	public void execute() {
 		// TODO Auto-generated method stub
