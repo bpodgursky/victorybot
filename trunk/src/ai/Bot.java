@@ -127,8 +127,6 @@ public class Bot{
 					if(nextOrders != -1 && currentTime + SUBMISSION_BUFFER > nextOrders && !submitted){
 						submitted = true;
 					
-						System.out.println("Time to submit");
-						
 						Order[] orders = search.currentOrders().toArray(new Order[0]);
 
 						String orderString = "SUB ";
@@ -160,12 +158,10 @@ public class Bot{
 		public void messageReceived(String[] message) {
 			try{
 				// Print the message
-				System.out.println(Arrays.toString(message));
-				
+
 				printMsg("srv", message);
 				// Accept the MAP message
 				if (message[0].equals("MAP")) {
-					System.out.println("Map");
 					
 					try {
 						String[] tokens = new String[message.length + 3];
@@ -185,7 +181,6 @@ public class Bot{
 				}
 				
 				if(message[0].equals("HLO")){
-					System.out.println("Hlo");
 					
 					Country power = Country.valueOf(message[2]);
 					String password = message[5];
@@ -241,13 +236,11 @@ public class Bot{
 					settings = new GameSettings(power, password, lvl, mtl, rtl, btl, dsd, aoa);
 					search = new GameSearch(board.getPlayer(power), board, diplomaticState, beliefs);
 
-					System.out.println(settings);
 				}
 				
 				//TODO there may be more to do with a now message, just get the date 
 				//	and trigger the state to update with the orders received
 				if(message[0].equals("NOW")){
-					System.out.println("Now");
 					
 					
 					board.setTime(message[2], Integer.parseInt(message[3]));
@@ -274,9 +267,6 @@ public class Bot{
 						throw new Exception("Unexpected");
 					}
 
-
-					System.out.println("Next orders now: "+nextOrders);
-					
 					StringBuilder move = new StringBuilder();
 					for(int i = 0; i < message.length; i++){
 						move.append(message[i]);
@@ -302,7 +292,14 @@ public class Bot{
 				}
 				
 				if (message[0].equals("ORD")) {
-					receivedOrders.add(orderFactory.buildOrder(message));
+					
+					Order order = orderFactory.buildOrder(message);
+					
+					System.out.println(order);
+					
+					receivedOrders.add(order);
+			
+				
 				}
 			}catch(Exception e){
 				e.printStackTrace();
