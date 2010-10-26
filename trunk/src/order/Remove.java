@@ -6,9 +6,10 @@ import representation.TerritorySquare;
 public class Remove extends Order{
 
 	public final TerritorySquare disbandLocation;
+
 	
 	public Remove(Player p, TerritorySquare disbandAt) throws Exception{
-		super(p);
+		super(p, Result.SUC, RetreatState.NA);
 		
 		if(disbandAt == null){
 			throw new Exception("null arguments");

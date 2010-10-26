@@ -1,5 +1,7 @@
 package order;
 
+import order.Order.Result;
+import order.Order.RetreatState;
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
@@ -11,7 +13,11 @@ public class Hold extends Order{
 	public final TerritorySquare holdingSquare;
 	
 	public Hold(Player p, TerritorySquare square) throws Exception{
-		super(p);
+		this(p, square, Result.MAYBE, RetreatState.MAYBE);
+	}
+	
+	public Hold(Player p, TerritorySquare square, Result result, RetreatState retreat) throws Exception{
+		super(p, result, retreat);
 		
 		if(square == null){
 			throw new Exception("null arguments");

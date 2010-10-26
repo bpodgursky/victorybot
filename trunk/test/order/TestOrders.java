@@ -29,7 +29,7 @@ public class TestOrders {
 		MoveByConvoy mbc = new MoveByConvoy(rus, bst.get("NWY"), bst.get("STP"), Arrays.asList(bst.get("BAR")));
 		SupportHold hld = new SupportHold(rus, bst.get("BAR"), bst.get("NWY"));
 		SupportMove smv = new SupportMove(rus, bst.get("BAR"), bst.get("NWY"), bst.get("STP"));
-		Move mov2 = new Move(rus, bst.get("BAR"), bst.get("STP"), "NC");
+		Move mov2 = new Move(rus, bst.get("BAR"), bst.get("STP"), "NCS");
 		
 		System.out.println(cnv.toOrder());
 		System.out.println(mov.toOrder());

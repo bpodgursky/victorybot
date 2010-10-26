@@ -5,7 +5,7 @@ import representation.Player;
 public class Waive extends Order{
 
 	public Waive(Player player) {
-		super(player);
+		super(player, Result.SUC, RetreatState.NA);
 	}
 
 	@Override

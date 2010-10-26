@@ -1,5 +1,7 @@
 package order;
 
+import order.Order.Result;
+import order.Order.RetreatState;
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
@@ -14,9 +16,10 @@ public class Disband extends Order{
 	public Disband(Player p, TerritorySquare location) throws Exception{
 		this(p, location, "NA");
 	}
+
 	
 	public Disband(Player p, TerritorySquare location, String coast) throws Exception{
-		super(p);
+		super(p, Result.SUC, RetreatState.NA);
 		
 		if(location == null){
 			throw new Exception("null arguments");

@@ -17,12 +17,14 @@ import gamesearch.GameSearch;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 import order.Order;
+import order.OrderFactory;
 
 import representation.Country;
 import state.BeliefState;
@@ -55,6 +57,8 @@ public class Bot{
 	private final Thread messageHandlerThread;
 	private final BotMessageHandler botMessageHandler;
 
+	private final OrderFactory orderFactory;
+	
 	void printMsg(String who, String[] message) {
 		StringBuffer sbuf = new StringBuffer();
 		for (int i = 0; i < message.length; i++) {
@@ -83,6 +87,8 @@ public class Bot{
 		diplomaticState = new DiplomaticState();
 		beliefs = new BeliefState();
 		
+		orderFactory = new OrderFactory(board);
+		
 		botMessageHandler = new BotMessageHandler();
 		
 		serv = new Server(ip, port);
@@ -105,6 +111,10 @@ public class Bot{
 		
 		long nextOrders = -1;
 		boolean submitted = false;
+		
+		//	Orders are sent one at a time; gather them all here.  when a NOW arrives,
+		//	send them to the gamestate en masse
+		Set<Order> receivedOrders = new HashSet<Order>();
 		
 		public void run(){
 			
@@ -234,7 +244,8 @@ public class Bot{
 					System.out.println(settings);
 				}
 				
-				//TODO there is more to do with a now message, just get the date for now
+				//TODO there may be more to do with a now message, just get the date 
+				//	and trigger the state to update with the orders received
 				if(message[0].equals("NOW")){
 					System.out.println("Now");
 					
@@ -263,6 +274,7 @@ public class Bot{
 						throw new Exception("Unexpected");
 					}
 
+
 					System.out.println("Next orders now: "+nextOrders);
 					
 					StringBuilder move = new StringBuilder();
@@ -271,23 +283,26 @@ public class Bot{
 						move.append(" ");
 					}
 					
-					String moves = move.toString();
 					
-					board.update(moves);
-					diplomaticState.update(moves);
-					beliefs.update(moves);
+					//	the NOW message means all orders have been received, so go ahead
+					//	and update the state
+					
+					board.update(receivedOrders);
+					diplomaticState.update(receivedOrders);
+					beliefs.update(receivedOrders);
+					
+					receivedOrders.clear();
 					
 					search.noteBoardUpdate();
 					search.noteDiplomaticUpdate();
 					search.noteBeliefUpdate();
 					
-
 					submitted = false;
 					
 				}
 				
 				if (message[0].equals("ORD")) {
-					System.out.println("Ord");
+					receivedOrders.add(orderFactory.buildOrder(message));
 				}
 			}catch(Exception e){
 				e.printStackTrace();
