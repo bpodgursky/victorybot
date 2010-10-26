@@ -79,6 +79,24 @@ public class Bot{
 		}
 		System.out.println("<" + who + ">: " + sbuf.toString());
 	}
+	
+	String cleanMsg(String[] message){
+		StringBuffer sbuf = new StringBuffer();
+		for (int i = 0; i < message.length; i++) {
+			String m = message[i];
+			sbuf.append(m);
+			boolean last = (i + 1) == message.length;
+			if (m.equals("(") || (!last && message[i + 1].equals(")"))) {
+				continue;
+			} else {
+				if (!last) {
+					sbuf.append(' ');
+				}
+			}
+		}
+		
+		return sbuf.toString();
+	}
 
 	public Bot(InetAddress ip, int port, String name) throws Exception {
 		this.name = name;

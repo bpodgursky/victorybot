@@ -32,14 +32,22 @@ public class OrderFactory {
 //		System.out.println(result);
 	}
 	
-	public Order buildOrder(String[] orderArray){
+	public Order buildOrder(String[] message){
 
 		//	TODO for now tack this together, but do we want to deal with tokens 
 		//	separately?
 		String order = "";
-		for(String s: orderArray){
-			order+=s;
+		for(int i = 0; i < message.length; i++){
+			String s = message[i];
+			
+			if(i != message.length -1){
+				order+=s+" ";
+			}else{
+				order+=s;
+			}
 		}
+		
+		System.out.println("Order: "+order);
 		
 		List<String>  contentTokens = new LinkedList<String>();
 		
