@@ -32,8 +32,15 @@ public class OrderFactory {
 //		System.out.println(result);
 	}
 	
-	public Order buildOrder(String order){
+	public Order buildOrder(String[] orderArray){
 
+		//	TODO for now tack this together, but do we want to deal with tokens 
+		//	separately?
+		String order = "";
+		for(String s: orderArray){
+			order+=s;
+		}
+		
 		List<String>  contentTokens = new LinkedList<String>();
 		
 		String result;
@@ -99,16 +106,17 @@ public class OrderFactory {
 			Order newOrder = null;
 			if(orderType.equals("HLD")){
 				String [] unitTokens = contentTokens.get(0).split(" ");
-				Country c = getCountry(unitTokens[0]);
-				TerritorySquare from = state.terrs.get(unitTokens[2]);
+				Country c = Country.valueOf(unitTokens[0]);
+				TerritorySquare from = state.get(unitTokens[2]);
 				newOrder = new Hold(state.getPlayer(c), from);
 				System.out.println(newOrder.toOrder());
 				return newOrder;
 			}else if(orderType.equals("MTO")){
 				String [] unitTokens = contentTokens.get(0).split(" ");
-				Country c = getCountry(unitTokens[0]);
-				TerritorySquare from = state.terrs.get(unitTokens[2]);
-				TerritorySquare to = state.terrs.get(contentTokens.get(1));
+				Country c = Country.valueOf(unitTokens[0]);
+					
+				TerritorySquare from = state.get(unitTokens[2]);
+				TerritorySquare to = state.get(contentTokens.get(1));
 				
 				newOrder = new Move(state.getPlayer(c), from, to);
 				System.out.println(newOrder.toOrder());
@@ -140,34 +148,6 @@ public class OrderFactory {
 		return resultOrder;
 	}
 	
-	private Country getCountry(String con) throws Exception
-	{
-		if(con.equals("AUS"))
-		{
-			return Country.AUS;
-		}else if(con.equals("GER"))
-		{
-			return Country.GER;
-		}else if(con.equals("ENG"))
-		{
-			return Country.ENG;
-		}else if(con.equals("FRA"))
-		{
-			return Country.FRA;
-		}else if(con.equals("RUS"))
-		{
-			return Country.RUS;
-		}else if(con.equals("TUR"))
-		{
-			return Country.TUR;
-		}else if(con.equals("ITA"));
-		else
-		{
-			throw new Exception();
-		}
-		return null;
-	}
-	
 	public static void main(String[] args)
 	{
 		System.out.println("Why?");
@@ -177,7 +157,7 @@ public class OrderFactory {
 			temp = new BoardState();
 			OrderFactory test = new OrderFactory(temp);
 			System.out.println("Before Order");
-			Order testOrder = test.buildOrder("ORD ( ( ENG FLT LON ) HLD )");
+			Order testOrder = test.buildOrder(new String[]{"ORD ( ( ENG FLT LON ) HLD )"});
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

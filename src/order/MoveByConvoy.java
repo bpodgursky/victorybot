@@ -3,6 +3,9 @@ package order;
 import java.util.LinkedList;
 import java.util.List;
 
+import order.Order.Result;
+import order.Order.RetreatState;
+
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
@@ -19,7 +22,11 @@ public class MoveByConvoy extends Order{
 	public final List<TerritorySquare> transits;
 	
 	public MoveByConvoy(Player p, TerritorySquare origin, TerritorySquare destination, List<TerritorySquare> transits) throws Exception{
-		super(p);		
+		this(p, origin, destination, transits, Result.MAYBE, RetreatState.MAYBE);
+	}
+	
+	public MoveByConvoy(Player p, TerritorySquare origin, TerritorySquare destination, List<TerritorySquare> transits, Result result, RetreatState retreat) throws Exception{
+		super(p, result, retreat);		
 		
 		if(origin == null || destination == null || transits == null){
 			throw new Exception("null arguments");

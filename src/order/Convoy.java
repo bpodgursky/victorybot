@@ -1,5 +1,7 @@
 package order;
 
+import order.Order.Result;
+import order.Order.RetreatState;
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
@@ -13,9 +15,13 @@ public class Convoy extends Order{
 	public final TerritorySquare convoyer;
 	public final TerritorySquare from;
 	public final TerritorySquare to;
+
+	public Convoy(Player p, TerritorySquare convoyer, TerritorySquare from, TerritorySquare to) throws Exception {
+		this(p, convoyer, from, to, Result.MAYBE, RetreatState.MAYBE);
+	}
 	
-	public Convoy(Player p, TerritorySquare convoyer, TerritorySquare from, TerritorySquare to) throws Exception{
-		super(p);
+	public Convoy(Player p, TerritorySquare convoyer, TerritorySquare from, TerritorySquare to, Result result, RetreatState retreat) throws Exception{
+		super(p, result, retreat);
 		
 		if(convoyer == null || from == null || to == null){
 			throw new Exception("null arguments");

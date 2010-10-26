@@ -17,7 +17,7 @@ public class Build extends Order{
 	}
 	
 	public Build(Player p, Unit u, TerritorySquare location, String coast) throws Exception{
-		super(p);
+		super(p, Result.SUC, RetreatState.NA);
 		
 		if(u == null || location == null || coast == null){
 			throw new Exception("null arguments");

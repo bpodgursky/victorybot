@@ -20,12 +20,21 @@ public class Move extends Order{
 	
 	public final String coast;
 	
+	
 	public Move(Player p, TerritorySquare from, TerritorySquare to) throws Exception{
 		this(p, from, to, "NA");
 	}
-
+	
+	public Move(Player p, TerritorySquare from, TerritorySquare to, Result result, RetreatState retreat) throws Exception{
+		this(p, from, to, "NA", result, retreat);
+	}
+	
 	public Move(Player p, TerritorySquare from, TerritorySquare to, String destinationCoast) throws Exception{
-		super(p);
+		this(p, from, to, destinationCoast, Result.MAYBE, RetreatState.MAYBE);
+	}
+
+	public Move(Player p, TerritorySquare from, TerritorySquare to, String destinationCoast, Result result, RetreatState retreat) throws Exception{
+		super(p, result, retreat);
 		
 		if(from == null || to == null || destinationCoast == null){
 			throw new Exception("null arguments");

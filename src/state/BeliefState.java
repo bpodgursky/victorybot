@@ -1,5 +1,9 @@
 package state;
 
+import java.util.Set;
+
+import order.Order;
+
 public class BeliefState {
 	
 	//	TODO this is just a stub for now
@@ -10,7 +14,7 @@ public class BeliefState {
 	}
 	
 	//	TODO stub
-	public void update(String moves){
+	public void update(Set<Order> moves){
 		
 	}
 

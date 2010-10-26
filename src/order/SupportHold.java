@@ -20,7 +20,11 @@ public class SupportHold extends Order{
 	public final Unit supported;
 	
 	public SupportHold(Player p, TerritorySquare supportFrom, TerritorySquare supportTo) throws Exception{
-		super(p);
+		this(p, supportFrom, supportTo, Result.MAYBE, RetreatState.MAYBE);
+	}
+
+	public SupportHold(Player p, TerritorySquare supportFrom, TerritorySquare supportTo, Result result, RetreatState retreat) throws Exception{
+		super(p, result, retreat);
 		
 		if(supportFrom == null || supportTo == null){
 			throw new Exception("null arguments");

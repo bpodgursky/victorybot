@@ -29,6 +29,7 @@ public class BoardState {
 	final static boolean LAND = true;
 	final static boolean SEA = false;
 	
+	
 	public enum Phase{SPR, SUM, FAL, AUT, WIN}
 	
 	//spring = first moves
@@ -672,34 +673,11 @@ public class BoardState {
 		return terrs.get(name);
 	}
 	
-	public void update(String moves){
+	public void update(Set<Order> moves){
 		//Order order = buildOrder(moves);
 		//order.execute();
 		
 		//TODO update history
-	}
-	
-	private Order buildOrder(String order)
-	{
-		OrderFactory token = new OrderFactory(order, terrs);
-		try
-		{
-			if(token.order.equals("HLD"))
-			{
-				//TODO get player out of the order
-				
-				//return new Hold(this.token.unitLoc);
-			}
-			else
-			{
-				throw new Exception();
-			}
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		return null;
 	}
 	
 	public String toString(){

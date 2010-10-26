@@ -18,8 +18,16 @@ public class Retreat extends Order{
 		this(p, from, to, "NA");
 	}
 	
-	public Retreat(Player p, TerritorySquare from, TerritorySquare to, String destinationCoast) throws Exception{
-		super(p);
+	public Retreat(Player p, TerritorySquare from, TerritorySquare to, Result result) throws Exception{
+		this(p, from, to, "NA", result);
+	}
+	
+	public Retreat(Player p, TerritorySquare from, TerritorySquare to, String coast) throws Exception{
+		this(p, from, to, "NA", Result.MAYBE);
+	}
+	
+	public Retreat(Player p, TerritorySquare from, TerritorySquare to, String destinationCoast, Result result) throws Exception{
+		super(p, result, RetreatState.NA);
 		
 		if(from == null || to == null || destinationCoast == null){
 			throw new Exception("null arguments");

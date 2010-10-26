@@ -13,9 +13,13 @@ public class SupportMove extends Order{
 	
 	public final Unit supporter;
 	public final Unit supported;
-	
+
 	public SupportMove(Player p, TerritorySquare supportFrom, TerritorySquare supportOrig, TerritorySquare supportInto) throws Exception{
-		super(p);
+		this(p, supportFrom, supportOrig, supportInto, Result.MAYBE, RetreatState.MAYBE);
+	}
+	
+	public SupportMove(Player p, TerritorySquare supportFrom, TerritorySquare supportOrig, TerritorySquare supportInto, Result result, RetreatState retreat) throws Exception{
+		super(p, result, retreat);
 		
 		if(supportFrom == null || supportOrig == null || supportInto == null){
 			throw new Exception("null arguments");
