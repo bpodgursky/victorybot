@@ -8,9 +8,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import order.Build;
+import order.Convoy;
+import order.Disband;
 import order.Hold;
+import order.Move;
+import order.MoveByConvoy;
 import order.Order;
 import order.OrderFactory;
+import order.Remove;
+import order.Retreat;
+import order.SupportHold;
+import order.SupportMove;
+import order.Waive;
+import order.Order.Result;
+import order.Order.RetreatState;
 
 import representation.Country;
 import representation.Player;
@@ -76,6 +88,10 @@ public class BoardState {
 		retreats.put(sqr, new RetreatSituation(retreating, sqr, originCoast));
 	}
 	
+	public void resolveRetreat(TerritorySquare from){
+		retreats.remove(from);
+	}
+	
 	public Unit getRetreatingUnit(TerritorySquare sq){
 		return retreats.get(sq).retreating;
 	}
@@ -116,6 +132,10 @@ public class BoardState {
 		
 		if(u.army && !terr.isLand()){
 			throw new Exception("Invalid occupier");
+		}
+		
+		if(terr.getOccupier() != null){
+			throw new Exception("territory already occupied");
 		}
 		
 		u.belongsTo.addOccupy(terr);
@@ -673,9 +693,143 @@ public class BoardState {
 		return terrs.get(name);
 	}
 	
-	public void update(Set<Order> moves){
-		//Order order = buildOrder(moves);
-		//order.execute();
+	public void update(Set<Order> moves) throws Exception{
+		
+		//TODO for now just apply it if the results are set
+		
+		//TODO this code needs to be tested
+		
+		//process movements separately--slightly more complex resolutions
+		Set<Order> movements = new HashSet<Order>();
+		
+		for(Order ord: moves){
+			
+			if(ord.actionResult == Result.SUC){
+				if(ord.getClass() == Build.class){
+					Build b = (Build)ord;
+					
+					setOccupier(b.build, b.location);
+					
+				}else if(ord.getClass() == Convoy.class){
+					
+					//nothing to do if a convoy succeeds
+					
+				}else if(ord.getClass() == Disband.class){
+					Disband dsb = (Disband)ord;
+
+					removeOccupier(dsb.disbandAt);
+					
+				}else if(ord.getClass() == Hold.class){
+					
+					//nothing to do if a hold succeeds
+					
+				}else if(ord.getClass() == Move.class){
+					
+					movements.add(ord);
+					
+				}else if(ord.getClass() == MoveByConvoy.class){
+					
+					movements.add(ord);
+					
+				}else if(ord.getClass() == Remove.class){
+					Remove rem = (Remove)ord;
+					
+					removeOccupier(rem.disbandLocation);
+					
+				}else if(ord.getClass() == Retreat.class){
+					Retreat ret = (Retreat)ord;
+					
+					//	should be able to resolve the retreats here -- shouldn't ever have the issue
+					//	of retreating somewhere someone else retreats from
+					
+					resolveRetreat(ret.from);
+					setOccupier(ret.retreatingUnit, ret.to);
+					
+				}else if(ord.getClass() == SupportHold.class){
+					
+					//nothing to do if a support hold works
+					
+				}else if(ord.getClass() == SupportMove.class){
+					
+					//nothing to do if a support move works
+					
+				}else if(ord.getClass() == Waive.class){
+					
+					//nothing to do if a waive is successful
+				}
+			}
+			
+			if(ord.retreatState == RetreatState.RET){
+				
+				if(ord.getClass() == Convoy.class){
+					Convoy c = (Convoy)ord;
+					
+					setRetreatingUnit(c.convoyingUnit, c.convoyer, "NA");
+					
+				}else if(ord.getClass() == Hold.class){
+					Hold hold = (Hold)ord;
+					
+					setRetreatingUnit(hold.holdingUnit, hold.holdingSquare, hold.holdingSquare.getOccupiedCoast());
+					
+				}else if(ord.getClass() == Move.class){
+					Move mov = (Move)ord;
+					
+					setRetreatingUnit(mov.unit, mov.from, mov.from.getOccupiedCoast());
+					
+				}else if(ord.getClass() == MoveByConvoy.class){
+					MoveByConvoy mbc = (MoveByConvoy)ord;
+					
+					setRetreatingUnit(mbc.convoyedUnit, mbc.convoyOrigin, "NA");
+					
+				}else if(ord.getClass() == SupportHold.class){
+					SupportHold shold = (SupportHold)ord;
+					
+					setRetreatingUnit(shold.supporter, shold.supportFrom, shold.supportFrom.getOccupiedCoast());
+					
+				}else if(ord.getClass() == SupportMove.class){
+					SupportMove smove = (SupportMove)ord;
+					
+					setRetreatingUnit(smove.supporter, smove.supportFrom, smove.supportFrom.getOccupiedCoast());
+					
+				}else {
+					//nothing else should have a retreat
+					throw new Exception("should not be a retreat here");
+				}
+			}
+		}			
+		
+		//	first map each move to where it will end up
+		Map<TerritorySquare, Order> destinations = new HashMap<TerritorySquare, Order>();
+		for(Order ord: moves){
+			
+			if(ord.getClass() == MoveByConvoy.class){
+				MoveByConvoy mbc = (MoveByConvoy)ord;
+				
+				removeOccupier(mbc.convoyOrigin);
+				destinations.put(mbc.convoyDestination, mbc);
+				
+			}else if(ord.getClass() == Move.class){
+				Move mov = (Move)ord;
+				
+				removeOccupier(mov.from);
+				destinations.put(mov.to, mov);
+			}
+		}
+		
+		for(TerritorySquare sq: destinations.keySet()){
+			Order ord = destinations.get(sq);
+			
+			if(ord.getClass() == MoveByConvoy.class){
+				MoveByConvoy mbc = (MoveByConvoy)ord;
+				
+				setOccupier(mbc.convoyedUnit, mbc.convoyDestination);
+				
+			}else if(ord.getClass() == Move.class){
+				Move mov = (Move)ord;
+			
+				setOccupier(mov.unit, mov.to);
+			}
+		}
 		
 		//TODO update history
 	}

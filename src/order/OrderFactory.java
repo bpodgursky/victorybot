@@ -48,18 +48,18 @@ public class OrderFactory {
 		String orderType = "";
 				
 		order = order.substring(3).trim();
-		System.out.println(order);
+		//System.out.println(order);
 		int parenCount = 0;
-		System.out.println(order.charAt(0));
+		//System.out.println(order.charAt(0));
 		if(order.charAt(0) == '(')
 		{
-			System.out.println("Inside IF");
+			//System.out.println("Inside IF");
 			int i = 1;
 			parenCount++;
 			StringBuilder unit = new StringBuilder();
 			while(order.charAt(i+1) != ')' && parenCount != 0)
 			{
-				System.out.println(i);
+				//System.out.println(i);
 				if(order.charAt(i) == '(')
 				{
 					parenCount++;
@@ -72,12 +72,12 @@ public class OrderFactory {
 				unit.append(order.charAt(i));
 				i++;
 			}
-			System.out.println(unit.toString().trim());
+			//System.out.println(unit.toString().trim());
 			contentTokens.add(unit.toString().trim());
 			order = order.substring(i+2).trim();
 			orderType = order.substring(0,3);
 			order = order.substring(4);
-			System.out.println(order);
+			//System.out.println(order);
 			if(order.length() == 1)
 			{
 				
@@ -109,7 +109,7 @@ public class OrderFactory {
 				Country c = Country.valueOf(unitTokens[0]);
 				TerritorySquare from = state.get(unitTokens[2]);
 				newOrder = new Hold(state.getPlayer(c), from);
-				System.out.println(newOrder.toOrder());
+				//System.out.println(newOrder.toOrder());
 				return newOrder;
 			}else if(orderType.equals("MTO")){
 				String [] unitTokens = contentTokens.get(0).split(" ");
@@ -119,7 +119,7 @@ public class OrderFactory {
 				TerritorySquare to = state.get(contentTokens.get(1));
 				
 				newOrder = new Move(state.getPlayer(c), from, to);
-				System.out.println(newOrder.toOrder());
+				//System.out.println(newOrder.toOrder());
 				return newOrder;
 			}else if(orderType.equals("SUPMTO")){
 				//TODO
