@@ -49,42 +49,64 @@ public class OrderFactory {
 		
 		System.out.println("Order: "+order);
 		
-		List<String>  contentTokens = new LinkedList<String>();
+		List<LinkedList<String>>  contentTokens = new LinkedList<LinkedList<String>>();
 		
 		String result;
-		String turn = "asdf";
+		String turn = message[2] + " " + message[3];
 		String orderType = "";
 				
 		order = order.substring(3).trim();
 		//System.out.println(order);
 		int parenCount = 0;
 		//System.out.println(order.charAt(0));
-		if(order.charAt(0) == '(')
+		if(message[5].equals("("))
 		{
 			//System.out.println("Inside IF");
-			int i = 1;
+			int i = 6;
 			parenCount++;
-			StringBuilder unit = new StringBuilder();
-			while(order.charAt(i+1) != ')' && parenCount != 0)
+			LinkedList<String> unit = new LinkedList<String>();
+			while(i < message.length)
 			{
-				//System.out.println(i);
-				if(order.charAt(i) == '(')
+				if(message[i].equals("("))
 				{
 					parenCount++;
 					i++;
 				}
-				if(order.charAt(i) == ')')
+				if(message[i].equals(")") && parenCount == 2)
 				{
+					contentTokens.add(unit);
+					System.out.println(unit.toString());
+					System.out.println(contentTokens.toString());
+					parenCount--;
+					i++;
+					unit = new LinkedList<String>();
+				}
+				if(message[i].equals(")"))
+				{
+					if(parenCount == 1)
+					{
+						break;
+					}
 					parenCount--;
 				}
-				unit.append(order.charAt(i));
+				
+				unit.add(message[i]);
 				i++;
 			}
+			contentTokens.add(unit);
+			if(contentTokens.get(0).get(contentTokens.get(0).size()-1).equals(")"))
+			{
+				contentTokens.get(0).remove(contentTokens.get(0).size()-1);
+			}
+			orderType = contentTokens.toString();
+			System.out.println(orderType);
+			System.out.println(contentTokens.get(1).toString());
+			orderType = contentTokens.get(1).get(0);
 			//System.out.println(unit.toString().trim());
-			contentTokens.add(unit.toString().trim());
-			order = order.substring(i+2).trim();
-			orderType = order.substring(0,3);
-			order = order.substring(4);
+			//contentTokens.add(unit.toString().trim());
+			//order = order.substring(i+2).trim();
+			//orderType = order.substring(0,3);
+			//order = order.substring(4);
 			//System.out.println(order);
 			if(order.length() == 1)
 			{
@@ -95,7 +117,7 @@ public class OrderFactory {
 			}
 			else
 			{
-				contentTokens.add(order.substring(0,3));
+				//contentTokens.add(order.substring(0,3));
 			}
 		}
 		else
@@ -113,27 +135,25 @@ public class OrderFactory {
 		{
 			Order newOrder = null;
 			if(orderType.equals("HLD")){
-				String [] unitTokens = contentTokens.get(0).split(" ");
-				Country c = Country.valueOf(unitTokens[0]);
-				TerritorySquare from = state.get(unitTokens[2]);
+				Country c = Country.valueOf(contentTokens.get(0).get(0));
+				TerritorySquare from = state.get(contentTokens.get(0).get(2));
 				newOrder = new Hold(state.getPlayer(c), from);
-				//System.out.println(newOrder.toOrder());
+				System.out.println(newOrder.toOrder());
 				return newOrder;
 			}else if(orderType.equals("MTO")){
-				String [] unitTokens = contentTokens.get(0).split(" ");
-				Country c = Country.valueOf(unitTokens[0]);
+				Country c = Country.valueOf(contentTokens.get(0).get(0));
 					
-				TerritorySquare from = state.get(unitTokens[2]);
-				TerritorySquare to = state.get(contentTokens.get(1));
+				TerritorySquare from = state.get(contentTokens.get(0).get(2));
+				TerritorySquare to = state.get(contentTokens.get(1).get(0));
 				
 				newOrder = new Move(state.getPlayer(c), from, to);
 				//System.out.println(newOrder.toOrder());
 				return newOrder;
-			}else if(orderType.equals("SUPMTO")){
+			}else if(orderType.equals("SUP")){
 				//TODO
-			}else if(orderType.equals("CVYCTO")){
+			}else if(orderType.equals("CVY")){
 				//TODO
-			}else if(orderType.equals("CTOVIA")){
+			}else if(orderType.equals("CTO")){
 				//TODO
 			}else if(orderType.equals("RTO")){
 				//TODO
@@ -165,7 +185,11 @@ public class OrderFactory {
 			temp = new BoardState();
 			OrderFactory test = new OrderFactory(temp);
 			System.out.println("Before Order");
-			Order testOrder = test.buildOrder(new String[]{"ORD ( ( ENG FLT LON ) HLD )"});
+			Order testOrder = test.buildOrder(new String[]{"ORD", "(", "SPR", "1901", ")", "(", "(", "RUS",
+					"FLT", "(", "STP", "SCS", ")", ")",
+					"HLD", ")"
+					//"CTO", "NAO", "VIA", "(", "ENC", "ION", ")", ")"
+					,"(", "SUC", ")"});
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
