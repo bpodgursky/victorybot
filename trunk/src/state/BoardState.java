@@ -591,8 +591,8 @@ public class BoardState {
 		setControl(eng, get("LVP"));
 		setControl(eng, get("LON"));
 		
-		setOccupier(new Unit(eng, FLEET), get("EDI"));
-		setOccupier(new Unit(eng, ARMY), get("LVP"));
+		setOccupier(new Unit(eng, FLEET), get("EDI"));//EDI
+		setOccupier(new Unit(eng, ARMY), get("LVP"));//LVP
 		setOccupier(new Unit(eng, FLEET), get("LON"));
 		
 		setControl(rus, get("STP"));
