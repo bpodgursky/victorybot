@@ -6,6 +6,7 @@ import java.util.Map;
 
 import representation.Country;
 import representation.TerritorySquare;
+import representation.Unit;
 import state.BoardState;
 
 public class OrderFactory {
@@ -93,15 +94,24 @@ public class OrderFactory {
 				unit.add(message[i]);
 				i++;
 			}
-			contentTokens.add(unit);
+			if(unit.size() != 0)
+			{
+				contentTokens.add(unit);
+			}
 			if(contentTokens.get(0).get(contentTokens.get(0).size()-1).equals(")"))
 			{
 				contentTokens.get(0).remove(contentTokens.get(0).size()-1);
 			}
 			orderType = contentTokens.toString();
 			System.out.println(orderType);
-			System.out.println(contentTokens.get(1).toString());
-			orderType = contentTokens.get(1).get(0);
+			if(contentTokens.size() == 1)
+			{
+				orderType = contentTokens.get(0).get(1);
+			}
+			else
+			{
+				orderType = contentTokens.get(1).get(0);
+			}
 			//System.out.println(unit.toString().trim());
 			//contentTokens.add(unit.toString().trim());
 			//order = order.substring(i+2).trim();
@@ -147,24 +157,73 @@ public class OrderFactory {
 				TerritorySquare to = state.get(contentTokens.get(1).get(0));
 				
 				newOrder = new Move(state.getPlayer(c), from, to);
-				//System.out.println(newOrder.toOrder());
+				System.out.println(newOrder.toOrder());
 				return newOrder;
 			}else if(orderType.equals("SUP")){
-				//TODO
+				Country c = Country.valueOf(contentTokens.get(0).get(0));
+				TerritorySquare from = state.get(contentTokens.get(0).get(2));
+				TerritorySquare supporter = state.get(contentTokens.get(1).get(3));
+				if(contentTokens.size() == 3)
+				{
+					TerritorySquare to = state.get(contentTokens.get(2).get(1));
+					newOrder = new SupportMove(state.getPlayer(c), from, supporter, to);
+				}
+				else
+				{
+					newOrder = new SupportHold(state.getPlayer(c), from, supporter);
+				}
+				System.out.println(newOrder.toOrder());
+				return newOrder;
 			}else if(orderType.equals("CVY")){
-				//TODO
+				Country c = Country.valueOf(contentTokens.get(0).get(0));
+				TerritorySquare from = state.get(contentTokens.get(0).get(2));
+				TerritorySquare convoy = state.get(contentTokens.get(1).get(3));
+				TerritorySquare to = state.get(contentTokens.get(2).get(1));
+				newOrder = new Convoy(state.getPlayer(c), from, convoy, to);
+				System.out.println(newOrder.toOrder());
 			}else if(orderType.equals("CTO")){
-				//TODO
+				Country c = Country.valueOf(contentTokens.get(0).get(0));
+				List<TerritorySquare> via = new LinkedList<TerritorySquare>();
+				TerritorySquare from = state.get(contentTokens.get(0).get(2));
+				TerritorySquare to = state.get(contentTokens.get(1).get(1));
+				for(int i = 3; i < contentTokens.get(1).size(); i++)
+				{
+					TerritorySquare viaTerr = state.get(contentTokens.get(1).get(i));
+					via.add(viaTerr);
+				}
+				newOrder = new MoveByConvoy(state.getPlayer(c), from, to, via);
+				System.out.println(newOrder.toOrder());
 			}else if(orderType.equals("RTO")){
-				//TODO
+				Country c = Country.valueOf(contentTokens.get(0).get(0));
+				TerritorySquare from = state.get(contentTokens.get(0).get(2));
+				TerritorySquare to = state.get(contentTokens.get(1).get(1));
+				newOrder = new Retreat(state.getPlayer(c), from, to);
+				System.out.println(newOrder.toOrder());
 			}else if(orderType.equals("DSB")){
-				//TODO
+				Country c = Country.valueOf(contentTokens.get(0).get(0));
+				TerritorySquare from = state.get(contentTokens.get(0).get(2));
+				newOrder = new Disband(state.getPlayer(c), from);
+				System.out.println(newOrder.toOrder());
 			}else if(orderType.equals("BLD")){
-				//TODO
+				Country c = Country.valueOf(contentTokens.get(0).get(0));
+				TerritorySquare from = state.get(contentTokens.get(0).get(2));
+				Unit u = null;
+				if(contentTokens.get(0).get(1).equals("AMY"))
+				{
+					u = new Unit(state.getPlayer(c), true);
+				}
+				else
+				{
+					u = new Unit(state.getPlayer(c), false);
+				}
+				newOrder = new Build(state.getPlayer(c), u, from);
 			}else if(orderType.equals("REM")){
-				//TODO
+				Country c = Country.valueOf(contentTokens.get(0).get(0));
+				TerritorySquare from = state.get(contentTokens.get(0).get(2));
+				newOrder = new Remove(state.getPlayer(c), from);
 			}else if(orderType.equals("WVE")){
-				//TODO
+				Country c = Country.valueOf(contentTokens.get(0).get(0));
+				newOrder = new Waive(state.getPlayer(c));
 			}
 		}
 		catch (Exception ex)
@@ -185,11 +244,11 @@ public class OrderFactory {
 			temp = new BoardState();
 			OrderFactory test = new OrderFactory(temp);
 			System.out.println("Before Order");
-			Order testOrder = test.buildOrder(new String[]{"ORD", "(", "SPR", "1901", ")", "(", "(", "RUS",
-					"FLT", "(", "STP", "SCS", ")", ")",
-					"HLD", ")"
+			Order testOrder = test.buildOrder(new String[]{"ORD", "(", "SPR", "1901", ")", "(", "ENG",
+					"WVE", ")",//, "VIA",
+					//"(", "NTH", ")", ")"
 					//"CTO", "NAO", "VIA", "(", "ENC", "ION", ")", ")"
-					,"(", "SUC", ")"});
+					"(", "SUC", ")"});
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
