@@ -1,5 +1,6 @@
 package order;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -35,18 +36,20 @@ public class OrderFactory {
 	
 	public Order buildOrder(String[] message) throws Exception{
 
+		System.out.println(Arrays.toString(message));
+		
 		//	TODO for now tack this together, but do we want to deal with tokens 
 		//	separately?
-//		String order = "";
-//		for(int i = 0; i < message.length; i++){
-//			String s = message[i];
-//			
-//			if(i != message.length -1){
-//				order+=s+" ";
-//			}else{
-//				order+=s;
-//			}
-//		}
+		String order = "";
+		for(int i = 0; i < message.length; i++){
+			String s = message[i];
+			
+			if(i != message.length -1){
+				order+=s+" ";
+			}else{
+				order+=s;
+			}
+		}
 		
 //		System.out.println("Order: "+order);
 		
@@ -54,9 +57,9 @@ public class OrderFactory {
 		
 //		String result;
 //		String turn = message[2] + " " + message[3];
-		String orderType = "";
+		String orderType = null;
 				
-//		order = order.substring(3).trim();
+		order = order.substring(3).trim();
 		//System.out.println(order);
 		int parenCount = 0;
 		//System.out.println(order.charAt(0));
@@ -81,6 +84,12 @@ public class OrderFactory {
 					parenCount--;
 					i++;
 					unit = new LinkedList<String>();
+					
+					if(orderType == null){
+						orderType = message[i];
+					}
+					
+					i++;
 				}
 				if(message[i].equals(")"))
 				{
@@ -102,16 +111,16 @@ public class OrderFactory {
 			{
 				contentTokens.get(0).remove(contentTokens.get(0).size()-1);
 			}
-			orderType = contentTokens.toString();
+			//orderType = contentTokens.toString();
 			//System.out.println(orderType);
 			if(contentTokens.size() == 1)
 			{
 				orderType = contentTokens.get(0).get(1);
 			}
-			else
-			{
-				orderType = contentTokens.get(1).get(0);
-			}
+//			else
+//			{
+//				orderType = contentTokens.get(1).get(0);
+//			}
 			//System.out.println(unit.toString().trim());
 			//contentTokens.add(unit.toString().trim());
 			//order = order.substring(i+2).trim();
@@ -135,6 +144,11 @@ public class OrderFactory {
 			
 		}
 		
+//		System.out.println("Order parts: ");
+//		for(List<String> part: contentTokens){
+//			System.out.println(part);
+//		}
+		
 		//1) turn order string into these token parts
 		
 		//2) switch on order type, content tokens parsed depending on 
@@ -153,10 +167,10 @@ public class OrderFactory {
 			TerritorySquare from = state.get(contentTokens.get(0).get(2));
 			TerritorySquare to = state.get(contentTokens.get(1).get(0));
 			
-			System.out.println("Country: "+contentTokens.get(0).get(0));
-			System.out.println("Player: "+state.getPlayer(c));
-			System.out.println("From: "+contentTokens.get(0).get(2));
-			System.out.println("To: "+contentTokens.get(1).get(0));
+//			System.out.println("Country: "+contentTokens.get(0).get(0));
+//			System.out.println("Player: "+state.getPlayer(c));
+//			System.out.println("From: "+contentTokens.get(0).get(2));
+//			System.out.println("To: "+contentTokens.get(1).get(0));
 			
 			newOrder = new Move(state.getPlayer(c), from, to);
 			//System.out.println(newOrder.toOrder());
@@ -248,15 +262,15 @@ public class OrderFactory {
 					//"CTO", "NAO", "VIA", "(", "ENC", "ION", ")", ")"
 					"(", "SUC", ")"});
 			
-			System.out.println(testOrder);
+			System.out.println(testOrder+"\n");
 			
-			Order testMove2 = test.buildOrder("ORD ( SPR 1901 ) ( ( RUS FLT STP SCS) MTO FIN ) ( SUC )".split(" "));
+			Order testMove2 = test.buildOrder("ORD ( SPR 1901 ) ( ( RUS FLT STP SCS ) MTO FIN ) ( SUC )".split(" "));
 
-			System.out.println(testMove2);
+			System.out.println(testMove2+"\n");
 			
 			Order testMove = test.buildOrder("ORD ( SPR 1901 ) ( ( AUS AMY BUD ) MTO SER ) ( SUC )".split(" "));
 
-			System.out.println(testMove);
+			System.out.println(testMove+"\n");
 			
 		} catch (Exception e) {
 			e.printStackTrace();

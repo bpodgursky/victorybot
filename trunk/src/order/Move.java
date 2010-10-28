@@ -50,9 +50,9 @@ public class Move extends Order{
 		this.coast = destinationCoast;
 	}
 	
-	public String toString(){
-		return "[ move from " +from+" to "+to+"]";
-	}
+//	public String toString(){
+//		return "[ move from " +from+" to "+to+"]";
+//	}
 
 	public void execute() {
 		// TODO Auto-generated method stub
