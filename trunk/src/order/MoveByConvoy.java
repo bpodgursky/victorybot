@@ -32,9 +32,11 @@ public class MoveByConvoy extends Order{
 			throw new Exception("null arguments");
 		}
 		
-		if(!origin.board.canConvoy(p, origin, destination, transits)){
-			throw new Exception("invalid convoy");
-		}
+//		if(!origin.board.canConvoy(p, origin, destination, transits)){
+//			throw new Exception("invalid convoy");
+//		}
+		
+		origin.board.assertCanConvoy(p, origin, destination, transits);
 		
 		this.convoyedUnit = origin.getOccupier();
 		

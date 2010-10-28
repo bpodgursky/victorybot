@@ -34,9 +34,11 @@ public class Retreat extends Order{
 		}
 			
 		
-		if(!from.board.canRetreat(p, from, to, destinationCoast)){
-			throw new Exception("invalid retreat");
-		}
+//		if(!from.board.canRetreat(p, from, to, destinationCoast)){
+//			throw new Exception("invalid retreat");
+//		}
+		
+		from.board.assertCanRetreat(p, from, to, destinationCoast);
 		
 		this.from = from;
 		this.to = to;

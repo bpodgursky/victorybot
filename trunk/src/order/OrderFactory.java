@@ -105,20 +105,54 @@ public class OrderFactory {
 				{
 					if(parenCount == 1)
 					{
-						System.out.println("at "+i);
-						System.out.println("in "+Arrays.toString(message));
-
-						System.out.println("i+3 is "+message[i+3]);
-						System.out.println("i+2 is "+message[i+2]);
-						System.out.println("i+1 is "+message[i+1]);
-						System.out.println("i+0 is "+message[i]);
+//						System.out.println("at "+i);
+//						System.out.println("in "+Arrays.toString(message));
+//
+//						System.out.println("i+3 is "+message[i+3]);
+//						System.out.println("i+2 is "+message[i+2]);
+//						System.out.println("i+1 is "+message[i+1]);
+//						System.out.println("i+0 is "+message[i]);
 						
-						result = Result.valueOf(message[i+2]);
-						
-						if(!message[i+3].equals(")")){
-							retreat = RetreatState.RET;
+						//it's a waive
+						if(orderType == null){
+							
+							orderType = "WVE";
+							result = Result.SUC;
+							retreat = RetreatState.NA;
+						}
+						//In the case of a unit which was convoying or holding, RET may be the only token.
+						else if(orderType.equals("HLD") || orderType.equals("CVY")){
+							
+							if(!message[i+3].equals(")")){
+								
+								//	then there are two tokens
+								
+								result = Result.valueOf(message[i+2]);
+								retreat = RetreatState.valueOf(message[i+3]);
+								
+							}else{
+								
+								//	otherwise we have to see what it is
+								//	(because this syntax sucks)
+								
+								if(message[i+2].equals("RET")){
+									retreat = RetreatState.RET;
+									result = Result.FAIL;
+								}else{
+									retreat = RetreatState.NO;
+									result = Result.SUC;
+								}
+							}
+							
 						}else{
-							retreat = RetreatState.NO;
+						
+							result = Result.valueOf(message[i+2]);
+							
+							if(!message[i+3].equals(")")){
+								retreat = RetreatState.RET;
+							}else{
+								retreat = RetreatState.NO;
+							}
 						}
 						
 						break;
@@ -171,12 +205,12 @@ public class OrderFactory {
 			
 		}
 		
-		System.out.println("Order parts: ");
-		for(List<String> part: contentTokens){
-			System.out.println(part);
-		}
-		System.out.println("Order type: "+orderType);
-		System.out.println("Result: "+result);
+//		System.out.println("Order parts: ");
+//		for(List<String> part: contentTokens){
+//			System.out.println(part);
+//		}
+//		System.out.println("Order type: "+orderType);
+//		System.out.println("Result: "+result);
 		
 		//1) turn order string into these token parts
 		
@@ -187,7 +221,7 @@ public class OrderFactory {
 		
 		Country c = Country.valueOf(contentTokens.get(0).get(0));
 		
-		System.out.println("Country: "+c);
+//		System.out.println("Country: "+c);
 		
 		if(orderType.equals("HLD")){
 
@@ -211,6 +245,7 @@ public class OrderFactory {
 			System.out.println("Player: "+state.getPlayer(c));
 			System.out.println("From: "+contentTokens.get(0).get(2));
 			System.out.println("To: "+contentTokens.get(1).get(0));
+			System.out.println("coast: "+coast);
 			System.out.println("terr1: "+from);
 			System.out.println("terr2: "+to);
 			
@@ -254,8 +289,14 @@ public class OrderFactory {
 		}else if(orderType.equals("RTO")){
 			
 			TerritorySquare from = state.get(contentTokens.get(0).get(2));
-			TerritorySquare to = state.get(contentTokens.get(1).get(1));
-			newOrder = new Retreat(state.getPlayer(c), from, to, result);
+			TerritorySquare to = state.get(contentTokens.get(1).get(0));
+			
+			String rToCoast = "NA";
+			if(contentTokens.get(1).size() > 1){
+				rToCoast = contentTokens.get(1).get(1);
+			}
+			
+			newOrder = new Retreat(state.getPlayer(c), from, to, rToCoast, result);
 			//System.out.println(newOrder.toOrder());
 		}else if(orderType.equals("DSB")){
 			

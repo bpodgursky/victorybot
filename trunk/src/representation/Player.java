@@ -5,14 +5,19 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import state.BoardState;
+
 
 
 public class Player {
 
 	//constant
 	
-	final Country power;  
+	public final BoardState board;
+	public final Country power;  
+	
 	final Set<TerritorySquare> homeCenters = new HashSet<TerritorySquare>();
+
 	
 	//dynamic
 	
@@ -24,8 +29,9 @@ public class Player {
 	final Set<TerritorySquare> supplyCenters = new HashSet<TerritorySquare>();
 
 	
-	public Player(Country power){
+	public Player(Country power, BoardState board){
 		
+		this.board = board;
 		this.power = power;
 		this.homeCenters.addAll(homeCenters);
 	}

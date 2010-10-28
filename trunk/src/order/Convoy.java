@@ -27,9 +27,11 @@ public class Convoy extends Order{
 			throw new Exception("null arguments");
 		}
 		
-		if(!convoyer.board.canAssistConvoy(p, convoyer, from, to)){
-			throw new Exception("cannot convoy with "+convoyer+" from "+from+" to "+to);
-		}
+//		if(!convoyer.board.canAssistConvoy(p, convoyer, from, to)){
+//			throw new Exception("cannot convoy with "+convoyer+" from "+from+" to "+to);
+//		}
+		
+		convoyer.board.assertCanAssistConvoy(p, convoyer, from, to);
 		
 		convoyingUnit = convoyer.getOccupier();
 		convoyedUnit = from.getOccupier();

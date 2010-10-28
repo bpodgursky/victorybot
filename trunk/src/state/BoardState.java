@@ -51,6 +51,10 @@ public class BoardState {
 	//win = builds and disbands
 	Phase currentPhase;
 	
+	public Phase getCurrentPhase(){
+		return currentPhase;
+	}
+	
 	int currentYear;
 	
 	//constant
@@ -113,11 +117,11 @@ public class BoardState {
 	public void setControl(Player p, TerritorySquare terr) throws Exception{
 		
 		if(!terr.isSupplyCenter()){
-			throw new Exception("Territory not supply center");
+			throw new Exception("Territory "+terr.getName()+" not supply center");
 		}
 		
 		if(terr.getController() == p){
-			throw new Exception("Player already controls this center!");
+			throw new Exception("Player "+p.getName()+" already controls center "+terr.getName());
 		}
 		
 		if(terr.isControlled()){
@@ -131,11 +135,11 @@ public class BoardState {
 	public void setOccupier(Unit u, TerritorySquare terr, String coast) throws Exception{
 		
 		if(!terr.hasCoast(coast)){
-			throw new Exception("Invalid coast!");
+			throw new Exception("Invalid coast "+coast+" for terr "+terr.getName());
 		}
 		
 		if(u.army && !terr.isLand()){
-			throw new Exception("Invalid occupier");
+			throw new Exception("Invalid occupier for terr "+terr.getName());
 		}
 		
 		if(terr.getOccupier() != null){
@@ -149,7 +153,7 @@ public class BoardState {
 	public void setOccupier(Unit u, TerritorySquare terr) throws Exception{
 		
 		if(!u.army && terr.hasMultipleCoasts()){
-			throw new Exception("Must specify a coast!");
+			throw new Exception("Must specify a coast for "+terr.getName());
 		}
 		
 		setOccupier(u, terr, "NA");
@@ -160,7 +164,7 @@ public class BoardState {
 		Unit removed = terr.getOccupier();
 		
 		if(removed == null){
-			throw new Exception("Territory not occupied!");
+			throw new Exception("Territory "+terr.getName()+" not occupied!");
 		}
 		
 		removed.belongsTo.removeOccupy(terr);
@@ -175,13 +179,13 @@ public class BoardState {
 		
 		currentPhase = Phase.SPR;
 		
-		Player eng = new Player(Country.ENG);
-		Player fra = new Player(Country.FRA);
-		Player ger = new Player(Country.GER);
-		Player rus = new Player(Country.RUS);
-		Player ita = new Player(Country.ITA);
-		Player aus = new Player(Country.AUS);
-		Player tur = new Player(Country.TUR);
+		Player eng = new Player(Country.ENG, this);
+		Player fra = new Player(Country.FRA, this);
+		Player ger = new Player(Country.GER, this);
+		Player rus = new Player(Country.RUS, this);
+		Player ita = new Player(Country.ITA, this);
+		Player aus = new Player(Country.AUS, this);
+		Player tur = new Player(Country.TUR, this);
 		
 		activePlayers.put(Country.ENG, eng);
 		activePlayers.put(Country.FRA, fra);
@@ -252,7 +256,7 @@ public class BoardState {
 		terrs.put("TUN", new TerritorySquare("TUN", SUPPLY, LAND, null, this));
 		terrs.put("SER", new TerritorySquare("SER", SUPPLY, LAND, null, this));
 		terrs.put("RUM", new TerritorySquare("RUM", SUPPLY, LAND, null, this));
-		terrs.put("BUL", new TerritorySquare("BUL", SUPPLY, LAND, null, Arrays.asList("ECS", "WCS"), this));
+		terrs.put("BUL", new TerritorySquare("BUL", SUPPLY, LAND, null, Arrays.asList("ECS", "SCS"), this));
 		terrs.put("GRE", new TerritorySquare("GRE", SUPPLY, LAND, null, this));
 		
 		//other non supply center land
@@ -277,7 +281,7 @@ public class BoardState {
 		terrs.put("YOR", new TerritorySquare("YOR",	NO_SUPPLY, LAND, null, this));
 		terrs.put("WAL", new TerritorySquare("WAL",	NO_SUPPLY, LAND, null, this));
 		terrs.put("PIC", new TerritorySquare("PIC", NO_SUPPLY, LAND, null, this));
-		terrs.put("TRL", new TerritorySquare("TRL", NO_SUPPLY, LAND, null, this));
+		terrs.put("TYR", new TerritorySquare("TYR", NO_SUPPLY, LAND, null, this));
 				
 		//sea territories
 		terrs.put("NAO", new TerritorySquare("NAO",	NO_SUPPLY, SEA, null, this));
@@ -292,8 +296,8 @@ public class BoardState {
 		terrs.put("ECH", new TerritorySquare("ECH",	NO_SUPPLY, SEA, null, this));
 		terrs.put("MAO", new TerritorySquare("MAO",	NO_SUPPLY, SEA, null, this));
 		terrs.put("WES", new TerritorySquare("WES",	NO_SUPPLY, SEA, null, this));
-		terrs.put("LYO", new TerritorySquare("LYO",	NO_SUPPLY, SEA, null, this));
-		terrs.put("TYN", new TerritorySquare("TYN",	NO_SUPPLY, SEA, null, this));
+		terrs.put("GOL", new TerritorySquare("GOL",	NO_SUPPLY, SEA, null, this));
+		terrs.put("TYS", new TerritorySquare("TYS",	NO_SUPPLY, SEA, null, this));
 		terrs.put("ION", new TerritorySquare("ION",	NO_SUPPLY, SEA, null, this));
 		terrs.put("ADR", new TerritorySquare("ADR",	NO_SUPPLY, SEA, null, this));
 		terrs.put("AEG", new TerritorySquare("AEG",	NO_SUPPLY, SEA, null, this));
@@ -322,6 +326,8 @@ public class BoardState {
 		border("MAO", "SPA", "NA", "NCS");
 		border("MAO", "SPA", "NA", "SCS");
 		border("MAO", "POR", true);
+		border("MAO", "WES", true);
+		border("MAO", "NAF", true);
 		
 		border("IRI", "CLY", true);
 		border("IRI", "LVP", true);
@@ -338,6 +344,10 @@ public class BoardState {
 		border("NTH", "EDI", true);
 		border("NTH", "HEL", true);
 		border("NTH", "ECH", true);
+		
+		border("HEL", "DEN", true);
+		border("HEL", "KIE", true);
+		border("HEL", "HOL", true);
 		
 		border("SKA", "NWY", true);
 		border("SKA", "SWE", true);
@@ -363,22 +373,22 @@ public class BoardState {
 		border("ECH", "BRE", true);
 		
 		border("WES", "SPA", "NA", "SCS");
-		border("WES", "LYO", true);
-		border("WES", "TYN", true);
+		border("WES", "GOL", true);
+		border("WES", "TYS", true);
 		border("WES", "TUN", true);
 		border("WES", "NAF", true);
 		
-		border("LYO", "SPA", "NA", "SCS");
-		border("LYO", "MAR", true);
-		border("LYO", "PIE", true);
-		border("LYO", "TUS", true);
-		border("LYO", "TYN", true);
+		border("GOL", "SPA", "NA", "SCS");
+		border("GOL", "MAR", true);
+		border("GOL", "PIE", true);
+		border("GOL", "TUS", true);
+		border("GOL", "TYS", true);
 		
-		border("TYN", "TUS", true);
-		border("TYN", "ROM", true);
-		border("TYN", "NAP", true);
-		border("TYN", "ION", true);
-		border("TYN", "TUN", true);
+		border("TYS", "TUS", true);
+		border("TYS", "ROM", true);
+		border("TYS", "NAP", true);
+		border("TYS", "ION", true);
+		border("TYS", "TUN", true);
 		
 		border("ION", "NAP", true);
 		border("ION", "ADR", true);
@@ -394,7 +404,7 @@ public class BoardState {
 		border("ADR", "ALB", true);
 		
 		border("AEG", "GRE", true);
-		border("AEG", "BUL", "NA", "WCS");
+		border("AEG", "BUL", "NA", "SCS");
 		border("AEG", "CON", true);
 		border("AEG", "SMY", true);
 		border("AEG", "EAS", true);
@@ -407,6 +417,8 @@ public class BoardState {
 		border("BLA", "RUM", true);
 		border("BLA", "SEV", true);
 		border("BLA", "ANK", true);
+		border("BLA", "CON", true);
+		border("BLA", "ARM", true);
 		border("BLA", "CON", true);
 		
 		//england
@@ -481,7 +493,7 @@ public class BoardState {
 		border("RUH", "MUN", false);
 		
 		border("MUN", "BUR", false);
-		border("MUN", "TRL", false);
+		border("MUN", "TYR", false);
 		border("MUN", "BOH", false);
 		border("MUN", "SIL", false);
 		
@@ -532,13 +544,14 @@ public class BoardState {
 		border("APU", "VEN", true);
 		
 		border("VEN", "TRI", true);
-		border("VEN", "TRL", false);
+		border("VEN", "TYR", false);
 		
 		//austro hungary
 		
-		border("TRL", "BOH", false);
-		border("TRL", "VIE", false);
-		border("TRL", "TRI", false);
+		border("TYR", "BOH", false);
+		border("TYR", "VIE", false);
+		border("TYR", "TRI", false);
+		border("TYR", "PIE", false);
 		
 		border("BOH", "GAL", false);
 		border("BOH", "VIE", false);
@@ -559,7 +572,7 @@ public class BoardState {
 		
 		//turkey
 		
-		border("CON", "BUL", "NA", "WCS");
+		border("CON", "BUL", "NA", "SCS");
 		border("CON", "BUL", "NA", "ECS");		
 		border("CON", "ANK", true);
 		border("CON", "SMY", true);
@@ -578,9 +591,11 @@ public class BoardState {
 		border("RUM", "BUL", "NA", "ECS");
 		
 		border("BUL", "SER", false);
-		border("BUL", "GRE", "WCS", "NA");
+		border("BUL", "GRE", "SCS", "NA");
 		
 		border("SER", "GRE", false);
+		border("SER", "ALB", false);
+		
 		border("GRE", "ALB", true);
 		
 		//spain and africa
@@ -729,12 +744,12 @@ public class BoardState {
 		for(Order ord: moves){
 				
 			if(ord.actionResult == Result.SUC){
-				System.out.println(ord.toOrder()+ " "+ord.getResult());
+				//System.out.println(ord.toOrder()+ " "+ord.getResult());
 				
 				if(ord.getClass() == Build.class){
 					Build b = (Build)ord;
 					
-					setOccupier(b.build, b.location);
+					setOccupier(b.build, b.location, b.coast);
 					
 				}else if(ord.getClass() == Convoy.class){
 					
@@ -743,7 +758,8 @@ public class BoardState {
 				}else if(ord.getClass() == Disband.class){
 					Disband dsb = (Disband)ord;
 
-					removeOccupier(dsb.disbandAt);
+					//removeOccupier(dsb.disbandAt);
+					resolveRetreat(dsb.disbandAt);
 					
 				}else if(ord.getClass() == Hold.class){
 					
@@ -769,7 +785,7 @@ public class BoardState {
 					//	of retreating somewhere someone else retreats from
 					
 					resolveRetreat(ret.from);
-					setOccupier(ret.retreatingUnit, ret.to);
+					setOccupier(ret.retreatingUnit, ret.to, ret.destCoast);
 					
 				}else if(ord.getClass() == SupportHold.class){
 					
@@ -860,7 +876,7 @@ public class BoardState {
 			}else if(ord.getClass() == Move.class){
 				Move mov = (Move)ord;
 				
-				setOccupier(mov.unit, mov.to);
+				setOccupier(mov.unit, mov.to, mov.coast);
 			}
 		}
 		
@@ -887,8 +903,44 @@ public class BoardState {
 	
 	//utility methods for game mechanics
 	
+	public void assertCanMove(Player p, TerritorySquare from, TerritorySquare to) throws Exception{
+		assertCanMove(p, from, to, "NA");
+	}
+	
 	public boolean canMove(Player p, TerritorySquare from, TerritorySquare to){
 		return canMove(p, from, to, "NA");
+	}
+	
+	public void assertCanMove(Player p, TerritorySquare from, TerritorySquare to, String destinationCoast) throws Exception{
+		
+		if(this.currentPhase == Phase.WIN || this.currentPhase == Phase.SUM || this.currentPhase == Phase.AUT){
+			throw new Exception("wrong season: "+currentPhase);
+		}
+		
+		//	make sure unit is there
+		if(from.getOccupier() == null){
+			throw new Exception("no occupier");
+		}
+		
+		//	player correct
+		if(from.getOccupier().belongsTo != p){
+			throw new Exception("wrong occupying player: "+from.getOccupier());
+		}
+		
+		if(from.getOccupier().army){
+			
+			//if the unit moving is an army, make sure it can do this
+			if(!from.isLandBorder(to)){
+				throw new Exception("no land border");
+			}
+		}else{
+			String occupiedCoast = from.getOccupiedCoast();			
+			
+			//if it's a fleet, make sure the coasts match up
+			if(!from.isSeaBorder(to, occupiedCoast, destinationCoast)){
+				throw new Exception("no such sea border from "+from.getName()+" to "+to.getName());
+			}
+		}
 	}
 	
 	public boolean canMove(Player p, TerritorySquare from, TerritorySquare to, String destinationCoast){
@@ -897,15 +949,17 @@ public class BoardState {
 			return false;
 		}
 		
-		//	player correct
-		if(from.getOccupier().belongsTo != p){
-			return false;
-		}
 		
 		//	make sure unit is there
 		if(from.getOccupier() == null){
 			return false;
 		}
+		
+		//	player correct
+		if(from.getOccupier().belongsTo != p){
+			return false;
+		}
+
 		
 		if(from.getOccupier().army){
 			
@@ -925,13 +979,27 @@ public class BoardState {
 		return true;
 	}
 	
-	public boolean canSupportHold(Player p, TerritorySquare from, TerritorySquare to){
+	
+	public void assertCanSupportHold(Player p, TerritorySquare from, TerritorySquare to) throws Exception{
 		
 		if(this.currentPhase == Phase.WIN || this.currentPhase == Phase.SUM || this.currentPhase == Phase.AUT){
-			return false;
+			throw new Exception("wrong season: "+currentPhase);
+		}
+		
+		if(to.getOccupier() == null){
+			throw new Exception("no occupier");
 		}
 		
 		if(from.getOccupier().belongsTo != p){
+			throw new Exception("wrong occupying country");
+		}
+		
+		assertCanMove(p, from, to);	
+	}
+	
+	public boolean canSupportHold(Player p, TerritorySquare from, TerritorySquare to){
+		
+		if(this.currentPhase == Phase.WIN || this.currentPhase == Phase.SUM || this.currentPhase == Phase.AUT){
 			return false;
 		}
 		
@@ -939,7 +1007,37 @@ public class BoardState {
 			return false;
 		}
 		
+		if(from.getOccupier().belongsTo != p){
+			return false;
+		}
+
+		
 		return canMove(p, from, to);	
+	}
+	
+	public void assertCanSupportMove(Player p, TerritorySquare supporter, TerritorySquare from, TerritorySquare to) throws Exception{
+		
+		if(this.currentPhase == Phase.WIN || this.currentPhase == Phase.SUM || this.currentPhase == Phase.AUT){
+			throw new Exception("wrong season: "+currentPhase);
+		}
+		
+		
+		if(supporter.getOccupier() == null){
+			throw new Exception("no supporter");
+		}
+		
+		if(supporter.getOccupier().belongsTo != p){
+			throw new Exception("wrong occupying country");
+		}
+		
+		if(from.getOccupier() == null){
+			throw new Exception("no occupier");
+		}
+		
+		assertCanMove(p, supporter, to);
+		
+		assertCanMove(p, from, to);
+		
 	}
 	
 	public boolean canSupportMove(Player p, TerritorySquare supporter, TerritorySquare from, TerritorySquare to){
@@ -971,6 +1069,38 @@ public class BoardState {
 		return true;
 	}
 	
+	public boolean assertCanAssistConvoy(Player p, TerritorySquare convoyer, TerritorySquare from, TerritorySquare to) throws Exception{
+		
+		if(this.currentPhase == Phase.WIN || this.currentPhase == Phase.SUM || this.currentPhase == Phase.AUT){
+			throw new Exception("wrong season: "+currentPhase);
+		}
+		
+		if(convoyer.getOccupier() == null){
+			throw new Exception("empty convoyer");
+		}
+		
+		if(from.getOccupier() == null){
+			throw new Exception("empty occupier");
+		}
+		
+		if(convoyer.getOccupier().belongsTo != p){
+			throw new Exception("wrong occupying country");
+		}
+		
+		Unit convoyingUnit = convoyer.getOccupier();
+		Unit convoyedUnit = from.getOccupier();
+		
+		if(convoyer.isLand() || convoyingUnit.army || !convoyedUnit.army){
+			throw new Exception("invalid type of unit being convoyed or convoying");
+		}
+		
+		if(!from.hasAnySeaBorders() || !to.hasAnySeaBorders()){
+			throw new Exception("convoy cannot succeed");
+		}
+		
+		return true;
+	}
+	
 	public boolean canAssistConvoy(Player p, TerritorySquare convoyer, TerritorySquare from, TerritorySquare to){
 		
 		if(this.currentPhase == Phase.WIN || this.currentPhase == Phase.SUM || this.currentPhase == Phase.AUT){
@@ -997,6 +1127,47 @@ public class BoardState {
 		}
 		
 		return true;
+	}
+	
+	public void assertCanConvoy(Player p, TerritorySquare from, TerritorySquare to, List<TerritorySquare> transit) throws Exception{
+		
+		if(this.currentPhase == Phase.WIN || this.currentPhase == Phase.SUM || this.currentPhase == Phase.AUT){
+			throw new Exception("wrong season: "+currentPhase);
+		}
+		
+		//	units need to exist, territories have to be sea, only fleets convoy
+		
+		Unit movingUnit = from.getOccupier();
+		
+		if(movingUnit == null || !movingUnit.army){
+			throw new Exception("this unit cannot convoy");
+		}
+		
+		if(movingUnit.belongsTo != p){
+			throw new Exception("wrong player");
+		}
+		
+		for(TerritorySquare sqr: transit){
+			if(sqr.getOccupier() == null || sqr.isLand() || sqr.getOccupier().army){
+				throw new Exception("invalid transit ship");
+			}
+		}
+		
+		//	make sure that the path is contiguous
+		
+		TerritorySquare start = from;
+		
+		for(TerritorySquare t: transit){
+			if(!t.isAnySeaBorder(start)){
+				throw new Exception("transit not connected");
+			}
+			
+			start = t;
+		}
+		
+		if(!start.isAnySeaBorder(to)){
+			throw new Exception("cannot get to destination--no border");
+		}
 	}
 	
 	public boolean canConvoy(Player p, TerritorySquare from, TerritorySquare to, List<TerritorySquare> transit){
@@ -1061,6 +1232,59 @@ public class BoardState {
 		
 	}
 	
+	public void assertCanHold(Player p, TerritorySquare holder) throws Exception{
+		
+		if(this.currentPhase == Phase.WIN || this.currentPhase == Phase.SUM || this.currentPhase == Phase.AUT){
+			throw new Exception("wrong season: "+currentPhase);
+		}
+		
+		if(holder.getOccupier() == null){
+			throw new Exception("null occupier");
+		}
+		
+		if(holder.getOccupier().belongsTo != p){
+			throw new Exception("holder belongs to wrong player");
+		}
+	}
+	
+	public void assertCanBuild(Player p, Unit u, TerritorySquare location) throws Exception{
+		
+		//	it must be winter
+		if(this.currentPhase != Phase.WIN){
+			throw new Exception("wrong season: "+currentPhase);
+		}
+		
+		//	location must be unoccupied
+		if(location.getOccupier() != null){
+			throw new Exception("occupier is null");
+		}
+		
+		//	location must be controlled by this player
+		if(location.getController() != p){
+			throw new Exception("location has no controller");
+		}
+
+		//	location must be home territory of u.controller
+		if(location.getHomePlayer() != u.belongsTo){
+			throw new Exception("location is not a home supply center");
+		}
+		
+		//	unit must belong to player
+		if(u.belongsTo != p){
+			throw new Exception("player does not control proposed unit");
+		}
+		
+		//	controller must have spare builds--fewer occupied territories than controlled territories
+		if(u.belongsTo.getNumberUnits() >= u.belongsTo.getNumberSupplyCenters()){
+			throw new Exception("player does not have any builds");
+		}
+		
+		//	location must controlled by u.controller
+		if(location.getController() != u.belongsTo){
+			throw new Exception("player does not control center");
+		}
+	}
+	
 	public boolean canBuild(Player p, Unit u, TerritorySquare location){
 		
 		//	it must be winter
@@ -1083,6 +1307,10 @@ public class BoardState {
 			return false;
 		}
 		
+		if(u.belongsTo != p){
+			return false;
+		}
+		
 		//	controller must have spare builds--fewer occupied territories than controlled territories
 		if(u.belongsTo.getNumberUnits() >= u.belongsTo.getNumberSupplyCenters()){
 			return false;
@@ -1096,6 +1324,58 @@ public class BoardState {
 		return true;
 	}
 	
+	public boolean assertCanWaive(Player p) throws Exception{
+		
+		//	it must be winter
+		if(this.currentPhase != Phase.WIN){
+			throw new Exception("wrong season: "+currentPhase);
+		}
+		
+		//	controller must have spare builds--fewer occupied territories than controlled territories
+		if(p.getNumberUnits() >= p.getNumberSupplyCenters()){
+			throw new Exception("no available builds to waive");
+		}
+		
+		return true;
+	}
+	
+	public boolean canWaive(Player p){
+		
+		//	it must be winter
+		if(this.currentPhase != Phase.WIN){
+			return false;
+		}
+		
+		//	controller must have spare builds--fewer occupied territories than controlled territories
+		if(p.getNumberUnits() >= p.getNumberSupplyCenters()){
+			return false;
+		}
+		
+		return true;
+	}
+	
+	public void assertCanDisband(Player p, TerritorySquare location) throws Exception{
+		
+		//	it must be retreat season
+		if(this.currentPhase != Phase.AUT && this.currentPhase != Phase.SUM){
+			throw new Exception("wrong season: "+currentPhase);
+		}
+		
+		//	there must be a pending retreat from this location
+		if(!this.retreats.containsKey(location)){
+			throw new Exception("no retreat for that location");
+		}
+		
+		RetreatSituation rSit = this.retreats.get(location);
+		
+		if(rSit.retreating.belongsTo != p){
+			throw new Exception("wrong player for retreat");
+		}
+		
+		if(rSit.from != location){
+			throw new Exception("wrong origin of retreat");
+		}
+	}
 	public boolean canDisband(Player p, TerritorySquare location){
 		
 		//	it must be retreat season
@@ -1125,8 +1405,57 @@ public class BoardState {
 		return true;
 	}
 	
+	
+	public void assertCanRetreat(Player p, TerritorySquare from, TerritorySquare to) throws Exception{
+		assertCanRetreat(p, from, to, "NA");
+	}
+	
 	public boolean canRetreat(Player p, TerritorySquare from, TerritorySquare to){
 		return canRetreat(p, from, to, "NA");
+	}
+	
+	public boolean assertCanRetreat(Player p, TerritorySquare from, TerritorySquare to, String destinationCoast) throws Exception{
+		
+		if(this.currentPhase != Phase.AUT && this.currentPhase != Phase.SUM){
+			throw new Exception("wrong season: "+currentPhase);
+		}
+		
+		//	there must be a pending retreat from this location
+		if(!this.retreats.containsKey(from)){
+			throw new Exception("no retreat for that location");
+		}
+		
+		RetreatSituation rSit = this.retreats.get(from);
+		
+		if(rSit.retreating.belongsTo != p){
+			throw new Exception("wrong player for retreat");
+		}
+		
+		if(rSit.from != from){
+			throw new Exception("wrong origin of retreat");
+		}
+
+		
+		if(rSit.retreating.army){
+			
+			//if the unit moving is an army, make sure it can do this
+			if(!from.isLandBorder(to)){
+				throw new Exception("no land border to retreat destination");
+			}
+		}else{
+			String occupiedCoast = rSit.originCoast;//from.getOccupiedCoast();			
+			
+			//if it's a fleet, make sure the coasts match up
+			if(!from.isSeaBorder(to, occupiedCoast, destinationCoast)){
+				throw new Exception("no sea border from " +from.getName()+" to retreat destination "+to.getName());
+			}
+		}
+		
+		if(history.wasTerritoryContested(to)){
+			throw new Exception("territory was contested on previous turn");
+		}
+		
+		return true;
 	}
 	
 	public boolean canRetreat(Player p, TerritorySquare from, TerritorySquare to, String destinationCoast){
@@ -1173,6 +1502,27 @@ public class BoardState {
 		return true;
 	}
 	
+	public void assertCanRemove(Player p, TerritorySquare location) throws Exception{
+		
+		//	it must be winter
+		if(this.currentPhase != Phase.WIN){
+			throw new Exception("wrong season: "+currentPhase);
+		}
+		
+		//	location must have a unit
+		if(location.getOccupier() == null){
+			throw new Exception("no occupier");
+		}
+		
+		if(location.getOccupier().belongsTo != p){
+			throw new Exception("wrong player");
+		}
+		
+		//	controller must have spare builds--fewer occupied territories than controlled territories
+		if(location.getOccupier().belongsTo.getNumberUnits() < location.getOccupier().belongsTo.getNumberSupplyCenters()){
+			throw new Exception("player does not have to remove units");
+		}
+	}
 	public boolean canRemove(Player p, TerritorySquare location){
 		
 		//	it must be winter

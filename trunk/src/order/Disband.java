@@ -25,9 +25,11 @@ public class Disband extends Order{
 			throw new Exception("null arguments");
 		}
 		
-		if(!location.board.canDisband(p, location)){
-			throw new Exception("invalid disband");
-		}
+//		if(!location.board.canDisband(p, location)){
+//			throw new Exception("invalid disband");
+//		}
+		
+		location.board.assertCanDisband(p, location);
 		
 		this.disbandAt = location;
 		this.disband = location.board.getRetreatingUnit(location);

@@ -13,6 +13,7 @@ import representation.TerritorySquare;
 import state.BeliefState;
 import state.DiplomaticState;
 import state.BoardState;
+import state.BoardState.Phase;
 
 //	gamesearch runs in a separate thread.  call methods on it to notify it of things--
 // 	updated state, diplomatic changes, etc
@@ -85,11 +86,18 @@ public class GameSearch {
 						Set<TerritorySquare> unitSquares = relevantPlayer.getOccupiedTerritories();
 						Set<Order> orders = new HashSet<Order>();
 						
-						for(TerritorySquare ts: unitSquares){
-							orders.add(new Hold(relevantPlayer, ts));
+						if(boardState.getCurrentPhase() == Phase.SPR || boardState.getCurrentPhase() == Phase.FAL){
+							for(TerritorySquare ts: unitSquares){
+								orders.add(new Hold(relevantPlayer, ts));
+							}
+							
+							currentOrders = orders;
+						}else{
+							currentOrders = new HashSet<Order>();
 						}
-						
-						currentOrders = orders;
+//						else if(boardState.getCurrentPhase() == Phase.WI){
+//							
+//						}
 						
 					}else{
 						Thread.sleep(10);

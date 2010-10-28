@@ -6,7 +6,10 @@ public abstract class Order {
 	
 	//	succeeded, bounced, support was cut, dislodged convoying
 	//	no such order, or action has not been executed
-	public enum Result{SUC, BNC, CUT, DSR, NSO, MAYBE}; 
+	//	fail is not include in the synatx, because they don't define a
+	//	token for a hold or convoy that is dislodged.  Going to call
+	//	those fail
+	public enum Result{SUC, BNC, CUT, DSR, NSO, MAYBE, FAIL}; 
 	
 	public final Result actionResult;
 	
