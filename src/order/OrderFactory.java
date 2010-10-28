@@ -69,6 +69,8 @@ public class OrderFactory {
 			int i = 6;
 			parenCount++;
 			LinkedList<String> unit = new LinkedList<String>();
+			
+			boolean seenDeeperParens = false;
 			while(i < message.length)
 			{
 				if(message[i].equals("("))
@@ -77,7 +79,8 @@ public class OrderFactory {
 					i++;
 				}
 				if(message[i].equals(")") && parenCount == 2)
-				{
+				{					
+					seenDeeperParens = true;
 					contentTokens.add(unit);
 					//System.out.println(unit.toString());
 					//System.out.println(contentTokens.toString());
@@ -97,6 +100,7 @@ public class OrderFactory {
 					{
 						break;
 					}
+					
 					parenCount--;
 				}
 				
@@ -113,7 +117,7 @@ public class OrderFactory {
 			}
 			//orderType = contentTokens.toString();
 			//System.out.println(orderType);
-			if(contentTokens.size() == 1)
+			if(!seenDeeperParens && contentTokens.size() == 1)
 			{
 				orderType = contentTokens.get(0).get(1);
 			}
@@ -144,10 +148,11 @@ public class OrderFactory {
 			
 		}
 		
-//		System.out.println("Order parts: ");
-//		for(List<String> part: contentTokens){
-//			System.out.println(part);
-//		}
+		System.out.println("Order parts: ");
+		for(List<String> part: contentTokens){
+			System.out.println(part);
+		}
+		System.out.println("Order type: "+orderType);
 		
 		//1) turn order string into these token parts
 		
@@ -271,6 +276,10 @@ public class OrderFactory {
 			Order testMove = test.buildOrder("ORD ( SPR 1901 ) ( ( AUS AMY BUD ) MTO SER ) ( SUC )".split(" "));
 
 			System.out.println(testMove+"\n");
+			
+			Order testHold = test.buildOrder("ORD ( SPR 1901 ) ( ( RUS AMY WAR ) HLD ) ( SUC )".split(" "));
+			
+			System.out.println(testHold+"\n");
 			
 		} catch (Exception e) {
 			e.printStackTrace();
