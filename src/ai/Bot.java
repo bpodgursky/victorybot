@@ -159,7 +159,9 @@ public class Bot{
 						
 						String[] tokens = orderString.split(" ");
 						
-						System.out.println("Sending: "+Arrays.toString(tokens));
+						//System.out.println("Sending: "+Arrays.toString(tokens));
+						
+						printMsg(name, tokens);
 						
 						serv.send(tokens);
 						
@@ -313,8 +315,6 @@ public class Bot{
 					
 					Order order = orderFactory.buildOrder(message);
 					
-					System.out.println(order);
-					
 					receivedOrders.add(order);
 			
 				
@@ -332,10 +332,12 @@ public class Bot{
 	///////////////////////////////////////////////////////////////////////////////////////
 	// Main class for launching bot
 	
+	public final static int LAUNCH_BOTS = 6;
+	
 	public static void main(String[] args) throws InterruptedException {
 
-		Thread[] bots = new Thread[7];
-		for(int i = 0; i < 7; i++){
+		Thread[] bots = new Thread[LAUNCH_BOTS];
+		for(int i = 0; i < LAUNCH_BOTS; i++){
 			bots[i] = new Thread(new BotLauncher(args));
 			bots[i].start();
 		}
