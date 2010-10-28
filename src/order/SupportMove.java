@@ -25,9 +25,11 @@ public class SupportMove extends Order{
 			throw new Exception("null arguments");
 		}
 		
-		if(!supportFrom.board.canSupportMove(p, supportFrom, supportOrig, supportInto)){
-			throw new Exception("cannot support with "+supportFrom+" from "+supportOrig+" to "+ supportInto);
-		}
+//		if(!supportFrom.board.canSupportMove(p, supportFrom, supportOrig, supportInto)){
+//			throw new Exception("cannot support with "+supportFrom+" from "+supportOrig+" to "+ supportInto);
+//		}
+		
+		supportFrom.board.assertCanSupportMove(p, supportFrom, supportOrig, supportInto);
 		
 		this.supportFrom = supportFrom;
 		this.supportOrig = supportOrig;

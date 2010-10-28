@@ -15,9 +15,11 @@ public class Remove extends Order{
 			throw new Exception("null arguments");
 		}
 		
-		if(disbandAt.board.canDisband(p, disbandAt)){
-			throw new Exception("invalid disband");
-		}
+//		if(disbandAt.board.canDisband(p, disbandAt)){
+//			throw new Exception("invalid disband");
+//		}
+		
+		disbandAt.board.assertCanRemove(p, disbandAt);
 		
 		this.disbandLocation = disbandAt;
 	}

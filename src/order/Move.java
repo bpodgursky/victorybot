@@ -39,9 +39,11 @@ public class Move extends Order{
 		if(from == null || to == null || destinationCoast == null){
 			throw new Exception("null arguments");
 		}
-		if(!from.board.canMove(p, from, to, destinationCoast)){
-			throw new Exception("player "+p.getName()+"cannot move from "+ from+ " to "+to+" on coast "+destinationCoast);
-		}
+//		if(!from.board.canMove(p, from, to, destinationCoast)){
+//			throw new Exception("player "+p.getName()+"cannot move from "+ from+ " to "+to+" on coast "+destinationCoast);
+//		}
+		
+		from.board.assertCanMove(p, from, to, destinationCoast);
 		
 		this.unit = from.getOccupier();
 		this.from = from;

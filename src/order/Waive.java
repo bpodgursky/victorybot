@@ -4,14 +4,14 @@ import representation.Player;
 
 public class Waive extends Order{
 
-	public Waive(Player player) {
+	public Waive(Player player) throws Exception{
 		super(player, Result.SUC, RetreatState.NA);
+		
+		player.board.assertCanWaive(player);
 	}
 
 	@Override
 	public void execute() {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override

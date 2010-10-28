@@ -30,9 +30,11 @@ public class SupportHold extends Order{
 			throw new Exception("null arguments");
 		}
 		
-		if(!supportFrom.board.canSupportHold(p, supportFrom, supportTo)){
-			throw new Exception("cannot support hold from "+supportFrom+" to "+supportTo);
-		}
+//		if(!supportFrom.board.canSupportHold(p, supportFrom, supportTo)){
+//			throw new Exception("cannot support hold from "+supportFrom+" to "+supportTo);
+//		}
+		
+		supportFrom.board.assertCanSupportHold(p, supportFrom, supportTo);
 		
 		this.supportFrom = supportFrom;
 		this.supportTo = supportTo;
