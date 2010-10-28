@@ -24,7 +24,7 @@ public class Hold extends Order{
 		}
 		
 		if(!square.board.canHold(p, square)){
-			throw new Exception("hold is not valid for "+square);
+			throw new Exception("hold by "+p.getName()+" is not valid for "+square);
 		}
 		
 		holdingSquare = square;

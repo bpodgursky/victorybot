@@ -263,7 +263,6 @@ public class Bot{
 				if(message[0].equals("NOW")){
 					
 					
-					board.setTime(message[2], Integer.parseInt(message[3]));
 					
 					if(message[2].equals("SPR") || message[2].equals("FAL")){
 						if(settings.mtl != -1){
@@ -303,6 +302,12 @@ public class Bot{
 					
 					receivedOrders.clear();
 					
+					if(message[2].equals("WIN")){
+						board.updateSupplyControl();
+					}
+					
+					board.setTime(message[2], Integer.parseInt(message[3]));
+					
 					search.noteBoardUpdate();
 					search.noteDiplomaticUpdate();
 					search.noteBeliefUpdate();
@@ -332,7 +337,7 @@ public class Bot{
 	///////////////////////////////////////////////////////////////////////////////////////
 	// Main class for launching bot
 	
-	public final static int LAUNCH_BOTS = 6;
+	public final static int LAUNCH_BOTS = 1;
 	
 	public static void main(String[] args) throws InterruptedException {
 
