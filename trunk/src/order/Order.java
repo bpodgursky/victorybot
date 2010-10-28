@@ -34,6 +34,10 @@ public abstract class Order {
 	
 	public abstract String toOrder();
 	
+	public Result getResult(){
+		return actionResult;
+	}
+	
 	public String toString(){
 		return this.toOrder();
 	}

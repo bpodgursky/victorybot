@@ -116,6 +116,10 @@ public class BoardState {
 			throw new Exception("Territory not supply center");
 		}
 		
+		if(terr.getController() == p){
+			throw new Exception("Player already controls this center!");
+		}
+		
 		if(terr.isControlled()){
 			terr.getController().removeSupply(terr);
 		}
@@ -135,7 +139,7 @@ public class BoardState {
 		}
 		
 		if(terr.getOccupier() != null){
-			throw new Exception("territory already occupied");
+			throw new Exception("territory "+terr.getName()+" already occupied");
 		}
 		
 		u.belongsTo.addOccupy(terr);
@@ -277,16 +281,16 @@ public class BoardState {
 				
 		//sea territories
 		terrs.put("NAO", new TerritorySquare("NAO",	NO_SUPPLY, SEA, null, this));
-		terrs.put("NRG", new TerritorySquare("NRG",	NO_SUPPLY, SEA, null, this));
+		terrs.put("NWG", new TerritorySquare("NWG",	NO_SUPPLY, SEA, null, this));
 		terrs.put("NTH", new TerritorySquare("NTH",	NO_SUPPLY, SEA, null, this));
 		terrs.put("BAR", new TerritorySquare("BAR",	NO_SUPPLY, SEA, null, this));
 		terrs.put("BAL", new TerritorySquare("BAL",	NO_SUPPLY, SEA, null, this));
-		terrs.put("BOT", new TerritorySquare("BOT",	NO_SUPPLY, SEA, null, this));
+		terrs.put("GOB", new TerritorySquare("GOB",	NO_SUPPLY, SEA, null, this));
 		terrs.put("IRI", new TerritorySquare("IRI",	NO_SUPPLY, SEA, null, this));
 		terrs.put("SKA", new TerritorySquare("SKA",	NO_SUPPLY, SEA, null, this));
 		terrs.put("HEL", new TerritorySquare("HEL",	NO_SUPPLY, SEA, null, this));
-		terrs.put("ENG", new TerritorySquare("ENG",	NO_SUPPLY, SEA, null, this));
-		terrs.put("MID", new TerritorySquare("MID",	NO_SUPPLY, SEA, null, this));
+		terrs.put("ECH", new TerritorySquare("ECH",	NO_SUPPLY, SEA, null, this));
+		terrs.put("MAO", new TerritorySquare("MAO",	NO_SUPPLY, SEA, null, this));
 		terrs.put("WES", new TerritorySquare("WES",	NO_SUPPLY, SEA, null, this));
 		terrs.put("LYO", new TerritorySquare("LYO",	NO_SUPPLY, SEA, null, this));
 		terrs.put("TYN", new TerritorySquare("TYN",	NO_SUPPLY, SEA, null, this));
@@ -298,30 +302,31 @@ public class BoardState {
 
 		//ocean adjacencies
 		
-		border("NAO", "NRG", true);
+		border("NAO", "NWG", true);
 		border("NAO", "CLY", true);
 		border("NAO", "IRI", true);
-		border("NAO", "MID", true);
+		border("NAO", "MAO", true);
 		
-		border("NRG", "BAR", true);
-		border("NRG", "NWY", true);
-		border("NRG", "NTH", true);
-		border("NRG", "EDI", true);
+		border("NWG", "BAR", true);
+		border("NWG", "NWY", true);
+		border("NWG", "NTH", true);
+		border("NWG", "EDI", true);
 		
 		border("BAR", "STP", "NA", "NCS");
 		border("BAR", "NWY", true);
 		
-		border("MID", "IRI", true);
-		border("MID", "ENG", true);
-		border("MID", "BRE", true);
-		border("MID", "GAS", true);
-		border("MID", "SPA", "NA", "NCS");
-		border("MID", "POR", true);
+		border("MAO", "IRI", true);
+		border("MAO", "ECH", true);
+		border("MAO", "BRE", true);
+		border("MAO", "GAS", true);
+		border("MAO", "SPA", "NA", "NCS");
+		border("MAO", "SPA", "NA", "SCS");
+		border("MAO", "POR", true);
 		
 		border("IRI", "CLY", true);
 		border("IRI", "LVP", true);
 		border("IRI", "WAL", true);
-		border("IRI", "ENG", true);
+		border("IRI", "ECH", true);
 		
 		border("NTH", "SKA", true);
 		border("NTH", "NWY", true);
@@ -332,30 +337,30 @@ public class BoardState {
 		border("NTH", "YOR", true);
 		border("NTH", "EDI", true);
 		border("NTH", "HEL", true);
-		border("NTH", "ENG", true);
+		border("NTH", "ECH", true);
 		
 		border("SKA", "NWY", true);
 		border("SKA", "SWE", true);
 		border("SKA", "DEN", true);
 		
 		border("BAL", "SWE", true);
-		border("BAL", "BOT", true);
+		border("BAL", "GOB", true);
 		border("BAL", "LVN", true);
 		border("BAL", "PRU", true);
 		border("BAL", "BER", true);
 		border("BAL", "KIE", true);
 		border("BAL", "DEN", true);
 		
-		border("BOT", "SWE", true);
-		border("BOT", "FIN", true);
-		border("BOT", "STP", "NA", "SCS");
-		border("BOT", "LVN", true);
+		border("GOB", "SWE", true);
+		border("GOB", "FIN", true);
+		border("GOB", "STP", "NA", "SCS");
+		border("GOB", "LVN", true);
 		
-		border("ENG", "WAL", true);
-		border("ENG", "LON", true);
-		border("ENG", "BEL", true);
-		border("ENG", "PIC", true);
-		border("ENG", "BRE", true);
+		border("ECH", "WAL", true);
+		border("ECH", "LON", true);
+		border("ECH", "BEL", true);
+		border("ECH", "PIC", true);
+		border("ECH", "BRE", true);
 		
 		border("WES", "SPA", "NA", "SCS");
 		border("WES", "LYO", true);
@@ -502,6 +507,7 @@ public class BoardState {
 		border("GAS", "SPA", "NA", "NCS");
 		border("GAS", "MAR", false);
 		border("GAS", "BUR", false);
+		border("GAS", "PAR", false);
 		
 		border("PAR", "BUR", false);
 		
@@ -693,6 +699,23 @@ public class BoardState {
 		return terrs.get(name);
 	}
 	
+	public void updateSupplyControl() throws Exception{
+		
+		for(Player p: this.activePlayers.values()){
+			
+			//for each of their units, set them as controlling the center (if it is one)
+			
+			Set<TerritorySquare> control = p.getControlledTerritories();
+			for(TerritorySquare sq: p.getOccupiedTerritories()){
+				if(sq.isSupplyCenter()){
+					if(!control.contains(sq)){
+						setControl(p, sq);
+					}
+				}
+			}
+		}
+	}
+	
 	public void update(Set<Order> moves) throws Exception{
 		
 		//TODO for now just apply it if the results are set
@@ -700,11 +723,14 @@ public class BoardState {
 		//TODO this code needs to be tested
 		
 		//process movements separately--slightly more complex resolutions
-		Set<Order> movements = new HashSet<Order>();
+		Set<Order> successfulMoves = new HashSet<Order>();
 		
+		System.out.println("Processing orders: ");
 		for(Order ord: moves){
-			
+				
 			if(ord.actionResult == Result.SUC){
+				System.out.println(ord.toOrder()+ " "+ord.getResult());
+				
 				if(ord.getClass() == Build.class){
 					Build b = (Build)ord;
 					
@@ -725,11 +751,11 @@ public class BoardState {
 					
 				}else if(ord.getClass() == Move.class){
 					
-					movements.add(ord);
+					successfulMoves.add(ord);
 					
 				}else if(ord.getClass() == MoveByConvoy.class){
 					
-					movements.add(ord);
+					successfulMoves.add(ord);
 					
 				}else if(ord.getClass() == Remove.class){
 					Remove rem = (Remove)ord;
@@ -765,42 +791,49 @@ public class BoardState {
 					Convoy c = (Convoy)ord;
 					
 					setRetreatingUnit(c.convoyingUnit, c.convoyer, "NA");
+					this.removeOccupier(c.convoyer);
 					
 				}else if(ord.getClass() == Hold.class){
 					Hold hold = (Hold)ord;
 					
 					setRetreatingUnit(hold.holdingUnit, hold.holdingSquare, hold.holdingSquare.getOccupiedCoast());
+					this.removeOccupier(hold.holdingSquare);
 					
 				}else if(ord.getClass() == Move.class){
 					Move mov = (Move)ord;
 					
 					setRetreatingUnit(mov.unit, mov.from, mov.from.getOccupiedCoast());
+					this.removeOccupier(mov.from);
 					
 				}else if(ord.getClass() == MoveByConvoy.class){
 					MoveByConvoy mbc = (MoveByConvoy)ord;
 					
 					setRetreatingUnit(mbc.convoyedUnit, mbc.convoyOrigin, "NA");
+					this.removeOccupier(mbc.convoyOrigin);
 					
 				}else if(ord.getClass() == SupportHold.class){
 					SupportHold shold = (SupportHold)ord;
 					
 					setRetreatingUnit(shold.supporter, shold.supportFrom, shold.supportFrom.getOccupiedCoast());
+					this.removeOccupier(shold.supportFrom);
 					
 				}else if(ord.getClass() == SupportMove.class){
 					SupportMove smove = (SupportMove)ord;
 					
 					setRetreatingUnit(smove.supporter, smove.supportFrom, smove.supportFrom.getOccupiedCoast());
-					
+					this.removeOccupier(smove.supportFrom);
 				}else {
 					//nothing else should have a retreat
 					throw new Exception("should not be a retreat here");
 				}
+				
+
 			}
 		}			
 		
 		//	first map each move to where it will end up
 		Map<TerritorySquare, Order> destinations = new HashMap<TerritorySquare, Order>();
-		for(Order ord: moves){
+		for(Order ord: successfulMoves){
 			
 			if(ord.getClass() == MoveByConvoy.class){
 				MoveByConvoy mbc = (MoveByConvoy)ord;
@@ -826,7 +859,7 @@ public class BoardState {
 				
 			}else if(ord.getClass() == Move.class){
 				Move mov = (Move)ord;
-			
+				
 				setOccupier(mov.unit, mov.to);
 			}
 		}

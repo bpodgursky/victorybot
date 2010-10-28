@@ -24,7 +24,7 @@ public class Build extends Order{
 		}
 		
 		if(!location.board.canBuild(p, u, location)){
-			throw new Exception("invalid build");
+			throw new Exception("invalid build by "+p+" at "+location+" coast "+coast);
 		}
 		
 		this.build = u;
