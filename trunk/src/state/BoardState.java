@@ -315,6 +315,7 @@ public class BoardState {
 		border("NWG", "NWY", true);
 		border("NWG", "NTH", true);
 		border("NWG", "EDI", true);
+		border("NWG", "CLY", true);
 		
 		border("BAR", "STP", "NA", "NCS");
 		border("BAR", "NWY", true);
