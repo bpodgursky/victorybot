@@ -197,7 +197,10 @@ public class TerritorySquare {
 	}
 	
 	public String getUnitString(){
-		if(!this.occupier.army && this.hasMultipleCoasts()){
+		
+		if(this.occupier == null){
+			return "(unoccupied)";
+		}else if(!this.occupier.army && this.hasMultipleCoasts()){
 			return this.occupier+ " ( "+this.name+" "+this.getOccupiedCoast()+" )";
 		}else{
 			return this.occupier+ " "+this.name;

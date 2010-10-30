@@ -8,21 +8,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import order.Build;
-import order.Convoy;
-import order.Disband;
-import order.Hold;
-import order.Move;
-import order.MoveByConvoy;
 import order.Order;
-import order.OrderFactory;
-import order.Remove;
-import order.Retreat;
-import order.SupportHold;
-import order.SupportMove;
-import order.Waive;
 import order.Order.Result;
 import order.Order.RetreatState;
+import order.builds.Build;
+import order.builds.Remove;
+import order.builds.Waive;
+import order.retreats.Disband;
+import order.retreats.Retreat;
+import order.spring_fall.Convoy;
+import order.spring_fall.Hold;
+import order.spring_fall.Move;
+import order.spring_fall.MoveByConvoy;
+import order.spring_fall.SupportHold;
+import order.spring_fall.SupportMove;
 
 import representation.Country;
 import representation.Player;
@@ -87,7 +86,7 @@ public class BoardState {
 	
 	MoveHistory history = new MoveHistory();
 	
-	//TODO this is just here for testing...
+	//	only public for testing...
 	public void setRetreatingUnit(Unit retreating, TerritorySquare sqr, String originCoast){
 		retreats.put(sqr, new RetreatSituation(retreating, sqr, originCoast));
 	}
@@ -732,20 +731,337 @@ public class BoardState {
 		}
 	}
 	
+	private void resolve(Set<Order> moves){
+		//1) resolve moves
+		
+		//moves which want a location
+		Map<TerritorySquare, Set<Order>> movesWantLocation = 
+			new HashMap<TerritorySquare, Set<Order>>();
+			
+		//where moves come from
+		Map<TerritorySquare, Order> moveOrigins = 
+			new HashMap<TerritorySquare, Order>();
+		
+		//from the order to the orders which support it
+		Map<Order, Set<Order>> supportMoves = 
+			new HashMap<Order, Set<Order>>();
+		
+		//if a unit is holding or convoying,
+		//it would like to stay where it is
+		for(Order order: moves){
+			
+			if(order.getClass() == Move.class){
+				Move mov = (Move)order;
+				
+				if(!movesWantLocation.containsKey(mov.to)){
+					movesWantLocation.put(mov.to, new HashSet<Order>());
+				}
+				
+				movesWantLocation.get(mov.to).add(order);
+				moveOrigins.put(mov.from, mov);
+				
+			}else if(order.getClass() == Hold.class){
+				Hold hol = (Hold)order;
+				
+				if(!movesWantLocation.containsKey(hol.holdingSquare)){
+					movesWantLocation.put(hol.holdingSquare, new HashSet<Order>());
+				}
+				
+				movesWantLocation.get(hol.holdingSquare).add(order);
+				moveOrigins.put(hol.holdingSquare, hol);
+				
+			}else if(order.getClass() == SupportMove.class){
+				SupportMove smov = (SupportMove)order;
+				
+				if(!movesWantLocation.containsKey(smov.supportFrom)){
+					movesWantLocation.put(smov.supportFrom, new HashSet<Order>());
+				}
+				
+				movesWantLocation.get(smov.supportFrom).add(order);
+				moveOrigins.put(smov.supportFrom, smov);
+				
+			}else if(order.getClass() == SupportHold.class){
+				SupportHold shol = (SupportHold)order;
+				
+				if(!movesWantLocation.containsKey(shol.supportFrom)){
+					movesWantLocation.put(shol.supportFrom, new HashSet<Order>());
+				}
+				
+				movesWantLocation.get(shol.supportFrom).add(order);
+				moveOrigins.put(shol.supportFrom, shol);
+				
+			}else if(order.getClass() == Convoy.class){
+				Convoy con = (Convoy)order;
+				
+				if(!movesWantLocation.containsKey(con.convoyer)){
+					movesWantLocation.put(con.convoyer, new HashSet<Order>());
+				}
+				
+				movesWantLocation.get(con.convoyer).add(order);
+				moveOrigins.put(con.convoyer, con);
+				
+			}else if(order.getClass() == MoveByConvoy.class){
+				MoveByConvoy mbc = (MoveByConvoy)order;
+				
+				if(!movesWantLocation.containsKey(mbc.convoyDestination)){
+					movesWantLocation.put(mbc.convoyDestination, new HashSet<Order>());
+				}
+				
+				movesWantLocation.get(mbc.convoyDestination).add(mbc);
+				moveOrigins.put(mbc.convoyOrigin, mbc);
+			}
+		}
+		
+		//figure out what order each of the support moves is able to support
+		for(Order order: moves){
+			if(order.getClass() == SupportMove.class){
+				SupportMove smov = (SupportMove)order;
+				
+				//find the order it is supporting
+				Set<Order> movesToSquare =  movesWantLocation.get(smov.supportInto);
+				
+				for(Order potentialSupport: movesToSquare){
+					
+					//find if this order is either a move or a move by convoy
+					TerritorySquare supportedFrom = null;
+					if(potentialSupport.getClass() == Move.class){
+						Move potentialMove = (Move)potentialSupport;
+						
+						supportedFrom = potentialMove.from;
+						
+					}else if(potentialSupport.getClass() == MoveByConvoy.class){
+						MoveByConvoy potentialConvoy = (MoveByConvoy)potentialSupport;
+					
+						supportedFrom = potentialConvoy.convoyOrigin;
+					}
+						
+					//if it is, we know where it's from now
+					if(supportedFrom != null){
+						
+						if(supportedFrom == smov.supportFrom){
+							//then this order is supporting this move
+							
+							//	make sure your support is not cut
+							Set<Order> supportCutters = movesWantLocation.get(smov.supportFrom);
+							
+							boolean supportCut = false;
+							for(Order potentialCut: supportCutters){
+								if(potentialCut.getClass() == Move.class){
+									Move moveCut = (Move)potentialCut;
+									
+									//the support is cut if someone who is not where you are
+									//supporting into cuts it, and it is not the same player 
+									//as the supporter
+									if(moveCut.from != smov.supportInto &&
+											moveCut.player != smov.player){
+										supportCut = true;
+									}
+									
+								}else if(potentialCut.getClass() == MoveByConvoy.class){
+									MoveByConvoy mbcCut = (MoveByConvoy)potentialCut;
+									
+									//the support is cut if someone who is not where you are
+									//supporting into cuts it, and it is not the same player 
+									//as the supporter
+									if(mbcCut.convoyOrigin != smov.supportInto &&
+											mbcCut.player != smov.player){
+										supportCut = true;
+									}
+								}
+							}
+							
+							if(!supportCut){
+								if(!supportMoves.containsKey(potentialSupport)){
+									supportMoves.put(potentialSupport, new HashSet<Order>());
+								}
+								
+								supportMoves.get(potentialSupport).add(order);
+							}
+						}
+					}
+				}
+				
+			}
+			else if(order.getClass() == SupportHold.class){
+				SupportHold shol = (SupportHold)order;
+				
+				//find the order it is supporting
+				Set<Order> movesToSquare =  movesWantLocation.get(shol.supportTo);
+				
+				//you can support hold on anything that doesn't move
+				for(Order potentialSupport: movesToSquare){
+					
+					//could support a hold, supporthold, supportmove, convoy
+					
+					TerritorySquare holdLocation = null;
+					
+					if(potentialSupport.getClass() == Hold.class){
+						Hold hol = (Hold)potentialSupport;
+						
+						holdLocation = hol.holdingSquare;
+						
+					}else if(potentialSupport.getClass() == SupportHold.class){
+						SupportHold shold = (SupportHold)potentialSupport;
+						
+						holdLocation = shold.supportTo;
+						
+					}else if(potentialSupport.getClass() == SupportMove.class){
+						SupportMove smov = (SupportMove)potentialSupport;
+						
+						holdLocation = smov.supportFrom;
+						
+					}else if(potentialSupport.getClass() == Convoy.class){
+						Convoy conv = (Convoy)potentialSupport;
+						
+						holdLocation = conv.convoyer;
+						
+					}
+					
+					///if the order was one of these type
+					if(holdLocation != null){
+						
+						//and if it's the location that the support hold was supporting
+						if(holdLocation == shol.supportTo){
+							
+							//then this is the order we are looking to support
+							//	make sure your support is not cut
+							Set<Order> supportCutters = movesWantLocation.get(shol.supportFrom);
+							
+							boolean supportCut = false;
+							for(Order potentialCut: supportCutters){
+								if(potentialCut.getClass() == Move.class){
+									Move moveCut = (Move)potentialCut;
+									
+									//the support is cut if someone who is not where you are
+									//supporting into cuts it, and it is not the same player 
+									//as the supporter
+									if(moveCut.player != shol.player){
+										supportCut = true;
+									}
+									
+								}else if(potentialCut.getClass() == MoveByConvoy.class){
+									MoveByConvoy mbcCut = (MoveByConvoy)potentialCut;
+									
+									//the support is cut if someone who is not where you are
+									//supporting into cuts it, and it is not the same player 
+									//as the supporter
+									if(mbcCut.player != shol.player){
+										supportCut = true;
+									}
+								}
+							}
+							
+							if(!supportCut){
+								if(!supportMoves.containsKey(potentialSupport)){
+									supportMoves.put(potentialSupport, new HashSet<Order>());
+								}
+								
+								supportMoves.get(potentialSupport).add(order);
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		//TODO resolve convoys -- aka see if any are dislodged or invalid.  fail moves 
+		// which rely on them
+
+		//now that the supports have been allocated, just iterate over the moves
+		
+		Set<Order> unresolvedMoves = new HashSet<Order>();
+		
+		for(Order ord: moves){
+			if(ord.getClass() == Move.class){
+				unresolvedMoves.add(ord);
+			}else if(ord.getClass() == MoveByConvoy.class){
+				unresolvedMoves.add(ord);
+			}
+		}
+		
+		
+		Map<TerritorySquare, Order> mostSupportForTerritory = new HashMap<TerritorySquare, Order>();
+		
+		for(TerritorySquare terr: movesWantLocation.keySet()){
+			
+			Set<Order> competitors = movesWantLocation.get(terr);
+			
+			Order mostSupported = null;
+			int mostSupports = 0;
+			
+			for(Order ord: competitors){
+				
+				
+				
+			}
+		}
+		
+		
+		while(!unresolvedMoves.isEmpty()){
+			
+			//loop through each
+			for(Order ord: unresolvedMoves.toArray(new Order[0])){
+				//	iteratively see if moves succeed.  for each unresolved move:
+				
+
+				TerritorySquare moveDestination = null;
+				
+				if(ord.getClass() == Move.class){
+					moveDestination = ((Move)ord).to;
+				}else if(ord.getClass() == MoveByConvoy.class){
+					moveDestination = ((MoveByConvoy)ord).convoyDestination;
+				}
+
+				//		if the territory it moves into was originally unoccupied, or the move has
+				//		2 or more support and the original occupier was a different power	
+				if(moveDestination.getOccupier() == null || 
+						supportMoves.get(ord).size() > 1 && 
+						moveDestination.getOccupier().belongsTo != ord.player){
+					
+					Set<Order> competitors = movesWantLocation.get(moveDestination);
+					
+					//			if the move has more support than anyone else moving into it  
+					if()
+
+					//				set it as succeed
+					//				set other moves into the territory as failing
+					//			else
+					//				set the successful move as succeeding
+					//				set the other moves including this into it as failing					
+				}
+	
+			
+
+				//		else  
+				//			if the unit originally in the territory has successfully moved out
+				//				set it as succeed
+				//			else if it is not moving out, or failed
+				//				set it as fail				
+				
+			}
+		}
+	}
+	
+	
 	public void update(Set<Order> moves) throws Exception{
 		
-		//TODO for now just apply it if the results are set
+
 		
-		//TODO this code needs to be tested
+		//	figure out which moves were successful
+		
+		//	for each territory, find out how many 
+		
+		
+		//TODO for now just apply it if the results are set
 		
 		//process movements separately--slightly more complex resolutions
 		Set<Order> successfulMoves = new HashSet<Order>();
 		
-		System.out.println("Processing orders: ");
+		System.out.println("Successful orders to process:");
 		for(Order ord: moves){
 				
 			if(ord.actionResult == Result.SUC){
-				//System.out.println(ord.toOrder()+ " "+ord.getResult());
+				System.out.println(ord.toOrder()+ " "+ord.getResult());
 				
 				if(ord.getClass() == Build.class){
 					Build b = (Build)ord;
@@ -881,7 +1197,7 @@ public class BoardState {
 			}
 		}
 		
-		//TODO update history
+		history.add(currentYear, currentPhase, moves);
 	}
 	
 	public String toString(){
