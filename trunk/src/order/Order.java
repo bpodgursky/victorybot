@@ -11,13 +11,13 @@ public abstract class Order {
 	//	those fail
 	public enum Result{SUC, BNC, CUT, DSR, NSO, MAYBE, FAIL}; 
 	
-	public final Result actionResult;
+	public Result actionResult;
 	
 	//	it has to retreat, doesn't have to retreat, or 
 	//	action hasn't been executed
 	public enum RetreatState{RET, NO, NA, MAYBE}
 	
-	public final RetreatState retreatState;
+	public RetreatState retreatState;
 	
 	public final Player player;
 	

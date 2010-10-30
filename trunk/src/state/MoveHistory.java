@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import order.Hold;
-import order.Move;
 import order.Order;
+import order.spring_fall.Hold;
+import order.spring_fall.Move;
 
 import representation.Player;
 import representation.TerritorySquare;
