@@ -1,4 +1,4 @@
-package state;
+package state.dynamic;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,7 +14,7 @@ import order.spring_fall.Move;
 
 import representation.Player;
 import representation.TerritorySquare;
-import state.BoardState.Phase;
+import state.constant.BoardConfiguration.Phase;
 
 //	a history of all moves
 public class MoveHistory {
