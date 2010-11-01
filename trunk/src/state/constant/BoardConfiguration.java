@@ -1213,6 +1213,7 @@ public class BoardConfiguration {
 				
 
 			}
+
 		}			
 		
 		//	first map each move to where it will end up
@@ -1248,7 +1249,16 @@ public class BoardConfiguration {
 			}
 		}
 		
-		bst.updateHistory(bst.currentYear, bst.currentPhase, moves);
+		bst.updateHistory(orig.currentYear, orig.currentPhase, moves);
+		
+		if(phase == Phase.WIN){
+			updateSupplyControl(bst);
+		}
+		
+		//	even if winter didn't happen, update controls
+		if(phase == Phase.SPR && orig.currentPhase != Phase.WIN){
+			updateSupplyControl(bst);
+		}
 		
 		return bst;
 	}
@@ -1780,7 +1790,7 @@ public class BoardConfiguration {
 		assertCanRetreat(bst, p, from, to, "NA");
 	}
 	
-	public boolean canRetreat(BoardState bst, Player p, TerritorySquare from, TerritorySquare to){
+	public boolean canRetreat(BoardState bst, Player p, TerritorySquare from, TerritorySquare to) throws Exception{
 		return canRetreat(bst, p, from, to, "NA");
 	}
 	
@@ -1828,7 +1838,7 @@ public class BoardConfiguration {
 		return true;
 	}
 	
-	public boolean canRetreat(BoardState bst, Player p, TerritorySquare from, TerritorySquare to, String destinationCoast){
+	public boolean canRetreat(BoardState bst, Player p, TerritorySquare from, TerritorySquare to, String destinationCoast) throws Exception{
 		
 		if(bst.currentPhase != Phase.AUT && bst.currentPhase != Phase.SUM){
 			return false;
