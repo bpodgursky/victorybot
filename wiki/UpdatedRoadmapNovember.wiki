@@ -1,4 +1,4 @@
-#summary One-sentence summary of this page.
+#summary Roadmap for functionality, updated nov 1
 
 = Introduction =
 
