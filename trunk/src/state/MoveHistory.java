@@ -34,7 +34,37 @@ public class MoveHistory {
 			OrderSet moves = moveHistory.get(i);
 			
 			if(moves.phase == Phase.SPR || moves.phase == Phase.FAL){
+				if(!moves.ordersTo.containsKey(square)) return false;
+			
 				return !moves.ordersTo.get(square).isEmpty();
+			}else{
+				continue;
+			}
+		}
+		
+		//	won't actually get here
+		return false;
+	}
+	
+	public boolean isValidRetreat(TerritorySquare square){
+		
+		if(moveHistory.size() == 0) return true;
+		
+		for(int i = moveHistory.size()-1; i >= 0; i--){
+			OrderSet moves = moveHistory.get(i);
+			
+			if(moves.phase == Phase.SPR || moves.phase == Phase.FAL){
+				if(!moves.ordersTo.containsKey(square)) return true;
+			
+				//	if it's not empty now, it's not a valid retreat
+				if(square.getOccupier() != null) return false;
+				
+				//	if two or more units contested it, it's an invalid retreat (standoff)
+				Set<Order> contestants = moves.ordersTo.get(square);
+				
+				if(contestants.size() >= 2) return false;
+				
+				return true;
 			}else{
 				continue;
 			}
@@ -86,7 +116,7 @@ class OrderSet{
 		//	and which players made them
 		for(Order ord: orders){
 			
-			if(this.orders.containsKey(ord.player)){
+			if(!this.orders.containsKey(ord.player)){
 				this.orders.put(ord.player, new HashSet<Order>());
 			}
 			
