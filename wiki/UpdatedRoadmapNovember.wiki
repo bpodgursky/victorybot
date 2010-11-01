@@ -1,0 +1,35 @@
+#summary One-sentence summary of this page.
+
+= Introduction =
+
+Updated timeline
+
+
+= Details =
+
+Game mechanics
+  finish resolution code to determine move success and failure 
+       -- should have a workable version by monday or tuesday
+Game search
+  0) factor out state from configuration, so search can easily backtrack
+       -- done
+  1) generate all (or many) valid moves for each player
+
+     returns map<player, set<set<order>>>
+  
+  2) rank moves for each player by some heuristic measure 
+
+     returns map<player, ordered list<pair<quality, set<order>>>>
+
+  3) for some combination of sets of orders for each player (map<player, set<order>>),
+    execute moves to get updated game state
+
+     returns BoardState, updated with those moves
+
+  4) evaluate new state quality by some heuristic measure
+
+  5) perform standard minimax search procedures--find a move such that it has a very few 
+  possible terrible consequences 
+  
+Diplomizer
+Belief state
