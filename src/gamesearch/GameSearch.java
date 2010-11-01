@@ -10,10 +10,10 @@ import java.util.HashSet;
 
 import representation.Player;
 import representation.TerritorySquare;
-import state.BeliefState;
-import state.DiplomaticState;
-import state.BoardState;
-import state.BoardState.Phase;
+import state.constant.BoardConfiguration;
+import state.constant.BoardConfiguration.Phase;
+import state.dynamic.BeliefState;
+import state.dynamic.DiplomaticState;
 
 //	gamesearch runs in a separate thread.  call methods on it to notify it of things--
 // 	updated state, diplomatic changes, etc
@@ -24,7 +24,7 @@ public class GameSearch {
 	
 	//	use these as base for search, heuristic for search, and to inform
 	//	move success probabilities, respectively
-	private final BoardState boardState;
+	private final BoardConfiguration boardState;
 	private final DiplomaticState dipState;
 	private final BeliefState beliefState;
 	
@@ -37,7 +37,7 @@ public class GameSearch {
 	private boolean dipUpdate;
 	private boolean beliefUpdate;
 	
-	public GameSearch(Player player, BoardState state, DiplomaticState dipState, BeliefState beliefState){
+	public GameSearch(Player player, BoardConfiguration state, DiplomaticState dipState, BeliefState beliefState){
 
 		this.relevantPlayer = player;
 		
@@ -95,9 +95,6 @@ public class GameSearch {
 						}else{
 							currentOrders = new HashSet<Order>();
 						}
-//						else if(boardState.getCurrentPhase() == Phase.WI){
-//							
-//						}
 						
 					}else{
 						Thread.sleep(10);

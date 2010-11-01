@@ -6,7 +6,7 @@ import order.Order.RetreatState;
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
-import state.BoardState;
+import state.constant.BoardConfiguration;
 
 public class SupportMove extends Order{
 

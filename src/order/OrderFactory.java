@@ -22,16 +22,16 @@ import order.spring_fall.SupportMove;
 import representation.Country;
 import representation.TerritorySquare;
 import representation.Unit;
-import state.BoardState;
+import state.constant.BoardConfiguration;
 
 public class OrderFactory {
 
 	//public final TerritorySquare unitLoc;
 
 	
-	public final BoardState state;
+	public final BoardConfiguration state;
 	
-	public OrderFactory(BoardState state){
+	public OrderFactory(BoardConfiguration state){
 		this.state = state;
 	}
 	
@@ -277,9 +277,9 @@ public class OrderFactory {
 	
 	public static void main(String[] args)
 	{
-		BoardState temp = null;
+		BoardConfiguration temp = null;
 		try {
-			temp = new BoardState();
+			temp = new BoardConfiguration();
 			OrderFactory test = new OrderFactory(temp);
 			
 			Order testMove2 = test.buildOrder("ORD ( SPR 1901 ) ( ( RUS FLT ( STP SCS ) ) MTO FIN ) ( SUC )".split(" "));

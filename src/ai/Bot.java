@@ -27,9 +27,9 @@ import order.Order;
 import order.OrderFactory;
 
 import representation.Country;
-import state.BeliefState;
-import state.BoardState;
-import state.DiplomaticState;
+import state.constant.BoardConfiguration;
+import state.dynamic.BeliefState;
+import state.dynamic.DiplomaticState;
 
 /**
  * An interactive client for testing the communication. Lines are read from
@@ -47,7 +47,7 @@ public class Bot{
 	private final Server serv;
 	boolean atPrompt;
 	
-	private final BoardState board;
+	private final BoardConfiguration board;
 	private final DiplomaticState diplomaticState;
 	private final BeliefState beliefs;
 	
@@ -101,7 +101,7 @@ public class Bot{
 	public Bot(InetAddress ip, int port, String name) throws Exception {
 		this.name = name;
 
-		board = new BoardState();
+		board = new BoardConfiguration();
 		diplomaticState = new DiplomaticState();
 		beliefs = new BeliefState();
 		

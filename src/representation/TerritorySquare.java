@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import state.BoardState;
+import state.constant.BoardConfiguration;
 
 
 
@@ -40,13 +40,9 @@ public class TerritorySquare {
 	final String name;
 	
 	//not 100% sure this needs to be here, but it's useful when assessing the validity of moves (by phase)
-	public final BoardState board;
+	public final BoardConfiguration board;
 	
 	//dynamic
-	
-	Player controller;		//null if none
-	Unit occupier;			//null if none
-	String occupiedCoast; 	//
 	
 	public void setController(Player p){
 		controller = p;
@@ -122,7 +118,7 @@ public class TerritorySquare {
 	
 	public TerritorySquare(String name, 
 			boolean isSupply, boolean isLand,
-			Player homeSupplyFor, BoardState state){
+			Player homeSupplyFor, BoardConfiguration state){
 		this(name, isSupply, isLand, homeSupplyFor, null, state);
 	}
 	
@@ -134,7 +130,7 @@ public class TerritorySquare {
 			boolean isSupply, boolean isLand,
 			Player homeSupplyFor,
 			Collection<String> coasts,
-			BoardState state){
+			BoardConfiguration state){
 		
 		this.name = name;
 		this.isLand = isLand;

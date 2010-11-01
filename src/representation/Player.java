@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import state.BoardState;
+import state.constant.BoardConfiguration;
 
 
 
@@ -13,7 +13,7 @@ public class Player {
 
 	//constant
 	
-	public final BoardState board;
+	public final BoardConfiguration board;
 	public final Country power;  
 	
 	final Set<TerritorySquare> homeCenters = new HashSet<TerritorySquare>();
@@ -21,15 +21,7 @@ public class Player {
 	
 	//dynamic
 	
-	//the set of territories you have units in 
-	final Set<TerritorySquare> occupiedTerritories = new HashSet<TerritorySquare>();
-	
-	//the ones you control.  Note, the territory will have a unit in it, that will indicate
-	//whether it is army or navy.
-	final Set<TerritorySquare> supplyCenters = new HashSet<TerritorySquare>();
-
-	
-	public Player(Country power, BoardState board){
+	public Player(Country power, BoardConfiguration board){
 		
 		this.board = board;
 		this.power = power;

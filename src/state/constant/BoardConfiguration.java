@@ -1,6 +1,7 @@
-package state;
+package state.constant;
 
 
+import java.io.FileWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,9 +28,10 @@ import representation.Country;
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
+import state.dynamic.MoveHistory;
 
 
-public class BoardState {
+public class BoardConfiguration {
 	
 	final static boolean SUPPLY = true;
 	final static boolean NO_SUPPLY = false;
@@ -39,22 +41,7 @@ public class BoardState {
 	
 	final static boolean LAND = true;
 	final static boolean SEA = false;
-	
-	
-	public enum Phase{SPR, SUM, FAL, AUT, WIN}
-	
-	//spring = first moves
-	//sum = retreats after first
-	//fall = second moves
-	//aut = retreats after fall
-	//win = builds and disbands
-	Phase currentPhase;
-	
-	public Phase getCurrentPhase(){
-		return currentPhase;
-	}
-	
-	int currentYear;
+
 	
 	//constant
 	
@@ -99,7 +86,7 @@ public class BoardState {
 		return retreats.get(sq).retreating;
 	}
 	
-	public BoardState() throws Exception{
+	public BoardConfiguration() throws Exception{
 		initialize();
 	}
 	
@@ -1955,11 +1942,11 @@ public class BoardState {
 	
 	public static void main(String[] args) throws Exception{
 		
-//		FileWriter fwriter = new FileWriter("map.gviz");
-//		fwriter.write(new GameState().mapAsDotFile());
-//		fwriter.close();
+		FileWriter fwriter = new FileWriter("map.gviz");
+		fwriter.write(new BoardConfiguration().mapAsDotFile());
+		fwriter.close();
 		
-		BoardState g = new BoardState();
+		BoardConfiguration g = new BoardConfiguration();
 		System.out.println(g.toString());
 	}	
 }

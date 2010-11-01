@@ -16,14 +16,14 @@ import order.spring_fall.SupportMove;
 import representation.Country;
 import representation.Player;
 import representation.Unit;
-import state.BoardState;
-import state.BoardState.Phase;
+import state.constant.BoardConfiguration;
+import state.constant.BoardConfiguration.Phase;
 
 public class TestOrders {
 	
 	public void testPrint() throws Exception{
 	
-		BoardState bst = new BoardState();
+		BoardConfiguration bst = new BoardConfiguration();
 		
 		Player rus = bst.getPlayer(Country.RUS);
 		
