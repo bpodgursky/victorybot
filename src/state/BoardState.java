@@ -309,6 +309,7 @@ public class BoardState {
 		border("NAO", "CLY", true);
 		border("NAO", "IRI", true);
 		border("NAO", "MAO", true);
+		border("LVP", "NAO", true);
 		
 		border("NWG", "BAR", true);
 		border("NWG", "NWY", true);
@@ -397,6 +398,7 @@ public class BoardState {
 		border("ION", "AEG", true);
 		border("ION", "EAS", true);
 		border("ION", "TUN", true);
+		border("ION", "APU", true);
 		
 		border("ADR", "APU", true);
 		border("ADR", "VEN", true);
@@ -731,8 +733,20 @@ public class BoardState {
 		}
 	}
 	
-	private void resolve(Set<Order> moves){
+	private void resolve(Set<Order> moves) throws Exception{
 		//1) resolve moves
+		
+		//TODO for testing for now, going to just check that our resolution is correct
+		Map<Order, Result> actualResults = new HashMap<Order, Result>();
+		Map<Order, RetreatState> actualRetreats = new HashMap<Order, RetreatState>();
+		
+		for(Order ord: moves){
+			actualResults.put(ord, ord.actionResult);
+			actualRetreats.put(ord, ord.retreatState);
+			
+			ord.actionResult = Result.MAYBE;
+			ord.retreatState = RetreatState.MAYBE;
+		}
 		
 		//moves which want a location
 		Map<TerritorySquare, Set<Order>> movesWantLocation = 
@@ -979,7 +993,7 @@ public class BoardState {
 			}
 		}
 		
-		
+		//	add only if there is a unique move with the most support
 		Map<TerritorySquare, Order> mostSupportForTerritory = new HashMap<TerritorySquare, Order>();
 		
 		for(TerritorySquare terr: movesWantLocation.keySet()){
@@ -988,11 +1002,21 @@ public class BoardState {
 			
 			Order mostSupported = null;
 			int mostSupports = 0;
+			int numWithSupportCount = 0;
 			
 			for(Order ord: competitors){
-				
-				
-				
+				int supporters = supportMoves.get(ord).size();
+				if(supporters > mostSupports){
+					mostSupports = supporters;
+					mostSupported = ord;
+					numWithSupportCount = 1;
+				}else if(supporters == mostSupports){
+					numWithSupportCount++;
+				}
+			}
+			
+			if(numWithSupportCount == 1){
+				mostSupportForTerritory.put(terr, mostSupported);
 			}
 		}
 		
@@ -1003,7 +1027,6 @@ public class BoardState {
 			for(Order ord: unresolvedMoves.toArray(new Order[0])){
 				//	iteratively see if moves succeed.  for each unresolved move:
 				
-
 				TerritorySquare moveDestination = null;
 				
 				if(ord.getClass() == Move.class){
@@ -1015,37 +1038,102 @@ public class BoardState {
 				//		if the territory it moves into was originally unoccupied, or the move has
 				//		2 or more support and the original occupier was a different power	
 				if(moveDestination.getOccupier() == null || 
-						supportMoves.get(ord).size() > 1 && 
-						moveDestination.getOccupier().belongsTo != ord.player){
+						(supportMoves.get(ord).size() > 1 && // if it has 2 or more support and it's a different person, it won't get held 
+															 //	up by blocked moves
+						moveDestination.getOccupier().belongsTo != ord.player)){
 					
+
+					//			get the move with the most support into the destination territory
+					//			(if there is such a move)
+					
+					Order successfulOrder = mostSupportForTerritory.get(moveDestination);
 					Set<Order> competitors = movesWantLocation.get(moveDestination);
 					
-					//			if the move has more support than anyone else moving into it  
-					if()
+					if(successfulOrder != null){
+						
+						//	set it as succeed
+						successfulOrder.actionResult = Result.SUC;
+						
+						//	set other moves wanting the territory as failing
+						//	if it was a hold or a support hold or a convoy, it's been 
+						//	dislodged as well
+						for(Order otherOrd: competitors){
+							if(otherOrd != successfulOrder){
+								otherOrd.actionResult = Result.FAIL;
+								
+								if(otherOrd.getClass() != Move.class && otherOrd.getClass() != MoveByConvoy.class){
+									otherOrd.retreatState = RetreatState.RET;
+								}
+							}
+						}
+					}
+					
+					//	else all moves into it fail 
+					else{
+						for(Order otherOrd: competitors){
+							if(otherOrd.getClass() == Move.class || otherOrd.getClass() == MoveByConvoy.class){
+								otherOrd.actionResult = Result.FAIL;
+							}
+						}
+					}
+					
+				}else{
+					//		else if the unit originally in the territory has successfully moved out
+					Order moveOut = moveOrigins.get(moveDestination);
+					
+					
+					if((moveOut.getClass() == Move.class || moveOut.getClass() == MoveByConvoy.class) &&
+							moveOut.actionResult == Result.SUC){
 
-					//				set it as succeed
-					//				set other moves into the territory as failing
-					//			else
-					//				set the successful move as succeeding
-					//				set the other moves including this into it as failing					
+						Order successfulOrder = mostSupportForTerritory.get(moveDestination);
+							
+						if(successfulOrder != null){
+							//	set the designated move as a success
+							successfulOrder.actionResult = Result.SUC;
+							
+							Set<Order> competitors = movesWantLocation.get(moveDestination);
+							
+							for(Order otherOrd: competitors){
+								if(otherOrd != successfulOrder){
+									otherOrd.actionResult = Result.FAIL;
+								}
+							}
+						}
+					}else if(moveOut.actionResult == Result.FAIL){
+						ord.actionResult = Result.FAIL;
+					}
 				}
 	
-			
-
-				//		else  
-				//			if the unit originally in the territory has successfully moved out
-				//				set it as succeed
-				//			else if it is not moving out, or failed
-				//				set it as fail				
-				
+				//TODO resolve cycles that occur
 			}
+		}
+		
+		
+		//	check to see how disastrously we are off in our resolutions
+		
+		for(Order ord: moves){
+			
+			Result calculatedResult = ord.actionResult;
+			Result realResult = actualResults.get(ord);
+			
+			RetreatState calculatedRetreat = ord.retreatState;
+			RetreatState realRetreat = actualRetreats.get(ord);
+			
+			if(calculatedResult != realResult){
+				throw new Exception("order "+ord+" should have resolved as "+realResult+ " but was resolved as "+calculatedResult);
+			}
+			
+			if(calculatedRetreat != realRetreat){
+				throw new Exception("order "+ord+" should have resolved as "+realRetreat+ " but was resolved as "+calculatedRetreat);
+			}
+			
 		}
 	}
 	
 	
 	public void update(Set<Order> moves) throws Exception{
 		
-
+		//resolve(moves);
 		
 		//	figure out which moves were successful
 		
@@ -1593,7 +1681,7 @@ public class BoardState {
 		
 		//	controller must have spare builds--fewer occupied territories than controlled territories
 		if(u.belongsTo.getNumberUnits() >= u.belongsTo.getNumberSupplyCenters()){
-			throw new Exception("player does not have any builds");
+			throw new Exception("player "+u.belongsTo+" does not have any builds");
 		}
 		
 		//	location must controlled by u.controller
@@ -1768,7 +1856,7 @@ public class BoardState {
 			}
 		}
 		
-		if(history.wasTerritoryContested(to)){
+		if(!history.isValidRetreat(to)){
 			throw new Exception("territory was contested on previous turn");
 		}
 		
@@ -1812,7 +1900,7 @@ public class BoardState {
 			}
 		}
 		
-		if(history.wasTerritoryContested(to)){
+		if(!history.isValidRetreat(to)){
 			return false;
 		}
 		

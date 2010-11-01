@@ -134,6 +134,8 @@ public class Bot{
 		//	send them to the gamestate en masse
 		Set<Order> receivedOrders = new HashSet<Order>();
 		
+		Set<Integer> yearsBuiltIn = new HashSet<Integer>();
+		
 		public void run(){
 			
 			//	for now, all this will do is sit here and wait until orders are almost due, and then submit them
@@ -293,6 +295,9 @@ public class Bot{
 					}
 					
 					
+
+
+					
 					//	the NOW message means all orders have been received, so go ahead
 					//	and update the state
 					
@@ -302,8 +307,20 @@ public class Bot{
 					
 					receivedOrders.clear();
 					
+					// just don't even ask
+					if(message[2].equals("SPR")){
+						if(!message[3].equals("1901")){
+							if(!yearsBuiltIn.contains(Integer.parseInt(message[3])-1)){
+								board.updateSupplyControl();
+								yearsBuiltIn.add(Integer.parseInt(message[3])-1);
+							}
+						}
+					}
+					
 					if(message[2].equals("WIN")){
 						board.updateSupplyControl();
+						
+						yearsBuiltIn.add(Integer.parseInt(message[3]));
 					}
 					
 					board.setTime(message[2], Integer.parseInt(message[3]));
