@@ -6,6 +6,7 @@ import order.Order.RetreatState;
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
+import state.dynamic.BoardState;
 
 //	for a fleet to support the convoy
 public class Convoy extends Order{
@@ -17,11 +18,11 @@ public class Convoy extends Order{
 	public final TerritorySquare from;
 	public final TerritorySquare to;
 
-	public Convoy(Player p, TerritorySquare convoyer, TerritorySquare from, TerritorySquare to) throws Exception {
-		this(p, convoyer, from, to, Result.MAYBE, RetreatState.MAYBE);
+	public Convoy(BoardState bst, Player p, TerritorySquare convoyer, TerritorySquare from, TerritorySquare to) throws Exception {
+		this(bst, p, convoyer, from, to, Result.MAYBE, RetreatState.MAYBE);
 	}
 	
-	public Convoy(Player p, TerritorySquare convoyer, TerritorySquare from, TerritorySquare to, Result result, RetreatState retreat) throws Exception{
+	public Convoy(BoardState bst, Player p, TerritorySquare convoyer, TerritorySquare from, TerritorySquare to, Result result, RetreatState retreat) throws Exception{
 		super(p, result, retreat);
 		
 		if(convoyer == null || from == null || to == null){
@@ -32,10 +33,10 @@ public class Convoy extends Order{
 //			throw new Exception("cannot convoy with "+convoyer+" from "+from+" to "+to);
 //		}
 		
-		convoyer.board.assertCanAssistConvoy(p, convoyer, from, to);
+		convoyer.board.assertCanAssistConvoy(bst, p, convoyer, from, to);
 		
-		convoyingUnit = convoyer.getOccupier();
-		convoyedUnit = from.getOccupier();
+		convoyingUnit = convoyer.getOccupier(bst);
+		convoyedUnit = from.getOccupier(bst);
 		
 		this.convoyer = convoyer;
 		this.from = from;
@@ -54,8 +55,8 @@ public class Convoy extends Order{
 	}
 
 	@Override
-	public String toOrder() {
-		return "( ( "+convoyer.getUnitString()+" ) CVY ( "+
-			from.getUnitString()+" ) CTO "+to.getName()+" )";
+	public String toOrder(BoardState bst) {
+		return "( ( "+convoyer.getUnitString(bst)+" ) CVY ( "+
+			from.getUnitString(bst)+" ) CTO "+to.getName()+" )";
 	}
 }

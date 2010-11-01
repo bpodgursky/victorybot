@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import state.constant.BoardConfiguration;
+import state.dynamic.BoardState;
 
 
 
@@ -28,78 +29,79 @@ public class Player {
 		this.homeCenters.addAll(homeCenters);
 	}
 	
-	public Set<TerritorySquare> getOccupiedTerritories(){
-		return this.occupiedTerritories;
+	public Set<TerritorySquare> getOccupiedTerritories(BoardState bst){
+		return bst.getOccupiedTerritories(this);
 	}
 	
-	public int getNumberUnits(){
-		return this.occupiedTerritories.size();
+	public int getNumberUnits(BoardState bst){
+		return bst.getOccupiedTerritories(this).size();
 	}
 	
-	public Set<TerritorySquare> getControlledTerritories(){
-		return this.supplyCenters;
+	public Set<TerritorySquare> getControlledTerritories(BoardState bst){
+		return bst.getSupplyCenters(this);
 	}
 	
-	public int getNumberSupplyCenters(){
-		return this.supplyCenters.size();
+	public int getNumberSupplyCenters(BoardState bst){
+		return bst.getSupplyCenters(this).size();
 	}
 	
 	public void setHomeSupply(Collection<TerritorySquare> homeSupply){
 		this.homeCenters.addAll(homeSupply);
 	}
 	
-	public void addSupply(TerritorySquare sqr) throws Exception{
+	public void addSupply(BoardState bst, TerritorySquare sqr) throws Exception{
 		
-		if(supplyCenters.contains(sqr)){
+		if(bst.getSupplyCenters(this).contains(sqr)){
 			throw new Exception("Already control this supply!");
 		}
 		
-		this.supplyCenters.add(sqr);
+		bst.getSupplyCenters(this).add(sqr);
 	}
 	
-	public void removeSupply(TerritorySquare sqr) throws Exception{
+	public void removeSupply(BoardState bst, TerritorySquare sqr) throws Exception{
 		
-		if(!supplyCenters.contains(sqr)){
+		if(!bst.getSupplyCenters(this).contains(sqr)){
 			throw new Exception("Don't control this supply!");
 		}
 		
-		this.supplyCenters.remove(sqr);
+		bst.getSupplyCenters(this).remove(sqr);
+		
 	}
 	
-	public void addOccupy(TerritorySquare sqr) throws Exception{
+	public void addOccupy(BoardState bst, TerritorySquare sqr) throws Exception{
 		
-		if(occupiedTerritories.contains(sqr)){
+		if(bst.getOccupiedTerritories(this).contains(sqr)){
 			throw new Exception("Already occupy this!");
 		}
 		
-		this.occupiedTerritories.add(sqr);
+		bst.getOccupiedTerritories(this).add(sqr);
 	}
 
-	public void removeOccupy(TerritorySquare sqr) throws Exception{
+	public void removeOccupy(BoardState bst, TerritorySquare sqr) throws Exception{
 		
-		if(!occupiedTerritories.contains(sqr)){
-			throw new Exception("Territory not occupied!");
+		if(!bst.getOccupiedTerritories(this).contains(sqr)){
+			throw new Exception("Territory "+sqr.getName()+" not occupied!");
 		}
 		
-		this.occupiedTerritories.remove(sqr);
+		bst.getOccupiedTerritories(this).remove(sqr);
 	}
 	
 	public String getName(){
 		return this.power.toString();
 	}
 	
-	public String toString(){
+	public String toString(BoardState bst){
 		String str = power+": ";
 		
 		str+="Controls [";
-		for(TerritorySquare sqr: this.supplyCenters){
+		for(TerritorySquare sqr: bst.getSupplyCenters(this)){
 			str+=sqr.name+", ";
 		}
 		str+="] ";
 		
 		str+="Occupies [";
-		for(TerritorySquare sqr: this.occupiedTerritories){
-			str+=(sqr.occupier.army?"A":"F")+" "+sqr.name+", ";
+		for(TerritorySquare sqr: bst.getOccupiedTerritories(this)){
+			str+=(bst.getOccupier(sqr).army?"A":"F")+" "+sqr.name+", ";
 		}
 		str+="]";
 		

@@ -1,6 +1,7 @@
 package order;
 
 import representation.Player;
+import state.dynamic.BoardState;
 
 public abstract class Order {
 	
@@ -35,13 +36,13 @@ public abstract class Order {
 	
 	public abstract void execute();
 	
-	public abstract String toOrder();
+	public abstract String toOrder(BoardState bst);
 	
 	public Result getResult(){
 		return actionResult;
 	}
 	
-	public String toString(){
-		return this.toOrder();
+	public String toString(BoardState bst){
+		return this.toOrder(bst);
 	}
 }

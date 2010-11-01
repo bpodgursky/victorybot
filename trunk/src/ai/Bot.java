@@ -29,7 +29,9 @@ import order.OrderFactory;
 import representation.Country;
 import state.constant.BoardConfiguration;
 import state.dynamic.BeliefState;
+import state.dynamic.BoardState;
 import state.dynamic.DiplomaticState;
+import state.dynamic.BoardState.Phase;
 
 /**
  * An interactive client for testing the communication. Lines are read from
@@ -50,6 +52,8 @@ public class Bot{
 	private final BoardConfiguration board;
 	private final DiplomaticState diplomaticState;
 	private final BeliefState beliefs;
+	
+	private BoardState boardState;
 	
 	private GameSettings settings;
 	private GameSearch search;
@@ -105,6 +109,8 @@ public class Bot{
 		diplomaticState = new DiplomaticState();
 		beliefs = new BeliefState();
 		
+		boardState = board.getInitialState();
+		
 		orderFactory = new OrderFactory(board);
 		
 		botMessageHandler = new BotMessageHandler();
@@ -153,9 +159,9 @@ public class Bot{
 						
 						for(int i = 0; i < orders.length; i++){
 							if(i != orders.length -1){
-								orderString+=orders[i].toOrder()+" ";
+								orderString+=orders[i].toOrder(boardState)+" ";
 							}else{
-								orderString+=orders[i].toOrder();
+								orderString+=orders[i].toOrder(boardState);
 							}
 						}
 						
@@ -301,7 +307,7 @@ public class Bot{
 					//	the NOW message means all orders have been received, so go ahead
 					//	and update the state
 					
-					board.update(receivedOrders);
+					boardState = board.update(Integer.parseInt(message[3]), Phase.valueOf(message[2]), boardState, receivedOrders);
 					diplomaticState.update(receivedOrders);
 					beliefs.update(receivedOrders);
 					
@@ -311,21 +317,19 @@ public class Bot{
 					if(message[2].equals("SPR")){
 						if(!message[3].equals("1901")){
 							if(!yearsBuiltIn.contains(Integer.parseInt(message[3])-1)){
-								board.updateSupplyControl();
+								board.updateSupplyControl(boardState);
 								yearsBuiltIn.add(Integer.parseInt(message[3])-1);
 							}
 						}
 					}
 					
 					if(message[2].equals("WIN")){
-						board.updateSupplyControl();
+						board.updateSupplyControl(boardState);
 						
 						yearsBuiltIn.add(Integer.parseInt(message[3]));
 					}
 					
-					board.setTime(message[2], Integer.parseInt(message[3]));
-					
-					search.noteBoardUpdate();
+					search.noteBoardUpdate(boardState);
 					search.noteDiplomaticUpdate();
 					search.noteBeliefUpdate();
 					
@@ -335,7 +339,7 @@ public class Bot{
 				
 				if (message[0].equals("ORD")) {
 					
-					Order order = orderFactory.buildOrder(message);
+					Order order = orderFactory.buildOrder(boardState, message);
 					
 					receivedOrders.add(order);
 			

@@ -14,12 +14,21 @@ import order.spring_fall.Move;
 
 import representation.Player;
 import representation.TerritorySquare;
-import state.constant.BoardConfiguration.Phase;
+
+import state.dynamic.BoardState.Phase;
 
 //	a history of all moves
 public class MoveHistory {
 
 	List<OrderSet> moveHistory = new ArrayList<OrderSet>();
+	
+	public MoveHistory clone(){
+		MoveHistory copy = new MoveHistory();
+		
+		copy.moveHistory.addAll(moveHistory);
+		
+		return copy;
+	}
 	
 	public void add(int year, Phase phase, Set<Order>  orders){
 		moveHistory.add(new OrderSet(year, phase, orders));
@@ -46,7 +55,7 @@ public class MoveHistory {
 		return false;
 	}
 	
-	public boolean isValidRetreat(TerritorySquare square){
+	public boolean isValidRetreat(BoardState bst, TerritorySquare square){
 		
 		if(moveHistory.size() == 0) return true;
 		
@@ -57,7 +66,7 @@ public class MoveHistory {
 				if(!moves.ordersTo.containsKey(square)) return true;
 			
 				//	if it's not empty now, it's not a valid retreat
-				if(square.getOccupier() != null) return false;
+				if(square.getOccupier(bst) != null) return false;
 				
 				//	if two or more units contested it, it's an invalid retreat (standoff)
 				Set<Order> contestants = moves.ordersTo.get(square);
@@ -77,13 +86,13 @@ public class MoveHistory {
 
 class OrderSet{
 	
-	Set<Order> allOrders = new HashSet<Order>();
+	final Set<Order> allOrders = new HashSet<Order>();
 	
-	Map<Player, Set<Order>> orders = new HashMap<Player, Set<Order>>();
-	Map<TerritorySquare, Set<Order>> ordersTo = new HashMap<TerritorySquare, Set<Order>>();
+	final Map<Player, Set<Order>> orders = new HashMap<Player, Set<Order>>();
+	final Map<TerritorySquare, Set<Order>> ordersTo = new HashMap<TerritorySquare, Set<Order>>();
 	
-	int year;
-	Phase phase;
+	final int year;
+	final Phase phase;
 
 	public OrderSet(int year, Phase phase, Set<Order>  orders){
 				

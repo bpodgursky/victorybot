@@ -6,6 +6,7 @@ import order.Order.RetreatState;
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
+import state.dynamic.BoardState;
 
 public class Disband extends Order{
 	
@@ -14,12 +15,12 @@ public class Disband extends Order{
 	
 	public final String disbandCoast;
 	
-	public Disband(Player p, TerritorySquare location) throws Exception{
-		this(p, location, "NA");
+	public Disband(BoardState bst, Player p, TerritorySquare location) throws Exception{
+		this(bst, p, location, "NA");
 	}
 
 	
-	public Disband(Player p, TerritorySquare location, String coast) throws Exception{
+	public Disband(BoardState bst, Player p, TerritorySquare location, String coast) throws Exception{
 		super(p, Result.SUC, RetreatState.NA);
 		
 		if(location == null){
@@ -30,10 +31,10 @@ public class Disband extends Order{
 //			throw new Exception("invalid disband");
 //		}
 		
-		location.board.assertCanDisband(p, location);
+		location.board.assertCanDisband(bst, p, location);
 		
 		this.disbandAt = location;
-		this.disband = location.board.getRetreatingUnit(location);
+		this.disband = bst.getRetreatingUnit(location);
 		this.disbandCoast = coast;
 	}
 	
@@ -42,7 +43,7 @@ public class Disband extends Order{
 	}
 
 	@Override
-	public String toOrder() {
+	public String toOrder(BoardState bst) {
 		return "( ( "+TerritorySquare.getUnitString(player, disband, disbandAt.getName(), disbandCoast)+" ) DSB )";
 	}
 }

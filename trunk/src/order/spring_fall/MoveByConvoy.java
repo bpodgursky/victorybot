@@ -10,6 +10,7 @@ import order.Order.RetreatState;
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
+import state.dynamic.BoardState;
 
 //	for the army to convoy
 public class MoveByConvoy extends Order{
@@ -22,11 +23,11 @@ public class MoveByConvoy extends Order{
 	
 	public final List<TerritorySquare> transits;
 	
-	public MoveByConvoy(Player p, TerritorySquare origin, TerritorySquare destination, List<TerritorySquare> transits) throws Exception{
-		this(p, origin, destination, transits, Result.MAYBE, RetreatState.MAYBE);
+	public MoveByConvoy(BoardState bst, Player p, TerritorySquare origin, TerritorySquare destination, List<TerritorySquare> transits) throws Exception{
+		this(bst, p, origin, destination, transits, Result.MAYBE, RetreatState.MAYBE);
 	}
 	
-	public MoveByConvoy(Player p, TerritorySquare origin, TerritorySquare destination, List<TerritorySquare> transits, Result result, RetreatState retreat) throws Exception{
+	public MoveByConvoy(BoardState bst, Player p, TerritorySquare origin, TerritorySquare destination, List<TerritorySquare> transits, Result result, RetreatState retreat) throws Exception{
 		super(p, result, retreat);		
 		
 		if(origin == null || destination == null || transits == null){
@@ -37,16 +38,16 @@ public class MoveByConvoy extends Order{
 //			throw new Exception("invalid convoy");
 //		}
 		
-		origin.board.assertCanConvoy(p, origin, destination, transits);
+		origin.board.assertCanConvoy(bst, p, origin, destination, transits);
 		
-		this.convoyedUnit = origin.getOccupier();
+		this.convoyedUnit = origin.getOccupier(bst);
 		
 		this.convoyOrigin = origin;
 		this.convoyDestination = destination;
 		this.transits = transits;
 		
 		for(TerritorySquare t: transits){
-			convoyingUnits.add(t.getOccupier());
+			convoyingUnits.add(t.getOccupier(bst));
 		}
 		
 	}
@@ -57,8 +58,8 @@ public class MoveByConvoy extends Order{
 	}
 
 	@Override
-	public String toOrder() {
-		String str = "( ( "+convoyOrigin.getUnitString()+" ) CTO "+
+	public String toOrder(BoardState bst) {
+		String str = "( ( "+convoyOrigin.getUnitString(bst)+" ) CTO "+
 		convoyDestination.getName()+" VIA (";
 		
 		for(int i = 0; i < transits.size(); i++){

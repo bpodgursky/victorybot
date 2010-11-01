@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import state.constant.BoardConfiguration;
+import state.dynamic.BoardState;
 
 
 
@@ -44,27 +45,27 @@ public class TerritorySquare {
 	
 	//dynamic
 	
-	public void setController(Player p){
-		controller = p;
+	public void setController(BoardState bst, Player p){
+		bst.setController(this, p);
 	}
 	
-	public void setOccupier(Unit u, String coast) throws Exception{
+	public void setOccupier(BoardState bst, Unit u, String coast) throws Exception{
 		
 		if(!coasts.contains(coast)){
 			throw new Exception("Invalid coast!");
 		}
 		
-		this.occupier = u;		
-		this.occupiedCoast = coast;
+		bst.setOccupier(this, u);
+		bst.setOccupiedCoast(this, coast);
 	}
 	
-	public void setOccupier(Unit u) throws Exception{
+	public void setOccupier(BoardState bst, Unit u) throws Exception{
 		
 		if(u != null && !u.army && this.coasts.size() > 1){
 			throw new Exception("Must specify a coast!");
 		}
 		
-		setOccupier(u, "NA");
+		setOccupier(bst, u, "NA");
 	}
 	
 	//	only call if there is only one coast
@@ -94,8 +95,8 @@ public class TerritorySquare {
 		}
 	}
 	
-	public String getOccupiedCoast(){
-		return this.occupiedCoast;
+	public String getOccupiedCoast(BoardState bst){
+		return bst.getOccupiedCoast(this);
 	}
 	
 	public boolean isLandBorder(TerritorySquare other){
@@ -122,8 +123,8 @@ public class TerritorySquare {
 		this(name, isSupply, isLand, homeSupplyFor, null, state);
 	}
 	
-	public Unit getOccupier(){
-		return this.occupier;
+	public Unit getOccupier(BoardState bst){
+		return bst.getOccupier(this);
 	}
 
 	public TerritorySquare(String name, 
@@ -163,12 +164,12 @@ public class TerritorySquare {
 		return this.isSupplyCenter;
 	}
 	
-	public boolean isControlled(){
-		return this.controller != null;
+	public boolean isControlled(BoardState bst){
+		return bst.getController(this) != null;
 	}
 	
-	public Player getController(){
-		return this.controller;
+	public Player getController(BoardState bst){
+		return bst.getController(this);
 	}
 	
 	public boolean hasCoast(String coast){
@@ -184,22 +185,22 @@ public class TerritorySquare {
 	}
 	
 	
-	public String toString(){
-		return "[Territory "+name+" controlled by "+ ((controller==null)?"":controller.getName()) + " occupied by "+ this.occupier +" coast " + this.occupiedCoast+"]";
+	public String toString(BoardState bst){
+		return "[Territory "+name+" controlled by "+ ((bst.getController(this)==null)?"":bst.getController(this).getName()) + " occupied by "+ bst.getOccupier(this)+" coast " + bst.getOccupiedCoast(this)+"]";
 	}
 	
 	public String getName(){
 		return this.name;
 	}
 	
-	public String getUnitString(){
+	public String getUnitString(BoardState bst){
 		
-		if(this.occupier == null){
+		if(bst.getOccupier(this) == null){
 			return "(unoccupied)";
-		}else if(!this.occupier.army && this.hasMultipleCoasts()){
-			return this.occupier+ " ( "+this.name+" "+this.getOccupiedCoast()+" )";
+		}else if(!bst.getOccupier(this).army && this.hasMultipleCoasts()){
+			return bst.getOccupier(this)+ " ( "+this.name+" "+bst.getOccupiedCoast(this)+" )";
 		}else{
-			return this.occupier+ " "+this.name;
+			return bst.getOccupier(this)+ " "+this.name;
 		}
 	}
 	

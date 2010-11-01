@@ -5,24 +5,21 @@ import order.Order.Result;
 import order.Order.RetreatState;
 import representation.Player;
 import representation.TerritorySquare;
+import state.dynamic.BoardState;
 
 public class Remove extends Order{
 
 	public final TerritorySquare disbandLocation;
 
 	
-	public Remove(Player p, TerritorySquare disbandAt) throws Exception{
+	public Remove(BoardState bst, Player p, TerritorySquare disbandAt) throws Exception{
 		super(p, Result.SUC, RetreatState.NA);
 		
 		if(disbandAt == null){
 			throw new Exception("null arguments");
 		}
 		
-//		if(disbandAt.board.canDisband(p, disbandAt)){
-//			throw new Exception("invalid disband");
-//		}
-		
-		disbandAt.board.assertCanRemove(p, disbandAt);
+		disbandAt.board.assertCanRemove(bst, p, disbandAt);
 		
 		this.disbandLocation = disbandAt;
 	}
@@ -33,8 +30,8 @@ public class Remove extends Order{
 	}
 
 	@Override
-	public String toOrder() {
-		return "( ( "+disbandLocation.getUnitString()+" ) DSB )";
+	public String toOrder(BoardState bst) {
+		return "( ( "+disbandLocation.getUnitString(bst)+" ) DSB )";
 	}
 
 }

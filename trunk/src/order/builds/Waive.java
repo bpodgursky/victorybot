@@ -4,13 +4,14 @@ import order.Order;
 import order.Order.Result;
 import order.Order.RetreatState;
 import representation.Player;
+import state.dynamic.BoardState;
 
 public class Waive extends Order{
 
-	public Waive(Player player) throws Exception{
+	public Waive(BoardState bst, Player player) throws Exception{
 		super(player, Result.SUC, RetreatState.NA);
 		
-		player.board.assertCanWaive(player);
+		player.board.assertCanWaive(bst, player);
 	}
 
 	@Override
@@ -18,7 +19,7 @@ public class Waive extends Order{
 	}
 
 	@Override
-	public String toOrder() {
+	public String toOrder(BoardState bst) {
 		return "( "+player.getName()+" WVE )";
 	}
 }

@@ -7,6 +7,7 @@ import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
 import state.constant.BoardConfiguration;
+import state.dynamic.BoardState;
 
 public class Move extends Order{
 	
@@ -24,19 +25,19 @@ public class Move extends Order{
 	public final String coast;
 	
 	
-	public Move(Player p, TerritorySquare from, TerritorySquare to) throws Exception{
-		this(p, from, to, "NA");
+	public Move(BoardState bst, Player p, TerritorySquare from, TerritorySquare to) throws Exception{
+		this(bst, p, from, to, "NA");
 	}
 	
-	public Move(Player p, TerritorySquare from, TerritorySquare to, Result result, RetreatState retreat) throws Exception{
-		this(p, from, to, "NA", result, retreat);
+	public Move(BoardState bst, Player p, TerritorySquare from, TerritorySquare to, Result result, RetreatState retreat) throws Exception{
+		this(bst, p, from, to, "NA", result, retreat);
 	}
 	
-	public Move(Player p, TerritorySquare from, TerritorySquare to, String destinationCoast) throws Exception{
-		this(p, from, to, destinationCoast, Result.MAYBE, RetreatState.MAYBE);
+	public Move(BoardState bst, Player p, TerritorySquare from, TerritorySquare to, String destinationCoast) throws Exception{
+		this(bst, p, from, to, destinationCoast, Result.MAYBE, RetreatState.MAYBE);
 	}
 
-	public Move(Player p, TerritorySquare from, TerritorySquare to, String destinationCoast, Result result, RetreatState retreat) throws Exception{
+	public Move(BoardState bst, Player p, TerritorySquare from, TerritorySquare to, String destinationCoast, Result result, RetreatState retreat) throws Exception{
 		super(p, result, retreat);
 		
 		if(from == null || to == null || destinationCoast == null){
@@ -46,9 +47,9 @@ public class Move extends Order{
 //			throw new Exception("player "+p.getName()+"cannot move from "+ from+ " to "+to+" on coast "+destinationCoast);
 //		}
 		
-		from.board.assertCanMove(p, from, to, destinationCoast);
+		from.board.assertCanMove(bst, p, from, to, destinationCoast);
 		
-		this.unit = from.getOccupier();
+		this.unit = from.getOccupier(bst);
 		this.from = from;
 		this.to = to;
 		
@@ -65,8 +66,8 @@ public class Move extends Order{
 	}
 
 	@Override
-	public String toOrder() {
-		return "( ( "+from.getUnitString()+" ) MTO "+
+	public String toOrder(BoardState bst) {
+		return "( ( "+from.getUnitString(bst)+" ) MTO "+
 			TerritorySquare.getDestString(unit, to.getName(), coast)+" )";
 	}
 }

@@ -11,9 +11,10 @@ import java.util.HashSet;
 import representation.Player;
 import representation.TerritorySquare;
 import state.constant.BoardConfiguration;
-import state.constant.BoardConfiguration.Phase;
 import state.dynamic.BeliefState;
+import state.dynamic.BoardState;
 import state.dynamic.DiplomaticState;
+import state.dynamic.BoardState.Phase;
 
 //	gamesearch runs in a separate thread.  call methods on it to notify it of things--
 // 	updated state, diplomatic changes, etc
@@ -24,9 +25,11 @@ public class GameSearch {
 	
 	//	use these as base for search, heuristic for search, and to inform
 	//	move success probabilities, respectively
-	private final BoardConfiguration boardState;
+	private final BoardConfiguration boardConfiguration;
 	private final DiplomaticState dipState;
 	private final BeliefState beliefState;
+	
+	private BoardState boardState;
 	
 	private final Thread internalSearch;
 	private final InternalSearch searcher;
@@ -45,15 +48,19 @@ public class GameSearch {
 		this.internalSearch = new Thread(searcher);
 		this.internalSearch.start();
 		
-		this.boardState = state;
+		this.boardConfiguration = state;
 		this.dipState = dipState;
 		this.beliefState = beliefState;
+		
+		boardState = state.getInitialState();
 	}
 	
 	//	methods to communicate to the search
 	//	TODO probably should have more complex ways to communicate in here
 	
-	public void noteBoardUpdate(){
+	public void noteBoardUpdate(BoardState bst){
+		
+		this.boardState = bst;
 		this.boardUpdate = true;
 	}
 	
@@ -83,12 +90,12 @@ public class GameSearch {
 						
 						//	get all occupied territories
 						
-						Set<TerritorySquare> unitSquares = relevantPlayer.getOccupiedTerritories();
+						Set<TerritorySquare> unitSquares = relevantPlayer.getOccupiedTerritories(boardState);
 						Set<Order> orders = new HashSet<Order>();
 						
-						if(boardState.getCurrentPhase() == Phase.SPR || boardState.getCurrentPhase() == Phase.FAL){
+						if(boardState.currentPhase == Phase.SPR || boardState.currentPhase == Phase.FAL){
 							for(TerritorySquare ts: unitSquares){
-								orders.add(new Hold(relevantPlayer, ts));
+								orders.add(new Hold(boardState, relevantPlayer, ts));
 							}
 							
 							currentOrders = orders;
