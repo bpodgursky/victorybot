@@ -155,7 +155,7 @@ public class BoardState {
 		return retreats.get(sq).retreating;
 	}
 	
-	public boolean isValidRetreat(TerritorySquare terr){
+	public boolean isValidRetreat(TerritorySquare terr) throws Exception{
 		return history.isValidRetreat(this, terr);
 	}
 	

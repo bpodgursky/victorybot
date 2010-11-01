@@ -55,7 +55,7 @@ public class MoveHistory {
 		return false;
 	}
 	
-	public boolean isValidRetreat(BoardState bst, TerritorySquare square){
+	public boolean isValidRetreat(BoardState bst, TerritorySquare square) throws Exception{
 		
 		if(moveHistory.size() == 0) return true;
 		
@@ -80,7 +80,7 @@ public class MoveHistory {
 		}
 		
 		//	won't actually get here
-		return false;
+		throw new Exception("history incomplete");
 	}
 }
 

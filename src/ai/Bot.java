@@ -186,9 +186,8 @@ public class Bot{
 		public void messageReceived(String[] message) {
 			try{
 				// Print the message
-
 				printMsg("srv", message);
-				// Accept the MAP message
+				
 				if (message[0].equals("MAP")) {
 					
 					try {
@@ -207,8 +206,7 @@ public class Bot{
 						System.exit(1);
 					}
 				}
-				
-				if(message[0].equals("HLO")){
+				else if(message[0].equals("HLO")){
 					
 					Country power = Country.valueOf(message[2]);
 					String password = message[5];
@@ -265,12 +263,7 @@ public class Bot{
 					search = new GameSearch(board.getPlayer(power), board, diplomaticState, beliefs);
 
 				}
-				
-				//TODO there may be more to do with a now message, just get the date 
-				//	and trigger the state to update with the orders received
-				if(message[0].equals("NOW")){
-					
-					
+				else if(message[0].equals("NOW")){
 					
 					if(message[2].equals("SPR") || message[2].equals("FAL")){
 						if(settings.mtl != -1){
@@ -300,10 +293,6 @@ public class Bot{
 						move.append(" ");
 					}
 					
-					
-
-
-					
 					//	the NOW message means all orders have been received, so go ahead
 					//	and update the state
 					
@@ -313,22 +302,6 @@ public class Bot{
 					
 					receivedOrders.clear();
 					
-					// just don't even ask
-					if(message[2].equals("SPR")){
-						if(!message[3].equals("1901")){
-							if(!yearsBuiltIn.contains(Integer.parseInt(message[3])-1)){
-								board.updateSupplyControl(boardState);
-								yearsBuiltIn.add(Integer.parseInt(message[3])-1);
-							}
-						}
-					}
-					
-					if(message[2].equals("WIN")){
-						board.updateSupplyControl(boardState);
-						
-						yearsBuiltIn.add(Integer.parseInt(message[3]));
-					}
-					
 					search.noteBoardUpdate(boardState);
 					search.noteDiplomaticUpdate();
 					search.noteBeliefUpdate();
@@ -336,14 +309,9 @@ public class Bot{
 					submitted = false;
 					
 				}
-				
-				if (message[0].equals("ORD")) {
-					
-					Order order = orderFactory.buildOrder(boardState, message);
-					
-					receivedOrders.add(order);
-			
-				
+				else if (message[0].equals("ORD")) {
+
+					receivedOrders.add(orderFactory.buildOrder(boardState, message));	
 				}
 			}catch(Exception e){
 				e.printStackTrace();
