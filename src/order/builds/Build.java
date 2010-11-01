@@ -6,6 +6,7 @@ import order.Order.RetreatState;
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
+import state.dynamic.BoardState;
 
 public class Build extends Order{
 	
@@ -15,18 +16,18 @@ public class Build extends Order{
 	
 	public final String coast;
 	
-	public Build(Player p, Unit u, TerritorySquare location) throws Exception{
-		this(p, u, location, "NA");
+	public Build(BoardState bst, Player p, Unit u, TerritorySquare location) throws Exception{
+		this(bst, p, u, location, "NA");
 	}
 	
-	public Build(Player p, Unit u, TerritorySquare location, String coast) throws Exception{
+	public Build(BoardState bst, Player p, Unit u, TerritorySquare location, String coast) throws Exception{
 		super(p, Result.SUC, RetreatState.NA);
 		
 		if(u == null || location == null || coast == null){
 			throw new Exception("null arguments");
 		}
 		
-		location.board.assertCanBuild(p, u, location);
+		location.board.assertCanBuild(bst, p, u, location);
 		
 		this.build = u;
 		this.location = location;
@@ -34,7 +35,7 @@ public class Build extends Order{
 		
 	}
 	
-	public String toOrder(){
+	public String toOrder(BoardState bst){
 		return "( ( "+TerritorySquare.getUnitString(player, build, location.getName(), coast)+" ) BLD )";
 	}
 

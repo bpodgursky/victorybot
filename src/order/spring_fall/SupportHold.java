@@ -7,6 +7,7 @@ import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
 import state.constant.BoardConfiguration;
+import state.dynamic.BoardState;
 
 
 public class SupportHold extends Order{
@@ -22,11 +23,11 @@ public class SupportHold extends Order{
 	public final Unit supporter;
 	public final Unit supported;
 	
-	public SupportHold(Player p, TerritorySquare supportFrom, TerritorySquare supportTo) throws Exception{
-		this(p, supportFrom, supportTo, Result.MAYBE, RetreatState.MAYBE);
+	public SupportHold(BoardState bst, Player p, TerritorySquare supportFrom, TerritorySquare supportTo) throws Exception{
+		this(bst, p, supportFrom, supportTo, Result.MAYBE, RetreatState.MAYBE);
 	}
 
-	public SupportHold(Player p, TerritorySquare supportFrom, TerritorySquare supportTo, Result result, RetreatState retreat) throws Exception{
+	public SupportHold(BoardState bst, Player p, TerritorySquare supportFrom, TerritorySquare supportTo, Result result, RetreatState retreat) throws Exception{
 		super(p, result, retreat);
 		
 		if(supportFrom == null || supportTo == null){
@@ -37,13 +38,13 @@ public class SupportHold extends Order{
 //			throw new Exception("cannot support hold from "+supportFrom+" to "+supportTo);
 //		}
 		
-		supportFrom.board.assertCanSupportHold(p, supportFrom, supportTo);
+		supportFrom.board.assertCanSupportHold(bst, p, supportFrom, supportTo);
 		
 		this.supportFrom = supportFrom;
 		this.supportTo = supportTo;
 		
-		this.supporter = supportFrom.getOccupier();
-		this.supported = supportTo.getOccupier();
+		this.supporter = supportFrom.getOccupier(bst);
+		this.supported = supportTo.getOccupier(bst);
 		
 	}
 	
@@ -51,8 +52,8 @@ public class SupportHold extends Order{
 		return "[support hold with "+supporter + " to "+supported+"]";
 	}
 	
-	public String toOrder(){
-		return "( ( "+supportFrom.getUnitString()+" ) SUP ( "+supportTo.getUnitString()+" ) )";
+	public String toOrder(BoardState bst){
+		return "( ( "+supportFrom.getUnitString(bst)+" ) SUP ( "+supportTo.getUnitString(bst)+" ) )";
 	} 
 
 	public void execute() {
