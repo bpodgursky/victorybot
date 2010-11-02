@@ -34,30 +34,11 @@ public class BoardState {
 		}
 	}
 	
-	public BoardState clone(int year, Phase phase){
-		
-		BoardState copy = new BoardState(year, phase, this.configuration);
-	
-		for(Player p: this.occupiedTerritories.keySet()){
-			copy.occupiedTerritories.put(p, new HashSet<TerritorySquare>(this.occupiedTerritories.get(p)));	
-		}
-		
-		for(Player p: this.supplyCenters.keySet()){
-			copy.supplyCenters.put(p, new HashSet<TerritorySquare>(this.supplyCenters.get(p)));	
-		}
-
-		copy.controller.putAll(this.controller);
-		copy.occupier.putAll(this.occupier);
-		copy.occupiedCoast.putAll(this.occupiedCoast);
-		
-		copy.retreats.putAll(this.retreats);
-		
-		copy.history = history.clone();
-		
-		return copy;
-	}
-	
 	//dynamic data for a player
+	
+	/////////////////////////////////////////
+	//	state data
+	/////////////////////////////////////////
 	
 	//the set of territories you have units in 
 	final Map<Player, Set<TerritorySquare>> occupiedTerritories = new HashMap<Player, Set<TerritorySquare>>();
@@ -84,6 +65,12 @@ public class BoardState {
 	MoveHistory history = new MoveHistory();
 	
 	final Map<TerritorySquare, RetreatSituation> retreats = new HashMap<TerritorySquare, RetreatSituation>();
+	
+	
+	
+	//////////////////////////////////////////////////////
+	//	methods
+	//////////////////////////////////////////////////////
 	
 	public void updateHistory(int year, Phase phase, Set<Order> orders){
 		this.history.add(year, phase, orders);
@@ -120,8 +107,6 @@ public class BoardState {
 	public void setOccupiedCoast(TerritorySquare terr, String coast){
 		this.occupiedCoast.put(terr, coast);
 	}
-	
-	//	state
 	
 	//	a map of territories which have to retreat this turn.  A little awkward; the territory's state will already
 	//	have been updated, so a new unit will be in the territory.  So this map is from the territory to the unit
@@ -164,6 +149,29 @@ public class BoardState {
 
 	public RetreatSituation getRetreatForTerritory(TerritorySquare terr){
 		return retreats.get(terr);
+	}
+	
+	public BoardState clone(int year, Phase phase){
+		
+		BoardState copy = new BoardState(year, phase, this.configuration);
+	
+		for(Player p: this.occupiedTerritories.keySet()){
+			copy.occupiedTerritories.put(p, new HashSet<TerritorySquare>(this.occupiedTerritories.get(p)));	
+		}
+		
+		for(Player p: this.supplyCenters.keySet()){
+			copy.supplyCenters.put(p, new HashSet<TerritorySquare>(this.supplyCenters.get(p)));	
+		}
+
+		copy.controller.putAll(this.controller);
+		copy.occupier.putAll(this.occupier);
+		copy.occupiedCoast.putAll(this.occupiedCoast);
+		
+		copy.retreats.putAll(this.retreats);
+		
+		copy.history = history.clone();
+		
+		return copy;
 	}
 
 }

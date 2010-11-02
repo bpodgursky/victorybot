@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -694,19 +695,26 @@ public class BoardConfiguration {
 		}
 	}
 	
-	private void resolve(BoardState bst, Set<Order> moves) throws Exception{
+	//	check indicates whether this is an update from the server that we are just verifying
+	//	(to test our own code)
+	
+	private void resolve(BoardState bst, Set<Order> moves, boolean check) throws Exception{
 		//1) resolve moves
+		
+		long tStart = System.currentTimeMillis();
 		
 		//TODO for testing for now, going to just check that our resolution is correct
 		Map<Order, Result> actualResults = new HashMap<Order, Result>();
 		Map<Order, RetreatState> actualRetreats = new HashMap<Order, RetreatState>();
 		
-		for(Order ord: moves){
-			actualResults.put(ord, ord.actionResult);
-			actualRetreats.put(ord, ord.retreatState);
-			
-			ord.actionResult = Result.MAYBE;
-			ord.retreatState = RetreatState.MAYBE;
+		if(check){
+			for(Order ord: moves){
+				actualResults.put(ord, ord.actionResult);
+				actualRetreats.put(ord, ord.retreatState);
+				
+				ord.actionResult = Result.MAYBE;
+				ord.retreatState = RetreatState.MAYBE;
+			}
 		}
 		
 		//moves which want a location
@@ -720,6 +728,10 @@ public class BoardConfiguration {
 		//from the order to the orders which support it
 		Map<Order, Set<Order>> supportMoves = 
 			new HashMap<Order, Set<Order>>();
+		
+		//from the support order to the order it supports
+		Map<Order, Order> supporters =
+			new HashMap<Order, Order>();
 		
 		//if a unit is holding or convoying,
 		//it would like to stay where it is
@@ -787,6 +799,10 @@ public class BoardConfiguration {
 			}
 		}
 		
+		//TODO mark invalid supports--if the action supported doesn't exist
+		
+		//TODO you cannot support an attack against your own units
+		
 		//figure out what order each of the support moves is able to support
 		for(Order order: moves){
 			if(order.getClass() == SupportMove.class){
@@ -813,7 +829,7 @@ public class BoardConfiguration {
 					//if it is, we know where it's from now
 					if(supportedFrom != null){
 						
-						if(supportedFrom == smov.supportFrom){
+						if(supportedFrom == smov.supportOrig){
 							//then this order is supporting this move
 							
 							//	make sure your support is not cut
@@ -830,6 +846,7 @@ public class BoardConfiguration {
 									if(moveCut.from != smov.supportInto &&
 											moveCut.player != smov.player){
 										supportCut = true;
+										smov.actionResult = Result.CUT;
 									}
 									
 								}else if(potentialCut.getClass() == MoveByConvoy.class){
@@ -841,6 +858,7 @@ public class BoardConfiguration {
 									if(mbcCut.convoyOrigin != smov.supportInto &&
 											mbcCut.player != smov.player){
 										supportCut = true;
+										smov.actionResult = Result.CUT;
 									}
 								}
 							}
@@ -851,6 +869,7 @@ public class BoardConfiguration {
 								}
 								
 								supportMoves.get(potentialSupport).add(order);
+								supporters.put(order, potentialSupport);
 							}
 						}
 					}
@@ -878,7 +897,7 @@ public class BoardConfiguration {
 					}else if(potentialSupport.getClass() == SupportHold.class){
 						SupportHold shold = (SupportHold)potentialSupport;
 						
-						holdLocation = shold.supportTo;
+						holdLocation = shold.supportFrom;
 						
 					}else if(potentialSupport.getClass() == SupportMove.class){
 						SupportMove smov = (SupportMove)potentialSupport;
@@ -912,6 +931,7 @@ public class BoardConfiguration {
 									//as the supporter
 									if(moveCut.player != shol.player){
 										supportCut = true;
+										shol.actionResult = Result.CUT;
 									}
 									
 								}else if(potentialCut.getClass() == MoveByConvoy.class){
@@ -922,6 +942,7 @@ public class BoardConfiguration {
 									//as the supporter
 									if(mbcCut.player != shol.player){
 										supportCut = true;
+										shol.actionResult = Result.CUT;
 									}
 								}
 							}
@@ -932,13 +953,14 @@ public class BoardConfiguration {
 								}
 								
 								supportMoves.get(potentialSupport).add(order);
+								supporters.put(order, potentialSupport);
 							}
 						}
 					}
 				}
 			}
 		}
-		
+
 		//TODO resolve convoys -- aka see if any are dislodged or invalid.  fail moves 
 		// which rely on them
 
@@ -953,6 +975,179 @@ public class BoardConfiguration {
 				unresolvedMoves.add(ord);
 			}
 		}
+
+		
+		System.out.println("Moves to location:");
+		for(TerritorySquare terr: movesWantLocation.keySet()){
+			System.out.println("\t"+terr.getName());
+			for(Order ord: movesWantLocation.get(terr)){
+				System.out.println("\t\t"+ord.toOrder(bst));
+			}
+		}
+
+		System.out.println("Moves from location:");
+		for(TerritorySquare terr: moveOrigins.keySet()){
+			System.out.println("\t"+terr.getName()+"\t"+moveOrigins.get(terr).toOrder(bst));
+		}
+
+		System.out.println("Moves supporting moves:");
+		for(Order ord: supportMoves.keySet()){
+			System.out.println("\t"+ord.toOrder(bst));
+			for(Order supp: supportMoves.get(ord)){
+				System.out.println("\t\t"+supp.toOrder(bst));
+			}
+		}
+
+		
+		//	resolve dislodged support move orders
+		
+		//	for each support move order
+		for(Order ord: moves){
+			if(ord.getClass() == SupportMove.class){
+				SupportMove smov = (SupportMove)ord;
+				
+				if(smov.actionResult == Result.CUT) continue;
+				
+				TerritorySquare supportingInto = smov.supportInto;
+				Order fromInto = moveOrigins.get(supportingInto);
+				
+				if(	fromInto != null && 
+					fromInto.player != smov.player &&
+					fromInto.getClass() == Move.class){
+					
+					Move fromIntoMove = (Move)fromInto;
+					
+					//	this is the situation we need to figure out
+					if(fromIntoMove.to == smov.supportFrom){
+						
+						int supportMoveSupport = 0;
+						if(supportMoves.containsKey(smov)){
+							supportMoveSupport = supportMoves.get(smov).size();
+						}
+						
+						int adversaryMoveSupport = 0;
+						if(supportMoves.containsKey(fromIntoMove)){
+							adversaryMoveSupport = supportMoves.get(fromIntoMove).size();
+						}
+						
+						Set<Order> allCompetitors = movesWantLocation.get(smov.supportFrom);
+						
+						boolean anotherEnemy = false;
+						int maxFriendlyIn = 0;
+						
+						for(Order attempt: allCompetitors){
+							
+							if(attempt.player != smov.player && attempt != fromIntoMove){
+								anotherEnemy = true;
+							}
+							
+							if(attempt.player == smov.player){
+								
+								int numSupports = 0;
+								if(supportMoves.containsKey(attempt)){
+									numSupports = supportMoves.get(attempt).size();
+								}
+								
+								maxFriendlyIn = numSupports;
+							}
+						}
+						
+						if(anotherEnemy ||
+								adversaryMoveSupport > Math.max(supportMoveSupport, maxFriendlyIn)){
+							
+							smov.actionResult = Result.CUT;
+							
+							supportMoves.get(supporters.get(smov)).remove(smov);
+							supporters.remove(smov);
+						}
+					}
+				}
+				
+			}
+		}
+		
+
+		Set<Order> obliteratedMoves = new HashSet<Order>();
+		
+		//	resolve any moves trying to swap places
+		for(Order ord: unresolvedMoves.toArray(new Order[0])){
+			
+			if(ord.getClass() == Move.class){
+				Move mov = (Move)ord;
+				
+				if(!unresolvedMoves.contains(mov)) continue;
+				
+				TerritorySquare sqr = mov.to;
+				Order moveFromDest = moveOrigins.get(sqr);
+				
+				if(moveFromDest == null) continue;
+				
+				if(moveFromDest.getClass() == Move.class){
+					Move movFromDest = (Move)moveFromDest;
+					
+					TerritorySquare destFromDest = movFromDest.to;
+					
+					if(mov.from == destFromDest){
+						
+						//	if they're the same player, they fail
+						if(mov.player == moveFromDest.player){
+							
+							mov.actionResult = Result.BNC;
+							movFromDest.actionResult = Result.BNC;
+							
+							unresolvedMoves.remove(mov);
+							unresolvedMoves.remove(moveFromDest);
+							
+						}else{
+						
+							int supports1 = 0;
+							if(supportMoves.containsKey(ord)){
+								supports1 = supportMoves.get(ord).size();
+							}
+							
+							int supports2 = 0;
+							if(supportMoves.containsKey(movFromDest)){
+								supports2 = supportMoves.get(movFromDest).size();
+							}
+							
+							if(supports1 == supports2){
+								
+								mov.actionResult = Result.BNC;
+								movFromDest.actionResult = Result.BNC;
+								
+								unresolvedMoves.remove(mov);
+								unresolvedMoves.remove(moveFromDest);
+								
+								obliteratedMoves.add(mov);
+								obliteratedMoves.add(movFromDest);
+
+							}else if(supports1 > supports2){
+								
+								//mov.actionResult = Result.SUC;
+								movFromDest.actionResult = Result.BNC;
+								
+								//unresolvedMoves.remove(mov);
+								unresolvedMoves.remove(moveFromDest);
+
+								obliteratedMoves.add(movFromDest);
+							
+							}else if(supports2 > supports1){
+								
+								mov.actionResult = Result.BNC;
+								//movFromDest.actionResult = Result.SUC;
+								
+								unresolvedMoves.remove(mov);
+								//unresolvedMoves.remove(moveFromDest);
+
+								obliteratedMoves.add(mov);
+							}
+						}
+					}
+				}
+				
+			}
+		}
+		
 		
 		//	add only if there is a unique move with the most support
 		Map<TerritorySquare, Order> mostSupportForTerritory = new HashMap<TerritorySquare, Order>();
@@ -962,31 +1157,52 @@ public class BoardConfiguration {
 			Set<Order> competitors = movesWantLocation.get(terr);
 			
 			Order mostSupported = null;
-			int mostSupports = 0;
+			int mostSupports = -1;
 			int numWithSupportCount = 0;
 			
 			for(Order ord: competitors){
-				int supporters = supportMoves.get(ord).size();
-				if(supporters > mostSupports){
-					mostSupports = supporters;
+				
+				if(ord.actionResult == Result.BNC) continue;
+				
+				int supporterCount = 0;
+				if(supportMoves.containsKey(ord)){
+					supporterCount = supportMoves.get(ord).size();
+				}
+				
+				if(supporterCount > mostSupports){
+					mostSupports = supporterCount;
 					mostSupported = ord;
 					numWithSupportCount = 1;
-				}else if(supporters == mostSupports){
+				}else if(supporterCount == mostSupports){
 					numWithSupportCount++;
 				}
 			}
 			
 			if(numWithSupportCount == 1){
-				mostSupportForTerritory.put(terr, mostSupported);
+				
+				if(!obliteratedMoves.contains(mostSupported)){
+					mostSupportForTerritory.put(terr, mostSupported);
+				}
 			}
 		}
 		
 		
+		System.out.println("Most supports into territory:");
+		for(TerritorySquare terr: mostSupportForTerritory.keySet()){
+			System.out.println("\t"+terr.getName()+"\t"+mostSupportForTerritory.get(terr).toOrder(bst));
+		}
+		
 		while(!unresolvedMoves.isEmpty()){
+			
+			int unresolvedBefore = unresolvedMoves.size();
 			
 			//loop through each
 			for(Order ord: unresolvedMoves.toArray(new Order[0])){
 				//	iteratively see if moves succeed.  for each unresolved move:
+				
+				//	could get modified within
+				if(ord.actionResult != Result.MAYBE) continue;
+				
 				
 				TerritorySquare moveDestination = null;
 				
@@ -999,9 +1215,11 @@ public class BoardConfiguration {
 				//		if the territory it moves into was originally unoccupied, or the move has
 				//		2 or more support and the original occupier was a different power	
 				if(moveDestination.getOccupier(bst) == null || 
-						(supportMoves.get(ord).size() > 1 && // if it has 2 or more support and it's a different person, it won't get held 
+						(supportMoves.containsKey(ord) &&	//	no exceptions please 	
+						supportMoves.get(ord).size() > 0 //&& // if it has 1 or more support and it's a different person, it won't get held 
 															 //	up by blocked moves
-						moveDestination.getOccupier(bst).belongsTo != ord.player)){
+						//moveDestination.getOccupier(bst).belongsTo != ord.player
+						)){
 					
 
 					//			get the move with the most support into the destination territory
@@ -1012,28 +1230,114 @@ public class BoardConfiguration {
 					
 					if(successfulOrder != null){
 						
-						//	set it as succeed
-						successfulOrder.actionResult = Result.SUC;
+						if(successfulOrder.actionResult == Result.MAYBE &&
+							(		moveDestination.getOccupier(bst) == null || 
+									successfulOrder.player != moveDestination.getOccupier(bst).belongsTo)){
+						
+							//	set it as succeed if it's a move
+							if( successfulOrder.getClass() == Move.class ||
+								successfulOrder.getClass() == MoveByConvoy.class){
+								
+								successfulOrder.actionResult = Result.SUC;
+								
+								System.out.println("Succeeds because it is the most powerful (1)");
+								System.out.println("\t"+successfulOrder.toOrder(bst));
+								
+								unresolvedMoves.remove(successfulOrder);
+							}
+						}else if(moveDestination.getOccupier(bst) != null && 
+								successfulOrder.player == moveDestination.getOccupier(bst).belongsTo){
+							
+							Order friendlyAt = moveOrigins.get(moveDestination);
+							
+							if(friendlyAt.getClass() == Move.class || friendlyAt.getClass() == MoveByConvoy.class){
+								
+								if(friendlyAt.actionResult == Result.SUC){
+									
+									successfulOrder.actionResult = Result.SUC;
+									
+									System.out.println("Succeeds because friendly unit moved out and is powerful (5)");
+									System.out.println("\t"+successfulOrder.toOrder(bst));
+									
+									unresolvedMoves.remove(successfulOrder);
+									
+								}
+								//	then you're stuck
+								else if(friendlyAt.actionResult == Result.BNC){
+									
+									if(successfulOrder.getClass() == Move.class ||
+											successfulOrder.getClass() == MoveByConvoy.class){
+										
+										successfulOrder.actionResult = Result.BNC;
+										unresolvedMoves.remove(successfulOrder);
+									}
+								}
+								
+								
+							}else{
+								
+								if(successfulOrder.getClass() == Move.class ||
+										successfulOrder.getClass() == MoveByConvoy.class){
+									
+									successfulOrder.actionResult = Result.BNC;
+									unresolvedMoves.remove(successfulOrder);
+								}
+								
+							}
+							
+						}
 						
 						//	set other moves wanting the territory as failing
 						//	if it was a hold or a support hold or a convoy, it's been 
 						//	dislodged as well
 						for(Order otherOrd: competitors){
 							if(otherOrd != successfulOrder){
-								otherOrd.actionResult = Result.FAIL;
 								
-								if(otherOrd.getClass() != Move.class && otherOrd.getClass() != MoveByConvoy.class){
-									otherOrd.retreatState = RetreatState.RET;
+								if(otherOrd.actionResult == Result.MAYBE){
+									
+									if( otherOrd.getClass() == Move.class ||
+										otherOrd.getClass() == MoveByConvoy.class){
+										
+										otherOrd.actionResult = Result.BNC;
+										unresolvedMoves.remove(otherOrd);
+										
+									}
+									
+									//	should only be a convoy or hold here...
+									else{
+										
+										otherOrd.actionResult = Result.FAIL;
+										unresolvedMoves.remove(otherOrd);
+										
+									}
 								}
 							}
 						}
+						
 					}
 					
 					//	else all moves into it fail 
 					else{
 						for(Order otherOrd: competitors){
 							if(otherOrd.getClass() == Move.class || otherOrd.getClass() == MoveByConvoy.class){
-								otherOrd.actionResult = Result.FAIL;
+								
+								if(otherOrd.actionResult == Result.MAYBE){
+									
+									if( otherOrd.getClass() == Move.class ||
+										otherOrd.getClass() == MoveByConvoy.class){
+										
+										otherOrd.actionResult = Result.BNC;
+										unresolvedMoves.remove(otherOrd);
+										
+									}
+									
+									else{
+										
+										otherOrd.actionResult = Result.FAIL;
+										unresolvedMoves.remove(otherOrd);
+										
+									}
+								}
 							}
 						}
 					}
@@ -1041,60 +1345,366 @@ public class BoardConfiguration {
 				}else{
 					//		else if the unit originally in the territory has successfully moved out
 					Order moveOut = moveOrigins.get(moveDestination);
+					Order successfulOrder = mostSupportForTerritory.get(moveDestination);
+					Set<Order> competitors = movesWantLocation.get(moveDestination);
 					
+					if(successfulOrder == null){
+						for(Order attempt: competitors){
+							
+							if(	attempt.getClass() != SupportHold.class &&
+								attempt.getClass() != SupportMove.class &&
+								attempt.getClass() != Hold.class &&
+								attempt.getClass() != Convoy.class){
+								
+								attempt.actionResult = Result.BNC;
+								unresolvedMoves.remove(attempt);	
+							}
+						}
+					}
 					
-					if((moveOut.getClass() == Move.class || moveOut.getClass() == MoveByConvoy.class) &&
+					else if((moveOut.getClass() == Move.class || moveOut.getClass() == MoveByConvoy.class) &&
 							moveOut.actionResult == Result.SUC){
 
-						Order successfulOrder = mostSupportForTerritory.get(moveDestination);
-							
-						if(successfulOrder != null){
-							//	set the designated move as a success
-							successfulOrder.actionResult = Result.SUC;
-							
-							Set<Order> competitors = movesWantLocation.get(moveDestination);
-							
-							for(Order otherOrd: competitors){
-								if(otherOrd != successfulOrder){
-									otherOrd.actionResult = Result.FAIL;
+
+						//	set the designated move as a success
+						successfulOrder.actionResult = Result.SUC;
+						
+						
+						System.out.println("Succeeds because current unit moved out (2)");
+						System.out.println("\t"+successfulOrder.toOrder(bst));
+						
+						unresolvedMoves.remove(successfulOrder);
+						
+						for(Order otherOrd: competitors){
+							if(otherOrd != successfulOrder){
+								if(otherOrd.actionResult == Result.MAYBE){
+									otherOrd.actionResult = Result.BNC;
+									unresolvedMoves.remove(otherOrd);	
 								}
 							}
 						}
-					}else if(moveOut.actionResult == Result.FAIL){
-						ord.actionResult = Result.FAIL;
+
+					}
+					
+					//	in this case it wasn't trying to go anywhere, so this action
+					//	is out of luck
+					else if(!(moveOut.getClass() == Move.class || moveOut.getClass() == MoveByConvoy.class)){
+						ord.actionResult = Result.BNC;
+						unresolvedMoves.remove(ord);	
+					}
+					
+					//	if the unit was trying to move out but failed
+					else if(moveOut.actionResult == Result.BNC &&
+							(moveOut.getClass() == Move.class || moveOut.getClass() == MoveByConvoy.class)){
+						ord.actionResult = Result.BNC;
+						unresolvedMoves.remove(ord);	
+					}
+
+
+				}
+			}
+			
+			System.out.println("iterated");
+			
+			int unresolvedAfter = unresolvedMoves.size();
+			
+			if(!unresolvedMoves.isEmpty() && unresolvedBefore == unresolvedAfter){
+				
+				//	if there are two units moving to any location, fail those and see if anything propagates
+				
+				Map<TerritorySquare, Set<Order>> conflicts = new HashMap<TerritorySquare, Set<Order>>();
+				
+				boolean anythingBroken = false;
+				for(Order ord: unresolvedMoves){
+					
+					TerritorySquare dest = null;
+					if(ord.getClass() == Move.class){
+						dest = ((Move)ord).to;
+					}else if(ord.getClass() == MoveByConvoy.class){
+						dest = ((MoveByConvoy)ord).convoyDestination;
+					}
+					
+					if(!conflicts.containsKey(dest)){
+						conflicts.put(dest, new HashSet<Order>());
+					}
+					
+					conflicts.get(dest).add(ord);
+				}
+				
+				for(TerritorySquare sqr: conflicts.keySet()){
+					
+					Set<Order> conflicters = conflicts.get(sqr);
+					
+					if(conflicters.size() > 1){
+						for(Order ord: conflicters){
+							ord.actionResult = Result.BNC;
+							unresolvedMoves.remove(ord);
+						}
+						
+						anythingBroken = true;
 					}
 				}
+				
+				if(!anythingBroken){
+					//	then we have a cycle or two (or more)
+					Set<Order> notInCycle = new HashSet<Order>();
+					while(!unresolvedMoves.isEmpty()){
+						
+						System.out.println("Unresolved moves:");
+						for(Order ord: unresolvedMoves){
+							System.out.println("\t"+ord.toOrder(bst));
+						}
+						
+						//	1) grab a random unresolved move
+						Order top = null;
+						Iterator<Order> it = unresolvedMoves.iterator();
+						do{
+							top = it.next();
+						}while(notInCycle.contains(top));
+						
+						Order next = top;
+						Set<Order> cycle = new HashSet<Order>();
+						//	2) get all orders in the ring
+						do{
+							
+							if(cycle.contains(next) && next != top){
+								notInCycle.add(top);
+								break;
+							}
+							
+							cycle.add(next);
+							
+							TerritorySquare dest = null;
+							if(next.getClass() == Move.class){
+								dest = ((Move)next).to;
+							}else if(next.getClass() == MoveByConvoy.class){
+								dest = ((MoveByConvoy)next).convoyDestination;
+							}
+							
+							next = moveOrigins.get(dest);
+							
+						}while(next != top);
+						
+						if(cycle.size() > 2){
+							for(Order ord: cycle){
+								ord.actionResult = Result.SUC;
+								
+								System.out.println("Succeeds because of successful cycle (3)");
+								System.out.println("\t"+ord.toOrder(bst));
+							}
+						}else{
+							for(Order ord: cycle){
+								ord.actionResult = Result.BNC;
+							}
+						}
+						
+						unresolvedMoves.removeAll(cycle);
+					}
+				}
+			}
+		}
+		
+		//	build map of the units succesfully moving to each location
+		Map<TerritorySquare, Order> successfulMoves = new HashMap<TerritorySquare, Order>();
+		
+		for(Order order: moves){
+			if(order.actionResult == Result.SUC){
+				if(order.getClass() == Move.class){
+					Move mov = (Move)order;
+					
+					successfulMoves.put(mov.to, mov);
 	
-				//TODO resolve cycles that occur
+				}else if(order.getClass() == MoveByConvoy.class){
+					MoveByConvoy mbc = (MoveByConvoy)order;
+	
+					successfulMoves.put(mbc.convoyDestination, mbc);
+				}
+			}
+		}
+		
+		//	resolve retreats
+		
+		Map<TerritorySquare, Set<Order>> retreatTo = new HashMap<TerritorySquare, Set<Order>>();
+		
+		for(Order ord:moves){
+			if(ord.getClass() == Retreat.class){
+				Retreat ret = (Retreat)ord;
+				
+				if(!retreatTo.containsKey(ret.to)){
+					retreatTo.put(ret.to, new HashSet<Order>());
+				}
+
+				retreatTo.get(ret.to).add(ret);
+			
+			}
+		}
+		
+		for(TerritorySquare sqr: retreatTo.keySet()){
+			
+			Set<Order> retreating = retreatTo.get(sqr);
+			
+			if(retreating.size() > 1){
+				for(Order ord: retreating){
+					ord.actionResult = Result.BNC;
+				}
+			}else{
+				for(Order ord: retreating){
+					ord.actionResult = Result.SUC;
+				}
 			}
 		}
 		
 		
-		//	check to see how disastrously we are off in our resolutions
+		//	now all actual movements have been resolved.  Any holds or convoys which have 
+		//	not explicitly failed so far will succeed
 		
 		for(Order ord: moves){
-			
-			Result calculatedResult = ord.actionResult;
-			Result realResult = actualResults.get(ord);
-			
-			RetreatState calculatedRetreat = ord.retreatState;
-			RetreatState realRetreat = actualRetreats.get(ord);
-			
-			if(calculatedResult != realResult){
-				throw new Exception("order "+ord+" should have resolved as "+realResult+ " but was resolved as "+calculatedResult);
+
+			if(ord.actionResult == Result.MAYBE){
+				
+				System.out.println("Succeeds because of default (4)");
+				System.out.println("\t"+ord.toOrder(bst));
+				
+				ord.actionResult = Result.SUC;
 			}
 			
-			if(calculatedRetreat != realRetreat){
-				throw new Exception("order "+ord+" should have resolved as "+realRetreat+ " but was resolved as "+calculatedRetreat);
+			//	if it was one of these, it can't retreat ever 
+			if(	ord.getClass() == Build.class || 
+				ord.getClass() == Remove.class || 
+				ord.getClass() == Waive.class ||
+				ord.getClass() == Disband.class ||
+				ord.getClass() == Retreat.class){
+				
+				ord.retreatState = RetreatState.NA;
 			}
 			
+			else if(ord.getClass() == Move.class){
+				Move mov = (Move)ord;
+				
+				//	if the move failed
+				if(mov.actionResult != Result.SUC){
+					
+					//	and something successfully moved into the square
+					if(successfulMoves.get(mov.from) != null){
+						mov.retreatState = RetreatState.RET;
+					}else{
+						mov.retreatState = RetreatState.NO;
+					}
+				}
+			
+			}
+			else if(ord.getClass() == MoveByConvoy.class){
+				MoveByConvoy mov = (MoveByConvoy)ord;
+				
+				//	if the move failed
+				if(mov.actionResult != Result.SUC){
+					
+					//	and something successfully moved into the square
+					if(successfulMoves.get(mov.convoyOrigin) != null){
+						mov.retreatState = RetreatState.RET;
+					}else{
+						mov.retreatState = RetreatState.NO;
+					}
+				}
+			}
+			else if(ord.getClass() == Hold.class){
+				Hold mov = (Hold)ord;
+				
+				//	and something successfully moved into the square
+				if(successfulMoves.get(mov.holdingSquare) != null){
+					mov.retreatState = RetreatState.RET;
+				}else{
+					mov.retreatState = RetreatState.NO;
+				}
+			}
+			else if(ord.getClass() == SupportHold.class){
+				SupportHold mov = (SupportHold)ord;
+				
+				//	and something successfully moved into the square
+				if(successfulMoves.get(mov.supportFrom) != null){
+					mov.retreatState = RetreatState.RET;
+					
+					//	if you're dislodged, your support is also cut, which takes precedence
+					if(mov.actionResult == Result.FAIL){
+						mov.actionResult = Result.CUT;
+					}
+					
+				}else{
+					mov.retreatState = RetreatState.NO;
+				}
+				
+			}
+			else if(ord.getClass() == SupportMove.class){
+				SupportMove mov = (SupportMove)ord;
+				
+				//	and something successfully moved into the square
+				if(successfulMoves.get(mov.supportFrom) != null){
+					mov.retreatState = RetreatState.RET;
+					
+					//	if you're dislodged, your support is also cut, which takes precedence
+					if(mov.actionResult == Result.FAIL){
+						mov.actionResult = Result.CUT;
+					}
+					
+				}else{
+					mov.retreatState = RetreatState.NO;
+				}
+
+			}
+			else if(ord.getClass() == Convoy.class){
+				Convoy mov = (Convoy)ord;
+
+				//	and something successfully moved into the square
+				if(successfulMoves.get(mov.convoyer) != null){
+					mov.retreatState = RetreatState.RET;
+				}else{
+					mov.retreatState = RetreatState.NO;
+				}
+
+			}
+			
+			if(ord.retreatState == RetreatState.MAYBE){
+				ord.retreatState = RetreatState.NO;
+			}
+			
+		}
+		
+		long tEnd = System.currentTimeMillis();
+		
+		System.out.println("Time to resolve: "+(tEnd-tStart));
+		
+		//	check to see how disastrously we are off in our resolutions
+
+		System.out.println("Resolved as: ");
+		for(Order ord: moves){
+			System.out.println("\t"+ord.toOrder(bst)+ " "+ord.actionResult+" "+ord.retreatState);
+		}
+		
+		if(check){
+			for(Order ord: moves){
+				
+				Result calculatedResult = ord.actionResult;
+				Result realResult = actualResults.get(ord);
+				
+				RetreatState calculatedRetreat = ord.retreatState;
+				RetreatState realRetreat = actualRetreats.get(ord);
+				
+				if(calculatedResult != realResult){
+					throw new Exception("result of order "+ord.toOrder(bst)+" should have resolved as "+realResult+ " but was resolved as "+calculatedResult);
+				}
+				
+				if(calculatedRetreat != realRetreat){
+					throw new Exception("retreat for order "+ord.toOrder(bst)+" should have resolved as "+realRetreat+ " but was resolved as "+calculatedRetreat);
+				}
+				
+			}
 		}
 	}
 	
 	
-	public BoardState update(int year, Phase phase, BoardState orig, Set<Order> moves) throws Exception{
+	public BoardState update(int year, Phase phase, BoardState orig, Set<Order> moves, boolean fromServer) throws Exception{
 		
-		//resolve(moves);
+		resolve(orig, moves, fromServer);
 		
 		//	figure out which moves were successful
 		
@@ -1311,7 +1921,7 @@ public class BoardConfiguration {
 			
 			//if the unit moving is an army, make sure it can do this
 			if(!from.isLandBorder(to)){
-				throw new Exception("no land border");
+				throw new Exception("no land border from "+from.getName()+" to "+to.getName());
 			}
 		}else{
 			String occupiedCoast = from.getOccupiedCoast(bst);			
@@ -1416,7 +2026,8 @@ public class BoardConfiguration {
 		
 		assertCanMove(bst, p, supporter, to);
 		
-		assertCanMove(bst, p, from, to);
+		//	because it could be convoyed, can't check this
+		//assertCanMove(bst, p, from, to);
 		
 	}
 	
