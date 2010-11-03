@@ -10,6 +10,7 @@ Updated timeline
 Game mechanics
   finish resolution code to determine move success and failure 
        -- should have a workable version by monday or tuesday
+       -- update: done
 Game search
   0) factor out state from configuration, so search can easily backtrack
        -- done
