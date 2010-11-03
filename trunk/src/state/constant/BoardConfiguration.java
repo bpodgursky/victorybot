@@ -1872,13 +1872,18 @@ public class BoardConfiguration {
 				RetreatState realRetreat = actualRetreats.get(ord);
 				
 				if(calculatedResult != realResult){
-					throw new Exception("result of order "+ord.toOrder(bst)+" should have resolved as "+realResult+ " but was resolved as "+calculatedResult);
+					System.out.println("Found discrepency: ");
+					System.err.println("\tresult of order "+ord.toOrder(bst)+" should have resolved as "+realResult+ " but was resolved as "+calculatedResult);
 				}
 				
 				if(calculatedRetreat != realRetreat){
-					throw new Exception("retreat for order "+ord.toOrder(bst)+" should have resolved as "+realRetreat+ " but was resolved as "+calculatedRetreat);
+					System.out.println("Found discrepency: ");
+					System.err.println("\tretreat for order "+ord.toOrder(bst)+" should have resolved as "+realRetreat+ " but was resolved as "+calculatedRetreat);
 				}
 				
+				//	if things were resolved differently we have to go with the server's version, after printing out 
+				ord.actionResult = realResult;
+				ord.retreatState = realRetreat;
 			}
 		}
 	}
