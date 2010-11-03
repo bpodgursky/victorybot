@@ -73,11 +73,11 @@ public class NaiveHeuristic extends Heuristic {
 			count++;
 			if(num%2 == 1)
 			{
-				str.append("1");
+				str.insert(0,"1");
 			}
 			else
 			{
-				str.append("0");
+				str.insert(0,"0");
 			}
 			num = num / 2;
 		}
@@ -92,9 +92,9 @@ public class NaiveHeuristic extends Heuristic {
 	
 	public static void main(String [] args)
 	{
-		for(int i = 0; i < Math.pow(2, 7); i++)
+		for(int i = 1; i < Math.pow(2, 5); i++)
 		{
-			System.out.println(NaiveHeuristic.makeBinary(i, 7));
+			System.out.println(NaiveHeuristic.makeBinary(i, 5));
 		}
 	}
 }
