@@ -1294,12 +1294,7 @@ public class BoardConfiguration {
 
 			}
 			
-
-
-
-	
 		}
-
 		
 		
 		//	recalculate now that bad convoys are erased
@@ -1870,21 +1865,20 @@ public class BoardConfiguration {
 	
 	
 	public BoardState update(int year, Phase phase, BoardState orig, Set<Order> moves, boolean fromServer) throws Exception{
-		
-		resolve(orig, moves, fromServer);
-		
+
 		//	figure out which moves were successful
 		
-		//	for each territory, find out how many 
+		//TODO for now call resolve even if from server; in future skip this if the moves are already resolved
+		resolve(orig, moves, fromServer);
 		
-		
-		//TODO for now just apply it if the results are set
 		
 		BoardState bst = orig.clone(year, phase);
 		
 		//process movements separately--slightly more complex resolutions
 		Set<Order> successfulMoves = new HashSet<Order>();
 		
+		//	note that retreats are being processed, so supports might look wonky
+		//	(with "unoccupied" where they are supporting)
 		System.out.println("Successful orders to process:");
 		for(Order ord: moves){
 				

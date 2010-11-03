@@ -1,45 +1,28 @@
- INFO: Man'chi Diplomacy AI (version 7) startup at Sep 13, 2007 7:44:20 PM [ManchiApp main]
+ INFO: Man'chi Diplomacy AI (version 7) startup at Nov 2, 2010 10:52:15 PM [ManchiApp main]
  INFO: Switching to session Diplomacy AI (version 7) [SessionFrame main]
- INFO: Loaded map: Standard map (7 countries, 75 provinces, 34 SC) in 561ms [MapFactory Thread-2]
- INFO: Connected to DAIDE server: DAIDE Averatec1/192.168.1.2:16713 [DaideServer AWT-EventQueue-0]
- INFO: DAIDE assigned power is France [DaideServer Thread-3]
- INFO: DAIDE passcode is 6503 [DaideServer Thread-3]
- INFO: Switching to session Test [SessionFrame AWT-EventQueue-0]
- INFO: French AttackBot thinking about phase S1901M [Robot Thread-3]
- INFO: French AttackBot submitting S1901M orders [Thinker Thread-4]
- INFO: French AttackBot thinking about phase F1901M [Robot Thread-3]
- INFO: French AttackBot submitting F1901M orders [Thinker Thread-5]
- INFO: French AttackBot thinking about phase W1901A [Robot Thread-3]
- INFO: French AttackBot submitting W1901A orders [Thinker Thread-6]
- INFO: French AttackBot thinking about phase S1902M [Robot Thread-3]
- INFO: French AttackBot submitting S1902M orders [Thinker Thread-7]
- INFO: French AttackBot thinking about phase S1902R [Robot Thread-3]
- INFO: French AttackBot thinking about phase F1902M [Robot Thread-3]
- INFO: French AttackBot submitting F1902M orders [Thinker Thread-9]
- INFO: French AttackBot thinking about phase F1902R [Robot Thread-3]
- INFO: French AttackBot submitting F1902R orders [Thinker Thread-10]
- INFO: French AttackBot thinking about phase W1902A [Robot Thread-3]
- INFO: French AttackBot submitting W1902A orders [Thinker Thread-11]
- INFO: French AttackBot thinking about phase S1903M [Robot Thread-3]
- INFO: French AttackBot submitting S1903M orders [Thinker Thread-12]
- INFO: French AttackBot thinking about phase S1903R [Robot Thread-3]
- INFO: French AttackBot thinking about phase F1903M [Robot Thread-3]
- INFO: French AttackBot submitting F1903M orders [Thinker Thread-14]
- INFO: French AttackBot thinking about phase F1903R [Robot Thread-3]
- INFO: French AttackBot thinking about phase W1903A [Robot Thread-3]
- INFO: French AttackBot submitting W1903A orders [Thinker Thread-16]
- INFO: French AttackBot thinking about phase S1904M [Robot Thread-3]
- INFO: French AttackBot submitting S1904M orders [Thinker Thread-17]
- INFO: French AttackBot thinking about phase S1904R [Robot Thread-3]
- INFO: French AttackBot submitting S1904R orders [Thinker Thread-18]
- INFO: French AttackBot thinking about phase F1904M [Robot Thread-3]
- INFO: French AttackBot submitting F1904M orders [Thinker Thread-19]
- INFO: French AttackBot thinking about phase F1904R [Robot Thread-3]
- INFO: French AttackBot thinking about phase W1904A [Robot Thread-3]
- INFO: French AttackBot thinking about phase S1905M [Robot Thread-3]
- INFO: French AttackBot submitting S1905M orders [Thinker Thread-22]
- INFO: French AttackBot thinking about phase S1905R [Robot Thread-3]
- INFO: French AttackBot thinking about phase F1905M [Robot Thread-3]
- INFO: French AttackBot submitting F1905M orders [Thinker Thread-24]
+ INFO: Connected to DAIDE server: DAIDE /127.0.0.1:16713 [DaideServer Thread-2]
+ INFO: No robot specified: using default AngryBot [DaideServer Thread-2]
+ WARN: Error processing message: MAP ('STANDARD') [DaideServer Thread-3]
+dip.game.ServerException: Unknown map: STANDARD
+	at dip.game.DaideServer.processMAP(DaideServer.java:489)
+	at dip.game.DaideServer.messageReceived(DaideServer.java:421)
+	at dip.daide.Server.diplomaticMessageReceived(Server.java:89)
+	at dip.daide.Connection.handleDiplomaticMessage(Connection.java:362)
+	at dip.daide.Connection.handleMessage(Connection.java:295)
+	at dip.daide.Connection$Consumer.run(Connection.java:630)
+Caused by: dip.map.MapException: java.io.FileNotFoundException: maps/STANDARD.map (No such file or directory)
+	at dip.map.MapFactory.get(MapFactory.java:83)
+	at dip.game.DaideServer.processMAP(DaideServer.java:480)
+	... 5 more
+Caused by: java.io.FileNotFoundException: maps/STANDARD.map (No such file or directory)
+	at java.io.FileInputStream.open(Native Method)
+	at java.io.FileInputStream.<init>(FileInputStream.java:137)
+	at java.io.FileInputStream.<init>(FileInputStream.java:96)
+	at java.io.FileReader.<init>(FileReader.java:58)
+	at dip.util.Application.getResourceStream(Application.java:162)
+	at dip.map.MapFactory.get(MapFactory.java:72)
+	... 6 more
  INFO: DAIDE server disconnected via OFF [DaideServer Thread-3]
- INFO: Normal application exit at Sep 13, 2007 8:02:50 PM [ManchiApp AWT-EventQueue-0]
+ INFO: Switching to session DAIDE [SessionFrame AWT-EventQueue-0]
+ INFO: DAIDE server disconnected via OFF [DaideServer Thread-3]
+ INFO: Normal application exit at Nov 2, 2010 10:52:50 PM [ManchiApp AWT-EventQueue-0]

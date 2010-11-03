@@ -1,1 +1,6 @@
-Bad TCP/IP address ''
+Send PRP PCE message : SND ( AUS ) ( PRP ( PCE ( RUS AUS ) ) ) 
+Send PRP PCE message : SND ( GER ) ( PRP ( PCE ( RUS GER ) ) ) 
+Send PRP PCE message : SND ( TUR ) ( PRP ( PCE ( RUS TUR ) ) ) 
+HUH message received : HUH ( SND ( RUS ) ( ERR 'Proposal is close to deadline, I will try to adjust orders' ) ) 
+Send PRP PCE message : SND ( AUS ) ( PRP ( PCE ( TUR AUS ) ) ) 
+Send PRP PCE message : SND ( ITA ) ( PRP ( PCE ( TUR ITA ) ) ) 

@@ -321,10 +321,7 @@ public class Bot{
 		}
 	}
 	
-	
-	
-	
-	
+
 	///////////////////////////////////////////////////////////////////////////////////////
 	// Main class for launching bot
 	
@@ -347,7 +344,6 @@ public class Bot{
 		System.err.println("Usage:\n" + "  TestAI <ip> <port> <name>");
 	}
 	
-	//TODO this is not a clean way to do this, but it is easy
 	static class BotLauncher implements Runnable{
 		
 		String[] args;
