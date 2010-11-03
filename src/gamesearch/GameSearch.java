@@ -90,6 +90,7 @@ public class GameSearch {
 						
 						//	get all occupied territories
 						
+						
 						Set<TerritorySquare> unitSquares = relevantPlayer.getOccupiedTerritories(boardState);
 						Set<Order> orders = new HashSet<Order>();
 						
