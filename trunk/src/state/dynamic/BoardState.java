@@ -140,8 +140,8 @@ public class BoardState {
 		return retreats.get(sq).retreating;
 	}
 	
-	public boolean isValidRetreat(TerritorySquare terr) throws Exception{
-		return history.isValidRetreat(this, terr);
+	public boolean isValidRetreat(TerritorySquare from, TerritorySquare terr) throws Exception{
+		return history.isValidRetreat(this, from, terr);
 	}
 	
 	public enum Phase{SPR, SUM, FAL, AUT, WIN}
