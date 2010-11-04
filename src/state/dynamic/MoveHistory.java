@@ -11,6 +11,7 @@ import java.util.Set;
 import order.Order;
 import order.spring_fall.Hold;
 import order.spring_fall.Move;
+import order.spring_fall.MoveByConvoy;
 
 import representation.Player;
 import representation.TerritorySquare;
@@ -55,7 +56,7 @@ public class MoveHistory {
 		return false;
 	}
 	
-	public boolean isValidRetreat(BoardState bst, TerritorySquare square) throws Exception{
+	public boolean isValidRetreat(BoardState bst, TerritorySquare from, TerritorySquare square) throws Exception{
 		
 		if(moveHistory.size() == 0) return true;
 		
@@ -72,6 +73,21 @@ public class MoveHistory {
 				Set<Order> contestants = moves.ordersTo.get(square);
 				
 				if(contestants.size() >= 2) return false;
+				
+				//	can't retreat where your attacker came from
+				if(contestants.size() == 1){
+					
+					Order orderAt = contestants.iterator().next();
+					
+					if(orderAt != null){
+						
+						if(orderAt.getClass() == Move.class){
+							Move moveFromDest = (Move)orderAt;
+							
+							if(moveFromDest.to == from) return false;
+						}
+					}
+				}
 				
 				return true;
 			}else{

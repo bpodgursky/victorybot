@@ -2623,7 +2623,7 @@ public class BoardConfiguration {
 			}
 		}
 		
-		if(!bst.isValidRetreat(to)){
+		if(!bst.isValidRetreat(from, to)){
 			throw new Exception("territory was contested on previous turn");
 		}
 		
@@ -2667,7 +2667,7 @@ public class BoardConfiguration {
 			}
 		}
 		
-		if(!bst.isValidRetreat(to)){
+		if(!bst.isValidRetreat(from, to)){
 			return false;
 		}
 		
