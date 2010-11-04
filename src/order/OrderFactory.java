@@ -23,6 +23,7 @@ import representation.Country;
 import representation.TerritorySquare;
 import representation.Unit;
 import state.constant.BoardConfiguration;
+import state.dynamic.BoardState;
 
 public class OrderFactory {
 
@@ -35,7 +36,7 @@ public class OrderFactory {
 		this.state = state;
 	}
 	
-	public Order buildOrder(String[] message) throws Exception{
+	public Order buildOrder(BoardState bst, String[] message) throws Exception{
 
 		List<LinkedList<String>>  contentTokens = new LinkedList<LinkedList<String>>();
 		
@@ -101,6 +102,7 @@ public class OrderFactory {
 							}else{
 								
 								//	otherwise we have to see what it is
+								//	(because this syntax sucks)
 								
 								if(message[i+2].equals("RET")){
 									retreat = RetreatState.RET;
@@ -171,7 +173,7 @@ public class OrderFactory {
 		if(orderType.equals("HLD")){
 
 			TerritorySquare from = state.get(contentTokens.get(0).get(2));
-			newOrder = new Hold(state.getPlayer(c), from, result, retreat);
+			newOrder = new Hold(bst, state.getPlayer(c), from, result, retreat);
 
 		}else if(orderType.equals("MTO")){
 				
@@ -192,7 +194,7 @@ public class OrderFactory {
 //			System.out.println("terr1: "+from);
 //			System.out.println("terr2: "+to);
 			
-			newOrder = new Move(state.getPlayer(c), from, to, coast, result, retreat);
+			newOrder = new Move(bst, state.getPlayer(c), from, to, coast, result, retreat);
 
 		}else if(orderType.equals("SUP")){
 			
@@ -201,11 +203,11 @@ public class OrderFactory {
 			if(contentTokens.size() == 3)
 			{
 				TerritorySquare to = state.get(contentTokens.get(2).get(1));
-				newOrder = new SupportMove(state.getPlayer(c), from, supporter, to, result, retreat);
+				newOrder = new SupportMove(bst, state.getPlayer(c), from, supporter, to, result, retreat);
 			}
 			else
 			{
-				newOrder = new SupportHold(state.getPlayer(c), from, supporter, result, retreat);
+				newOrder = new SupportHold(bst, state.getPlayer(c), from, supporter, result, retreat);
 			}
 
 		}else if(orderType.equals("CVY")){
@@ -213,19 +215,28 @@ public class OrderFactory {
 			TerritorySquare from = state.get(contentTokens.get(0).get(2));
 			TerritorySquare convoy = state.get(contentTokens.get(1).get(2));
 			TerritorySquare to = state.get(contentTokens.get(2).get(1));
-			newOrder = new Convoy(state.getPlayer(c), from, convoy, to, result, retreat);
+			newOrder = new Convoy(bst, state.getPlayer(c), from, convoy, to, result, retreat);
 
 		}else if(orderType.equals("CTO")){
 			
+			System.out.println("Order parts: ");
+			for(List<String> part: contentTokens){
+				System.out.println("\t"+part);
+			}
+			System.out.println("Order type:\t "+orderType);
+			System.out.println("Result:\t"+result);
+			System.out.println("Retreat:\t"+retreat);
+			System.out.println("Country: "+c);
+			
 			List<TerritorySquare> via = new LinkedList<TerritorySquare>();
 			TerritorySquare from = state.get(contentTokens.get(0).get(2));
-			TerritorySquare to = state.get(contentTokens.get(1).get(1));
-			for(int i = 3; i < contentTokens.get(1).size(); i++)
+			TerritorySquare to = state.get(contentTokens.get(1).get(0));
+			for(int i = 2; i < contentTokens.get(1).size(); i++)
 			{
 				TerritorySquare viaTerr = state.get(contentTokens.get(1).get(i));
 				via.add(viaTerr);
 			}
-			newOrder = new MoveByConvoy(state.getPlayer(c), from, to, via, result, retreat);
+			newOrder = new MoveByConvoy(bst, state.getPlayer(c), from, to, via, result, retreat);
 
 		}else if(orderType.equals("RTO")){
 			
@@ -237,12 +248,12 @@ public class OrderFactory {
 				rToCoast = contentTokens.get(1).get(1);
 			}
 			
-			newOrder = new Retreat(state.getPlayer(c), from, to, rToCoast, result);
+			newOrder = new Retreat(bst, state.getPlayer(c), from, to, rToCoast, result);
 
 		}else if(orderType.equals("DSB")){
 			
 			TerritorySquare from = state.get(contentTokens.get(0).get(2));
-			newOrder = new Disband(state.getPlayer(c), from);
+			newOrder = new Disband(bst, state.getPlayer(c), from);
 
 		}else if(orderType.equals("BLD")){
 			
@@ -256,16 +267,16 @@ public class OrderFactory {
 			{
 				u = new Unit(state.getPlayer(c), false);
 			}
-			newOrder = new Build(state.getPlayer(c), u, from);
+			newOrder = new Build(bst, state.getPlayer(c), u, from);
 			
 		}else if(orderType.equals("REM")){
 			
 			TerritorySquare from = state.get(contentTokens.get(0).get(2));
-			newOrder = new Remove(state.getPlayer(c), from);
+			newOrder = new Remove(bst, state.getPlayer(c), from);
 			
 		}else if(orderType.equals("WVE")){
 			
-			newOrder = new Waive(state.getPlayer(c));
+			newOrder = new Waive(bst, state.getPlayer(c));
 			
 		}else{
 			throw new Exception("unknown type "+orderType);
@@ -279,17 +290,20 @@ public class OrderFactory {
 		BoardConfiguration temp = null;
 		try {
 			temp = new BoardConfiguration();
+			
+			BoardState bst = temp.getInitialState();
+			
 			OrderFactory test = new OrderFactory(temp);
 			
-			Order testMove2 = test.buildOrder("ORD ( SPR 1901 ) ( ( RUS FLT ( STP SCS ) ) MTO FIN ) ( SUC )".split(" "));
+			Order testMove2 = test.buildOrder(bst, "ORD ( SPR 1901 ) ( ( RUS FLT ( STP SCS ) ) MTO FIN ) ( SUC )".split(" "));
 
 			System.out.println(testMove2+"\n");
 			
-			Order testMove = test.buildOrder("ORD ( SPR 1901 ) ( ( AUS AMY BUD ) MTO SER ) ( SUC )".split(" "));
+			Order testMove = test.buildOrder(bst, "ORD ( SPR 1901 ) ( ( AUS AMY BUD ) MTO SER ) ( SUC )".split(" "));
 
 			System.out.println(testMove+"\n");
 			
-			Order testHold = test.buildOrder("ORD ( SPR 1901 ) ( ( RUS AMY WAR ) HLD ) ( SUC )".split(" "));
+			Order testHold = test.buildOrder(bst, "ORD ( SPR 1901 ) ( ( RUS AMY WAR ) HLD ) ( SUC )".split(" "));
 			
 			System.out.println(testHold+"\n");
 			
