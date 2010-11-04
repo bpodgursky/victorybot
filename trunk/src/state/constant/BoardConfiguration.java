@@ -1750,8 +1750,7 @@ public class BoardConfiguration {
 	//	(to test our own code)
 	
 	private void resolve(BoardState bst, Set<Order> moves, boolean check) throws Exception{
-		//1) resolve moves
-		
+
 		long tStart = System.currentTimeMillis();
 		
 		Map<Order, Result> actualResults = new HashMap<Order, Result>();
@@ -1794,7 +1793,6 @@ public class BoardConfiguration {
 		//	your own units, because it's nasty as hell--that can still block
 		//	a different unit moving it, but it can't assist in the dislodge of
 		//	your unit
-
 
 		//	if a unit is dislodged by the unit it is support moving into, the support is cut
 		resolveDislodgedSupportMoves(moves, movesWantLocation, moveOrigins, supportMoves, supporters);
@@ -2006,10 +2004,7 @@ public class BoardConfiguration {
 					//nothing else should have a retreat
 					throw new Exception("should not be a retreat here");
 				}
-				
-
 			}
-
 		}			
 		
 		//	first map each move to where it will end up
