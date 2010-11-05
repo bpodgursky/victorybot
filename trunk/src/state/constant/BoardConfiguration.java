@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -2457,6 +2458,41 @@ public class BoardConfiguration {
 		}
 	}
 	
+	public boolean canBuild(BoardState bst, Player p, TerritorySquare location){
+		
+		//	it must be winter
+		if(bst.currentPhase != Phase.WIN){
+			return false;
+		}
+		
+		//	location must be unoccupied
+		if(location.getOccupier(bst) != null){
+			return false;
+		}
+		
+		//	location must be controlled by this player
+		if(location.getController(bst) != p){
+			return false;
+		}
+
+		//	location must be home territory of u.controller
+		if(location.getHomePlayer() != p){
+			return false;
+		}
+		
+		//	controller must have spare builds--fewer occupied territories than controlled territories
+		if(p.getNumberUnits(bst) >= p.getNumberSupplyCenters(bst)){
+			return false;
+		}
+		
+		//	location must controlled by u.controller
+		if(location.getController(bst) != p){
+			return false;
+		}
+		
+		return true;
+	}
+	
 	public boolean canBuild(BoardState bst, Player p, Unit u, TerritorySquare location){
 		
 		//	it must be winter
@@ -2719,6 +2755,100 @@ public class BoardConfiguration {
 		return true;
 	}
 
+	
+	//	methods which can help in move generation
+	//	TODO a lot of these methods may not be the most efficent ways to produce these stats.  Maybe
+	//	compute after a board update and store them...
+	
+	public Set<TerritorySquare> getSupportableTerritories(BoardState boardState, Player p, TerritorySquare location, boolean selfOnly){
+		
+		Set<TerritorySquare> potentialSupports = new HashSet<TerritorySquare>();
+		
+		for(TerritorySquare neighbor: location.getBorders()){
+			
+			if(canSupportHold(boardState, p, location, neighbor)){
+				
+				if(selfOnly){
+					if(neighbor.getOccupier(boardState).belongsTo == p){
+						potentialSupports.add(neighbor);
+					}
+				}else{
+					potentialSupports.add(neighbor);
+				}
+				
+			}
+		}
+		
+		return potentialSupports;
+	}
+	
+	public Set<RetreatSituation> getRetreatsForPlayer(BoardState boardState, Player p){
+		
+		Set<RetreatSituation> retreats = new HashSet<RetreatSituation>();
+		
+		for(RetreatSituation rsit: boardState.getRetreats()){
+			
+			if(rsit.retreating.belongsTo == p){
+				retreats.add(rsit);
+			}
+		}
+		
+		return retreats;
+	}
+	
+	public class TerritoryCoast{
+		
+		public final TerritorySquare sqr;
+		public final String coast;
+		
+		public TerritoryCoast(TerritorySquare sqr, String coast){
+			
+			this.sqr = sqr;
+			this.coast = coast;
+			
+		}
+	}
+	
+	//	map from the square to the coast
+	public List<TerritoryCoast> getRetreatsForUnit(BoardState boardState, RetreatSituation rsit) throws Exception{
+		
+		List<TerritoryCoast> options = new LinkedList<TerritoryCoast>();
+		TerritorySquare from = rsit.from;
+
+		for(TerritorySquare tsquare: from.getBorders()){
+			
+			for(String s: tsquare.getCoasts()){
+				if(this.canRetreat(boardState, rsit.retreating.belongsTo, from, tsquare, s)){
+					options.add(new TerritoryCoast(tsquare, s));
+				}
+			}
+		}
+		
+		return options;
+	}
+	
+	public int getRequiredBuilds(BoardState boardState, Player p){
+		
+		int control = p.getControlledTerritories(boardState).size();
+		int occupy = p.getOccupiedTerritories(boardState).size();
+		
+		return control-occupy;
+	}
+	
+	public Collection<TerritorySquare> getPossibleBuilds(BoardState boardState, Player p){
+		
+		List<TerritorySquare> possibilities = new LinkedList<TerritorySquare>();
+		
+		for(TerritorySquare tsquare: p.getHomeCenters()){
+			if(canBuild(boardState, p, tsquare)){
+				possibilities.add(tsquare);
+			}
+		}
+		
+		return possibilities;
+	}
+	
+	
 	
 	public static void main(String[] args) throws Exception{
 		

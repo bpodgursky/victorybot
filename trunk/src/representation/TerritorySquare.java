@@ -204,6 +204,10 @@ public class TerritorySquare {
 		}
 	}
 	
+	public Set<String> getCoasts(){
+		return coasts;
+	}
+	
 	//for building orders
 	
 	public static String getDestString(Unit unit, String destination, String coast){

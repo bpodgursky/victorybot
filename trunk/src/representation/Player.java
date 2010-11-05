@@ -37,6 +37,10 @@ public class Player {
 		return bst.getOccupiedTerritories(this).size();
 	}
 	
+	public Set<TerritorySquare> getHomeCenters(){
+		return homeCenters;
+	}
+	
 	public Set<TerritorySquare> getControlledTerritories(BoardState bst){
 		return bst.getSupplyCenters(this);
 	}
