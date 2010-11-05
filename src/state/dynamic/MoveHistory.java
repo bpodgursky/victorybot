@@ -9,9 +9,16 @@ import java.util.Map;
 import java.util.Set;
 
 import order.Order;
+import order.builds.Build;
+import order.builds.Remove;
+import order.retreats.Disband;
+import order.retreats.Retreat;
+import order.spring_fall.Convoy;
 import order.spring_fall.Hold;
 import order.spring_fall.Move;
 import order.spring_fall.MoveByConvoy;
+import order.spring_fall.SupportHold;
+import order.spring_fall.SupportMove;
 
 import representation.Player;
 import representation.TerritorySquare;
@@ -64,32 +71,26 @@ public class MoveHistory {
 			OrderSet moves = moveHistory.get(i);
 			
 			if(moves.phase == Phase.SPR || moves.phase == Phase.FAL){
-				if(!moves.ordersTo.containsKey(square)) return true;
 			
 				//	if it's not empty now, it's not a valid retreat
 				if(square.getOccupier(bst) != null) return false;
 				
-				//	if two or more units contested it, it's an invalid retreat (standoff)
-				Set<Order> contestants = moves.ordersTo.get(square);
-				
-				if(contestants.size() >= 2) return false;
+				//	if units contested it, it's an invalid retreat (standoff)
+				if(moves.ordersTo.containsKey(square)) return false;
 				
 				//	can't retreat where your attacker came from
-				if(contestants.size() == 1){
+				if(moves.ordersFrom.get(square) != null){
+					Order moveFrom = moves.ordersFrom.get(square);
 					
-					Order orderAt = contestants.iterator().next();
-					
-					if(orderAt != null){
+					if(moveFrom.getClass() == Move.class){
+						Move move = (Move)moveFrom;
 						
-						if(orderAt.getClass() == Move.class){
-							Move moveFromDest = (Move)orderAt;
-							
-							if(moveFromDest.to == from) return false;
-						}
+						if(move.to == from) return false;
 					}
 				}
 				
 				return true;
+				
 			}else{
 				continue;
 			}
@@ -105,7 +106,10 @@ class OrderSet{
 	final Set<Order> allOrders = new HashSet<Order>();
 	
 	final Map<Player, Set<Order>> orders = new HashMap<Player, Set<Order>>();
+	
+	//TODO for now only move and movebyconvoy to 
 	final Map<TerritorySquare, Set<Order>> ordersTo = new HashMap<TerritorySquare, Set<Order>>();
+	final Map<TerritorySquare, Order> ordersFrom = new HashMap<TerritorySquare, Order>();
 	
 	final int year;
 	final Phase phase;
@@ -127,14 +131,69 @@ class OrderSet{
 				}
 				
 				ordersTo.get(move.to).add(move);
+			}else if (ord.getClass() == MoveByConvoy.class){
+				MoveByConvoy mbc = (MoveByConvoy)ord;
+				
+				if(!ordersTo.containsKey(mbc.convoyDestination)){
+					ordersTo.put(mbc.convoyDestination, new HashSet<Order>());
+				}
+				
+				ordersTo.get(mbc.convoyDestination).add(mbc);
+			}
+		}
+		
+		for(Order ord: orders){
+			if(ord.getClass() == Build.class){
+				Build build = (Build)ord;
+				
+				ordersFrom.put(build.location, build);
+				
 			}else if (ord.getClass() == Hold.class){
 				Hold hold = (Hold)ord;
 				
-				if(!ordersTo.containsKey(hold)){
-					ordersTo.put(hold.holdingSquare, new HashSet<Order>());
-				}
+				ordersFrom.put(hold.holdingSquare, hold);
 				
-				ordersTo.get(hold.holdingSquare).add(hold);
+			}else if (ord.getClass() == Remove.class){
+				Remove remove = (Remove)ord;
+				
+				ordersFrom.put(remove.disbandLocation, remove);
+				
+			}else if (ord.getClass() == Disband.class){
+				Disband disband = (Disband)ord;
+				
+				ordersFrom.put(disband.disbandAt, disband);
+				
+			}else if (ord.getClass() == Retreat.class){
+				Retreat retreat = (Retreat)ord;
+				
+				//	to or from?
+				ordersFrom.put(retreat.from, retreat);
+				
+			}else if (ord.getClass() == Convoy.class){
+				Convoy convoy = (Convoy)ord;
+				
+				ordersFrom.put(convoy.convoyer, convoy);
+				
+			}else if (ord.getClass() == Move.class){
+				Move move = (Move)ord;
+				
+				ordersFrom.put(move.from, move);
+				
+			}else if (ord.getClass() == MoveByConvoy.class){
+				MoveByConvoy move = (MoveByConvoy)ord;
+				
+				ordersFrom.put(move.convoyOrigin, move);
+				
+			}else if (ord.getClass() == SupportHold.class){
+				SupportHold shold = (SupportHold)ord;
+				
+				ordersFrom.put(shold.supportFrom, shold);
+				
+			}else if (ord.getClass() == SupportMove.class){
+				SupportMove smove = (SupportMove)ord;
+				
+				ordersFrom.put(smove.supportFrom, smove);
+				
 			}
 		}
 		

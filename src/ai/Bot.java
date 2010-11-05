@@ -155,23 +155,26 @@ public class Bot{
 					
 						Order[] orders = search.currentOrders().toArray(new Order[0]);
 
-						String orderString = "SUB ";
-						
-						for(int i = 0; i < orders.length; i++){
-							if(i != orders.length -1){
-								orderString+=orders[i].toOrder(boardState)+" ";
-							}else{
-								orderString+=orders[i].toOrder(boardState);
+						if(orders.length > 0){
+							
+							String orderString = "SUB ";
+							
+							for(int i = 0; i < orders.length; i++){
+								if(i != orders.length -1){
+									orderString+=orders[i].toOrder(boardState)+" ";
+								}else{
+									orderString+=orders[i].toOrder(boardState);
+								}
 							}
+							
+							String[] tokens = orderString.split(" ");
+							
+							//System.out.println("Sending: "+Arrays.toString(tokens));
+							
+							printMsg(name, tokens);
+							
+							serv.send(tokens);
 						}
-						
-						String[] tokens = orderString.split(" ");
-						
-						//System.out.println("Sending: "+Arrays.toString(tokens));
-						
-						printMsg(name, tokens);
-						
-						serv.send(tokens);
 						
 						//TODO resubmit only if they have changed
 					}else{

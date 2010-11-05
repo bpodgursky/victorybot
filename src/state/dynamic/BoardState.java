@@ -1,5 +1,6 @@
 package state.dynamic;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -71,6 +72,10 @@ public class BoardState {
 	//////////////////////////////////////////////////////
 	//	methods
 	//////////////////////////////////////////////////////
+	
+	public Collection<RetreatSituation> getRetreats(){
+		return retreats.values();
+	}
 	
 	public void updateHistory(int year, Phase phase, Set<Order> orders){
 		this.history.add(year, phase, orders);
