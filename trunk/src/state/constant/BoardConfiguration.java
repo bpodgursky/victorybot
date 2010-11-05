@@ -2818,13 +2818,32 @@ public class BoardConfiguration {
 		for(TerritorySquare tsquare: from.getBorders()){
 			
 			for(String s: tsquare.getCoasts()){
-				if(this.canRetreat(boardState, rsit.retreating.belongsTo, from, tsquare, s)){
+				if(canRetreat(boardState, rsit.retreating.belongsTo, from, tsquare, s)){
 					options.add(new TerritoryCoast(tsquare, s));
 				}
 			}
 		}
 		
 		return options;
+	}
+	
+	public List<TerritoryCoast> getMovesForUnit(BoardState boardState, TerritorySquare from){
+		
+		Unit occupier = from.getOccupier(boardState);
+		
+		List<TerritoryCoast> options = new LinkedList<TerritoryCoast>();
+
+		for(TerritorySquare tsquare: from.getBorders()){
+			
+			for(String s: tsquare.getCoasts()){
+				if(canMove(boardState, occupier.belongsTo, from, tsquare, s)){
+					options.add(new TerritoryCoast(tsquare, s));
+				}
+			}
+		}
+		
+		return options;
+		
 	}
 	
 	public int getRequiredBuilds(BoardState boardState, Player p){

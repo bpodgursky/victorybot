@@ -3,11 +3,15 @@ package gamesearch;
 import heuristic.Heuristic;
 import heuristic.NaiveHeuristic;
 
+import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
 
@@ -20,6 +24,7 @@ import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
 import state.constant.BoardConfiguration;
+import state.constant.BoardConfiguration.TerritoryCoast;
 import state.dynamic.BoardState;
 import state.dynamic.BoardState.Phase;
 
@@ -34,10 +39,12 @@ public class MoveGeneration {
 		heuristic = new NaiveHeuristic(sBoard);
 	}
 	
-	private Set<Order> generateOrderSet(int num, int length, Set<TerritorySquare> unit, BoardState dynamicState, Player player)
+	private Random r = new Random();
+	
+	private Set<Order> generateOrderSet(int num, int length, Set<TerritorySquare> unit, BoardState dynamicState, Player player) throws Exception
 	{
 		StringBuilder str = new StringBuilder();
-		Object [] unitList = unit.toArray();
+		TerritorySquare [] unitList = unit.toArray(new TerritorySquare[0]);
 		
 		int count = 0;
 		
@@ -73,105 +80,61 @@ public class MoveGeneration {
 		//Step through the array that gives us our permutations
 		for(char c: permute)
 		{
+			TerritorySquare moveOrigin = unitList[count];
+			
 			//Means we will be giving a move order
 			if(c == '1')
 			{
-				try
-				{
-					TerritorySquare moveTo = null;
-					//TODO right now just selecting the first territory listed.  Need to make it do all territories.
-					//If it is not an army we have to do some extra work
-					if(!((TerritorySquare)unitList[count]).getOccupier(dynamicState).army)
-					{
-						Iterator<TerritorySquare> territories = ((TerritorySquare)unitList[count]).getBorders().iterator();
-						while(territories.hasNext())
-						{
-							//Come up with the coast string for the territory
-							TerritorySquare tmp = territories.next();
-							String coast1 = ((TerritorySquare)unitList[count]).getUnitString(dynamicState);
-							if(coast1.contains("NCS"))
-							{
-								coast1 = "NCS";
-							}
-							else if(coast1.contains("SCS"))
-							{
-								coast1 = "SCS";
-							}
-							else
-							{
-								coast1 = "NA";
-							}
-							
-							String coast2 = tmp.getUnitString(dynamicState);
-							if(coast2.contains("NCS"))
-							{
-								coast2 = "NCS";
-							}
-							else if(coast2.contains("SCS"))
-							{
-								coast2 = "SCS";
-							}
-							else
-							{
-								coast2 = "NA";
-							}
-							System.out.println(coast1);
-							System.out.println(coast2);
-							System.out.println(((TerritorySquare)unitList[count]));
-							System.out.println(tmp);
-							//Check to see if they share a sea border.  If not do not create that move
-							if(((TerritorySquare)unitList[count]).isSeaBorder(tmp,
-									coast1, coast2))
-							{
-								ord = new Move(dynamicState, player, ((TerritorySquare)unitList[count]), tmp);
-							}
-						}
-					}
-					else
-					{
-						ord = new Move(dynamicState, player, ((TerritorySquare)unitList[count]),
-							((TerritorySquare)unitList[count]).getBorders().iterator().next());
-					}
-				}
-				catch(Exception ex)
-				{
-					ex.printStackTrace();
-				}
+				
+				List<TerritoryCoast> possibleMoves = staticBoard.getMovesForUnit(dynamicState, moveOrigin);
+				
+				//TODO right now just a random territory listed.  Need to make it do all territories.
+				TerritoryCoast chosenDestination = possibleMoves.get(r.nextInt(possibleMoves.size()-1));
+				
+				ord = new Move(dynamicState, player, moveOrigin,
+						chosenDestination.sqr, chosenDestination.coast);
+				
 				//Add order to correct lists
 				moveSet.add(ord);
-				Double score = new Double(heuristic.orderScore(ord, dynamicState));
+				
+				//TODO added the rand because if two orders have the same score, 
+				//	the second one will obliterate the first in the map
+				Double score = new Double(heuristic.orderScore(ord, dynamicState)) + new Random().nextDouble()/10000.0;
 				moveScoreMap.put(score, ord);
+				
 			}
 			//If not a direct order put in supportSet for later processing
 			else
 			{
-				supportSet.add(((TerritorySquare)unitList[count]));
+				supportSet.add(moveOrigin);
 			}
 			count++;
 		}
+		
 		//Sort heuristic scores and now lets step through remaining units and try to support our moves
-		System.out.println(moveSet.firstElement());
-		Object [] orderScore = (moveScoreMap.keySet().toArray());
+		Double [] orderScore = (moveScoreMap.keySet().toArray(new Double[0]));
 		Arrays.sort(orderScore);
 		Vector<TerritorySquare> supportSetCopy = new Vector<TerritorySquare>(supportSet);
-		for(Object heurVal: orderScore)
+		
+		for(Double heurVal: orderScore)
 		{
+			
+			Move supportedMove = (Move)moveScoreMap.get(heurVal);
+			
+			TerritorySquare suppToPoss = supportedMove.to;
+			TerritorySquare supportFromPoss = supportedMove.from;
+			
 			for(TerritorySquare support: supportSetCopy)
 			{
+				
 				//Do we border where a move is trying to go
-				if(support.getBorders().contains(((Move)moveScoreMap.get((Double)heurVal)).to))
-				{
-					ord = null;
-					try
-					{
-						ord = new SupportMove(dynamicState, player, support, support, ((Move)moveScoreMap.get((Double)heurVal)).to);
-					}
-					catch(Exception ex)
-					{
-						ex.printStackTrace();
-					}
+				if(staticBoard.canSupportMove(dynamicState, player, support,  supportFromPoss, suppToPoss)){
+
+					ord = new SupportMove(dynamicState, player, support, supportFromPoss, suppToPoss);
+
 					supportOrder.add(ord);
 					supportSet.remove(support);
+					
 				}
 			}
 			supportSetCopy = supportSet;
@@ -191,11 +154,11 @@ public class MoveGeneration {
 		return finalMoveSet;
 	}
 	
-	public Set<Set<Order>> generateOrderSets(Player player, BoardState dynamicState)
+	public List<Set<Order>> generateOrderSets(Player player, BoardState dynamicState) throws Exception
 	{
 		int unitCount = player.getNumberUnits(dynamicState);
 		System.out.println(unitCount);
-		Set<Set<Order>> unitMasks = new HashSet<Set<Order>>();
+		List<Set<Order>> unitMasks = new LinkedList<Set<Order>>();
 		Set<TerritorySquare> unit = player.getOccupiedTerritories(dynamicState);
 		for(int i = 1; i < Math.pow(2.0,(double)unitCount); i++)
 		{
@@ -205,7 +168,7 @@ public class MoveGeneration {
 		return unitMasks;
 	}
 	
-	public static void main(String [] args)
+	public static void main(String [] args) throws Exception
 	{
 		BoardConfiguration staticBoard = null;
 		try
@@ -221,8 +184,10 @@ public class MoveGeneration {
 		int count = 0;
 		for(Set<Order> so: gen.generateOrderSets(staticBoard.getPlayer(Country.RUS), bst))
 		{
-			System.out.println(count);
 			count++;
+			
+			System.out.println(Integer.toBinaryString(count));
+
 			for(Order o: so)
 			{
 				System.out.println(o.toOrder(bst));
