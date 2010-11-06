@@ -1871,7 +1871,7 @@ public class BoardConfiguration {
 		if(check){
 			
 			//	print data for debugging
-			printMaps(moves, supportMoves, mostSupportForTerritory, movesWantLocation, moveOrigins, bst);
+			//	printMaps(moves, supportMoves, mostSupportForTerritory, movesWantLocation, moveOrigins, bst);
 				
 			for(Order ord: moves){
 				

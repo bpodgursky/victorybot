@@ -84,14 +84,20 @@ public class GameSearch {
 		
 		this.boardState = bst;
 		this.boardUpdate = true;
+		
+		internalSearch.interrupt();
 	}
 	
 	public void noteDiplomaticUpdate(){
 		this.dipUpdate = true;
+		
+		internalSearch.interrupt();
 	}
 	
 	public void noteBeliefUpdate(){
 		this.beliefUpdate = true;
+		
+		internalSearch.interrupt();
 	}
 	
 	
@@ -107,6 +113,9 @@ public class GameSearch {
 		//	for each of our moves, find with min the worst outcome from that move.
 		//	return the set of moves with the highest associated min
 		
+		
+		//TODO stub
+		return null;
 	}
 	
 	//	for the moves that we have made (friendlyOrders), what is the worst possible board 
@@ -120,6 +129,9 @@ public class GameSearch {
 		//			apply to gamestate, call max on this boardstate
 		
 		//	return the minimum board quality over all combinations
+		
+		//TODO stub
+		return 0;
 	}
 	
 	private double max(BoardState bst, YearPhase until){
@@ -133,6 +145,8 @@ public class GameSearch {
 		//	for each of our moves, find with min the worst outcome from that move.
 		//	return the maximum min found
 		
+		//TODO stub
+		return 0;
 	}
 	
 	
@@ -171,7 +185,7 @@ public class GameSearch {
 			}
 		}
 		
-		System.out.println("Possible moves calculated: ");
+		System.out.println("Possible moves for players calculated: ");
 		for(Player p: orderSetsByPlayer.keySet()){
 			System.out.println("\t"+p.getName()+"\t"+orderSetsByPlayer.get(p).length);
 		}
@@ -183,9 +197,14 @@ public class GameSearch {
 		Set<Order> bestOrders = null;
 		double bestScore = 0;
 		
+		System.out.println("Processing minimax...");
 		for(MovesValue playerOrds: orderSetsByPlayer.get(relevantPlayer)){
 			
-			System.out.println("Looking at "+playerOrds);
+			//	then we've taken too long.  get out of here and start over
+			if(boardUpdate){
+				return null;
+			}
+			
 			
 			List<Set<Order>> orderList = new LinkedList<Set<Order>>();
 			orderList.add(playerOrds.moves);
@@ -266,181 +285,181 @@ public class GameSearch {
 	
 	private class InternalSearch implements Runnable{
 		
-		//TODO this doesn't do anything especially useful yet
-		//	it just puts out hold orders
-		
 		public final void run(){
-			try {
+			try{
 				while(true){
-					if(boardUpdate){
-						boardUpdate = false;
-						
-						currentOrders = new HashSet<Order>();
-						Set<Order> orders = new HashSet<Order>();
-						
-						//	movement turn
-						if( boardState.time.phase == Phase.SPR || 
-							boardState.time.phase == Phase.FAL){
-							
-							//	put down something dumb at first so we have orders at least
-							
-							//	get all occupied territories
-							Set<TerritorySquare> unitSquares = relevantPlayer.getOccupiedTerritories(boardState);
-
-							
-							Set<TerritorySquare> supported = new HashSet<TerritorySquare>();
-							
-							for(TerritorySquare ts: unitSquares){
-
-								//	find something to support hold on
-								
-								Set<TerritorySquare> supportable = 
-									boardConfiguration.getSupportableTerritories(boardState, relevantPlayer, ts, true);
-								
-								for(TerritorySquare sqr: supportable){
-									System.out.println("\t"+sqr.getName());
-								}
-								
-								boolean foundOriginal = false;
-								for(TerritorySquare neighbor: supportable){
-									if(!supported.contains(neighbor)){
-
-										orders.add(new SupportHold(boardState, relevantPlayer, ts, neighbor));
-										supported.add(neighbor);
-										
-										foundOriginal = true;
-										
-										break;
-									}
-								}
-								
-								if(!foundOriginal && supportable.size() > 0){
-									
-									TerritorySquare target = supportable.iterator().next();
-							
-									orders.add(new SupportHold(boardState, relevantPlayer, ts, target));
-								}else if(!foundOriginal){
-									
-									orders.add(new Hold(boardState, relevantPlayer, ts));
-								}
-								
-							}
-							
-							//TODO intelligent search
-							
-							currentOrders = orders;
-							
-							moveSearch(boardState);
-							
-							System.out.println("Done with move search!");
-							System.out.println("Moves will be: ");
-							for(Order ord: currentOrders){
-								System.out.println("\t"+ord.toOrder(boardState));
-							}
-						}
-						
-						//	retreat time
-						else if(boardState.time.phase == Phase.SUM ||
-								 boardState.time.phase == Phase.AUT){
-							
-							//	just a dumb first guess
-							
-							Collection<RetreatSituation> needRetreats = boardConfiguration.getRetreatsForPlayer(boardState, relevantPlayer);
-							Set<TerritorySquare> takenRetreats = new HashSet<TerritorySquare>();
-							
-							for(RetreatSituation rsit: needRetreats){
-								
-								List<TerritoryCoast> options = boardConfiguration.getRetreatsForUnit(boardState, rsit);
-								
-								boolean foundRetreat = false;
-								for(TerritoryCoast tcoast: options){
-									
-									if(!takenRetreats.contains(tcoast.sqr)){
-										takenRetreats.add(tcoast.sqr);
-										
-										orders.add(new Retreat(boardState, relevantPlayer, rsit.from, tcoast.sqr, tcoast.coast));
-										
-										foundRetreat = true;
-										
-										break;
-									}
-								}
-								
-								if(!foundRetreat){
-									orders.add(new Disband(boardState, relevantPlayer, rsit.from));
-								}
-							}
-							
-							//TODO intelligent search
-							
-							currentOrders = orders;
-						}
-						
-						//	build/disband time 
-						else if(boardState.time.phase == Phase.WIN){
-							
-							int equalize = boardConfiguration.getRequiredBuilds(boardState, relevantPlayer);
-							
-							if(equalize > 0){
-								
-								Collection<TerritorySquare> possibleBuilds = boardConfiguration.getPossibleBuilds(boardState, relevantPlayer);
-							
-								for(TerritorySquare poss: possibleBuilds){
-									
-									if(poss.hasAnySeaBorders()){
-										
-										if(r.nextBoolean()){
-											orders.add(new Build(boardState, relevantPlayer, new Unit(relevantPlayer, true), poss));
-										}else{
-											orders.add(new Build(boardState, relevantPlayer, new Unit(relevantPlayer, false), poss, poss.getCoasts().iterator().next()));
-										}
-										
-									}else{
-										orders.add(new Build(boardState, relevantPlayer, new Unit(relevantPlayer, true), poss));
-									}
-										
-									equalize--;
-									
-									if(equalize == 0) break;
-								}
-							}else if(equalize < 0){
-								
-								Collection<TerritorySquare> allUnits = relevantPlayer.getOccupiedTerritories(boardState);
-								
-								//	it's winter, so if we have fewer builds than units, we have a unit somewhere that is not a 
-								//	supply center.  kill it
-								
-								for(TerritorySquare tsquare: allUnits){
-									
-									if(!tsquare.isSupplyCenter()){
-										orders.add(new Remove(boardState, relevantPlayer, tsquare));
-										
-										equalize--;
-										
-										if(equalize == 0) break;
-									}	
-								}
-							}
-							
-							//TODO intelligent reasoning about what and where to build--compare quality
-							//	of states
-							
-							currentOrders = orders;
-							
-						}
-						
+					process();
+				}
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		private void process() throws Exception{
+			if(boardUpdate){
+				boardUpdate = false;
+				
+				currentOrders = new HashSet<Order>();
+				Set<Order> orders = new HashSet<Order>();
+				
+				//	movement turn
+				if( boardState.time.phase == Phase.SPR || 
+					boardState.time.phase == Phase.FAL){
 					
+					System.out.println("Starting to process movements...");
+					
+					//	put down something dumb at first so we have orders at least
+					
+					//	get all occupied territories
+					Set<TerritorySquare> unitSquares = relevantPlayer.getOccupiedTerritories(boardState);
+
+					
+					Set<TerritorySquare> supported = new HashSet<TerritorySquare>();
+					
+					for(TerritorySquare ts: unitSquares){
+
+						//	find something to support hold on
+						
+						Set<TerritorySquare> supportable = 
+							boardConfiguration.getSupportableTerritories(boardState, relevantPlayer, ts, true);
 						
 						
+						boolean foundOriginal = false;
+						for(TerritorySquare neighbor: supportable){
+							if(!supported.contains(neighbor)){
+
+								orders.add(new SupportHold(boardState, relevantPlayer, ts, neighbor));
+								supported.add(neighbor);
+								
+								foundOriginal = true;
+								
+								break;
+							}
+						}
 						
-					}else{
-						Thread.sleep(10);
+						if(!foundOriginal && supportable.size() > 0){
+							
+							TerritorySquare target = supportable.iterator().next();
+					
+							orders.add(new SupportHold(boardState, relevantPlayer, ts, target));
+						}else if(!foundOriginal){
+							
+							orders.add(new Hold(boardState, relevantPlayer, ts));
+						}
+						
+						
+					}
+					
+					//TODO intelligent search
+					
+					currentOrders = orders;
+					
+					moveSearch(boardState);
+					
+					System.out.println("Done with move search!");
+					System.out.println("Moves will be: ");
+					for(Order ord: currentOrders){
+						System.out.println("\t"+ord.toOrder(boardState));
 					}
 				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} catch (Exception e) {
-				e.printStackTrace();
+				
+				//	retreat time
+				else if(boardState.time.phase == Phase.SUM ||
+						 boardState.time.phase == Phase.AUT){
+					
+					System.out.println("Starting to process retreat...");
+					
+					//	just a dumb first guess
+					
+					Collection<RetreatSituation> needRetreats = boardConfiguration.getRetreatsForPlayer(boardState, relevantPlayer);
+					Set<TerritorySquare> takenRetreats = new HashSet<TerritorySquare>();
+					
+					for(RetreatSituation rsit: needRetreats){
+						
+						List<TerritoryCoast> options = boardConfiguration.getRetreatsForUnit(boardState, rsit);
+						
+						boolean foundRetreat = false;
+						for(TerritoryCoast tcoast: options){
+							
+							if(!takenRetreats.contains(tcoast.sqr)){
+								takenRetreats.add(tcoast.sqr);
+								
+								orders.add(new Retreat(boardState, relevantPlayer, rsit.from, tcoast.sqr, tcoast.coast));
+								
+								foundRetreat = true;
+								
+								break;
+							}
+						}
+						
+						if(!foundRetreat){
+							orders.add(new Disband(boardState, relevantPlayer, rsit.from));
+						}
+					}
+					
+					//TODO intelligent search
+					
+					currentOrders = orders;
+					
+					System.out.println("Retreat order submitted.");
+				}
+				
+				//	build/disband time 
+				else if(boardState.time.phase == Phase.WIN){
+					
+					System.out.println("Starting to process builds...");
+					
+					int equalize = boardConfiguration.getRequiredBuilds(boardState, relevantPlayer);
+					
+					if(equalize > 0){
+						
+						Collection<TerritorySquare> possibleBuilds = boardConfiguration.getPossibleBuilds(boardState, relevantPlayer);
+					
+						for(TerritorySquare poss: possibleBuilds){
+							
+							if(poss.hasAnySeaBorders()){
+								
+								if(r.nextBoolean()){
+									orders.add(new Build(boardState, relevantPlayer, new Unit(relevantPlayer, true), poss));
+								}else{
+									orders.add(new Build(boardState, relevantPlayer, new Unit(relevantPlayer, false), poss, poss.getCoasts().iterator().next()));
+								}
+								
+							}else{
+								orders.add(new Build(boardState, relevantPlayer, new Unit(relevantPlayer, true), poss));
+							}
+								
+							equalize--;
+							
+							if(equalize == 0) break;
+						}
+					}else if(equalize < 0){
+						
+						Collection<TerritorySquare> allUnits = relevantPlayer.getOccupiedTerritories(boardState);
+						
+						//	it's winter, so if we have fewer builds than units, we have a unit somewhere that is not a 
+						//	supply center.  kill it
+						
+						for(TerritorySquare tsquare: allUnits){
+							
+							if(!tsquare.isSupplyCenter()){
+								orders.add(new Remove(boardState, relevantPlayer, tsquare));
+								
+								equalize--;
+								
+								if(equalize == 0) break;
+							}	
+						}
+					}
+					
+					//TODO intelligent reasoning about what and where to build--compare quality
+					//	of states
+					
+					currentOrders = orders;
+					
+					System.out.println("Build orders submitted");
+				}
 			}
 		}
 	}

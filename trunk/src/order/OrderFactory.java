@@ -216,15 +216,6 @@ public class OrderFactory {
 
 		}else if(orderType.equals("CTO")){
 			
-			System.out.println("Order parts: ");
-			for(List<String> part: contentTokens){
-				System.out.println("\t"+part);
-			}
-			System.out.println("Order type:\t "+orderType);
-			System.out.println("Result:\t"+result);
-			System.out.println("Retreat:\t"+retreat);
-			System.out.println("Country: "+c);
-			
 			List<TerritorySquare> via = new LinkedList<TerritorySquare>();
 			TerritorySquare from = state.get(contentTokens.get(0).get(2));
 			TerritorySquare to = state.get(contentTokens.get(1).get(0));
