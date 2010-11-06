@@ -861,6 +861,9 @@ public class BoardConfiguration {
 				//find the order it is supporting
 				Set<Order> movesToSquare =  movesWantLocation.get(shol.supportTo);
 				
+				//TODO deal with this case
+				if(movesToSquare == null) continue;
+				
 				boolean foundOrder = false;
 				
 				//you can support hold on anything that doesn't move

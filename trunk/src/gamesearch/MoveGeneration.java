@@ -45,7 +45,8 @@ public class MoveGeneration {
 	
 	private Random r = new Random();
 	
-	private static final int MOVES_PER_UNIT = 4;
+	private static final int MOVES_PER_UNIT = 3;
+	private static final int MAX_PLAYER_MOVES = 50;
 	
 	public static class OrderValue{
 		
@@ -56,7 +57,6 @@ public class MoveGeneration {
 			this.score = score;
 			this.order = ord;
 		}
-		
 	}
 	
 	private List<Set<Order>> generateOrderSets(int num, int length, Set<TerritorySquare> unit, BoardState dynamicState, Player player) throws Exception
@@ -171,7 +171,7 @@ public class MoveGeneration {
 				TerritorySquare suppToPoss = supportedMove.to;
 				TerritorySquare supportFromPoss = supportedMove.from;
 				
-				for(TerritorySquare support: supportSet.toArray(new TerritorySquare[0]))
+				for(TerritorySquare support: supportSetCopy.toArray(new TerritorySquare[0]))
 				{
 					
 					//Do we border where a move is trying to go
@@ -291,7 +291,12 @@ public class MoveGeneration {
 			}
 		});
 		
-		return moves;
+		MovesValue[] prunedMoves = new MovesValue[MAX_PLAYER_MOVES];
+		for(int i = 0; i < MAX_PLAYER_MOVES && i < moves.length; i++){
+			prunedMoves[i] = moves[i];
+		}
+		
+		return prunedMoves;
 	}
 	
 	public static void main(String [] args) throws Exception
