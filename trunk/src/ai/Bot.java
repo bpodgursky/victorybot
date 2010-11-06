@@ -28,6 +28,7 @@ import order.OrderFactory;
 
 import representation.Country;
 import state.constant.BoardConfiguration;
+import state.constant.BoardConfiguration.YearPhase;
 import state.dynamic.BeliefState;
 import state.dynamic.BoardState;
 import state.dynamic.DiplomaticState;
@@ -299,7 +300,7 @@ public class Bot{
 					//	the NOW message means all orders have been received, so go ahead
 					//	and update the state
 					
-					boardState = board.update(Integer.parseInt(message[3]), Phase.valueOf(message[2]), boardState, receivedOrders, true);
+					boardState = board.update(new YearPhase(Integer.parseInt(message[3]), Phase.valueOf(message[2])), boardState, receivedOrders, true);
 					diplomaticState.update(receivedOrders);
 					beliefs.update(receivedOrders);
 					

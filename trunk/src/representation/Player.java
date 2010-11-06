@@ -94,6 +94,10 @@ public class Player {
 		return this.power.toString();
 	}
 	
+	public String toString(){
+		return this.power.toString();
+	}
+	
 	public String toString(BoardState bst){
 		String str = power+": ";
 		

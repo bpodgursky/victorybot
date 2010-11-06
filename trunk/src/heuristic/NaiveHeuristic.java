@@ -170,7 +170,7 @@ public class NaiveHeuristic extends Heuristic {
 
 		//	and subtract the ones that others are on
 		for(TerritorySquare sqr:player.getControlledTerritories(dynamicBoard)){
-			if(sqr.getOccupier(dynamicBoard).belongsTo != player){
+			if(sqr.getOccupier(dynamicBoard) != null && sqr.getOccupier(dynamicBoard).belongsTo != player){
 				mySupplyCenterCount--;
 			}
 		}
@@ -229,7 +229,7 @@ public class NaiveHeuristic extends Heuristic {
 		
 		//	take the expected supply center count, and discounted other positions
 		return mySupplyCenterCount + 
-			.5 * (threateningSupplyCenterScore + threatenedSupplyCenterScore);
+			.25 * (threateningSupplyCenterScore + threatenedSupplyCenterScore);
 	}
 	
 	public static String makeBinary(int num, int power)
