@@ -1,0 +1,27 @@
+#summary Roadmap and progress as of Nov 6
+
+= Introduction =
+
+Functionality/next moves
+
+= Details =
+
+<b>State</b>
+
+Game mechanics
+  Done
+    State has been factored out from the board configuration
+    Move resolution 
+  Todo
+    some bugs which get worked out as they arise
+
+Game search 
+  Naive heuristics for state
+  Basic/hacky move generation at a state
+    Generates a subset of possible moves for a player
+    The beginnings of the game search component
+  Todo
+    Turn the crude game search as of now into a legit pruned minimax search
+
+Diplomizer 
+Belief state
