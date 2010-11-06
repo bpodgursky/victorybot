@@ -12,6 +12,7 @@ import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
 import state.constant.BoardConfiguration;
+import state.constant.BoardConfiguration.YearPhase;
 
 //	the general contract: don't change data in the class except 
 //	from within the update method in BoardConfiguration
@@ -20,10 +21,11 @@ public class BoardState {
 
 	public final BoardConfiguration configuration;
 	
-	public BoardState(int year, Phase phase, BoardConfiguration config){
-		
-		this.currentYear = year;
-		this.currentPhase = phase;
+	public final YearPhase time;
+	
+	public BoardState(YearPhase time, BoardConfiguration config){
+//		
+		this.time = time;
 		this.configuration = config;
 		
 		for(Player p: config.getPlayers()){
@@ -59,9 +61,9 @@ public class BoardState {
 	//fall = second moves
 	//aut = retreats after fall
 	//win = builds and disbands
-	public final Phase currentPhase;
+	//public final Phase currentPhase;
 	
-	public final int currentYear;
+	//public final int currentYear;
 	
 	MoveHistory history = new MoveHistory();
 	
@@ -156,9 +158,9 @@ public class BoardState {
 		return retreats.get(terr);
 	}
 	
-	public BoardState clone(int year, Phase phase){
+	public BoardState clone(YearPhase time){
 		
-		BoardState copy = new BoardState(year, phase, this.configuration);
+		BoardState copy = new BoardState(time, this.configuration);
 	
 		for(Player p: this.occupiedTerritories.keySet()){
 			copy.occupiedTerritories.put(p, new HashSet<TerritorySquare>(this.occupiedTerritories.get(p)));	

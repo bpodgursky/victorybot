@@ -1,9 +1,19 @@
 package gamesearch;
 
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.Random;
+
+import gamesearch.MoveGeneration.MovesValue;
+import heuristic.Heuristic;
+import heuristic.NaiveHeuristic;
 
 import order.Order;
 import order.builds.Build;
@@ -15,11 +25,13 @@ import order.spring_fall.SupportHold;
 
 import java.util.HashSet;
 
+import representation.Country;
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
 import state.constant.BoardConfiguration;
 import state.constant.BoardConfiguration.TerritoryCoast;
+import state.constant.BoardConfiguration.YearPhase;
 import state.dynamic.BeliefState;
 import state.dynamic.BoardState;
 import state.dynamic.DiplomaticState;
@@ -50,6 +62,8 @@ public class GameSearch {
 	private boolean dipUpdate;
 	private boolean beliefUpdate;
 	
+	private final Heuristic heuristic;
+	
 	public GameSearch(Player player, BoardConfiguration state, DiplomaticState dipState, BeliefState beliefState){
 
 		this.relevantPlayer = player;
@@ -61,6 +75,8 @@ public class GameSearch {
 		this.boardConfiguration = state;
 		this.dipState = dipState;
 		this.beliefState = beliefState;
+		
+		this.heuristic = new NaiveHeuristic(boardConfiguration);
 		
 		boardState = state.getInitialState();
 	}
@@ -87,6 +103,134 @@ public class GameSearch {
 		return currentOrders;
 	}
 	
+	
+	private Set<Order> moveSearch(BoardState bst) throws Exception{
+		//	TODO this is temporarily just a one level search
+
+		
+		MoveGeneration gen = new MoveGeneration(boardConfiguration);
+
+		Map<Player, MovesValue[]> orderSetsByPlayer =
+			new HashMap<Player, MovesValue[]>();
+		
+		
+		Set<Player> relevantPlayers = boardConfiguration.getRelevantPlayers(bst, relevantPlayer);
+		
+		System.out.println("This state, we "+relevantPlayer.getName()+" only care about players: ");
+		System.out.println("\t"+relevantPlayers);
+		
+		//	for each player, generate the a priori likely moves
+		List<Player> otherPlayers = new LinkedList<Player>();
+		for(Player p: boardConfiguration.getPlayers()){
+			
+			if(relevantPlayers.contains(p)){
+				orderSetsByPlayer.put(p, gen.generateOrderSets(p, bst));
+			}else{
+				
+				MovesValue[] hold = new MovesValue[1];
+				hold[0] = new MovesValue(boardConfiguration.generateHoldsFor(bst, p), -1);
+				
+				orderSetsByPlayer.put(p, hold);
+			}
+			
+			if(p != this.relevantPlayer){
+				otherPlayers.add(p);
+			}
+		}
+		
+		System.out.println("Possible moves calculated: ");
+		for(Player p: orderSetsByPlayer.keySet()){
+			System.out.println("\t"+p.getName()+"\t"+orderSetsByPlayer.get(p).length);
+		}
+		
+		//	try combinations of moves
+		
+		Player[] playerArray = otherPlayers.toArray(new Player[0]);		
+
+		Set<Order> bestOrders = null;
+		double bestScore = 0;
+		
+		for(MovesValue playerOrds: orderSetsByPlayer.get(relevantPlayer)){
+			
+			System.out.println("Looking at "+playerOrds);
+			
+			List<Set<Order>> orderList = new LinkedList<Set<Order>>();
+			orderList.add(playerOrds.moves);
+			
+			List<Double> scores = new ArrayList<Double>();
+			
+			enumerateMoves(bst, orderList, orderSetsByPlayer, playerArray, 0, scores);
+			
+			//TODO hacky hacky hacky minimax hack make this whole algorithm clear
+			Double minScore = scores.get(0);
+			for(Double d: scores){
+				if(d < minScore){
+					minScore = d;
+				}
+			}
+			
+			if(bestOrders == null || minScore > bestScore){
+				bestOrders = playerOrds.moves;
+				bestScore = minScore;
+				
+				currentOrders = bestOrders;
+			}
+			
+		}
+		
+		return bestOrders;
+	}
+	
+	//	how many moves to enumerate for each player.  hardcode for now
+	private static final int MAX_ENUM = 5;
+	
+	private void enumerateMoves(BoardState bst, List<Set<Order>> allOrders, Map<Player, MovesValue[]> playerOrders, Player[] players, int player, List<Double> scores) throws Exception{
+		
+		if(player == players.length){
+			// execute, evaluate quality
+			
+			Set<Order> toExecute = new HashSet<Order>();
+			
+			for(Set<Order> execute: allOrders){
+				
+				toExecute.addAll(execute);
+			}
+			
+			BoardState executed = boardConfiguration.update(bst.time.next(), bst, toExecute, false);
+			
+			double stateScore = heuristic.boardScore(relevantPlayer, executed);
+			
+			scores.add(stateScore);
+		}
+		
+		else if(players[player] == relevantPlayer){
+			enumerateMoves(bst, allOrders, playerOrders, players, player+1, scores);
+		}
+		else{
+			
+			MovesValue[] movesForPlayer = playerOrders.get(players[player]);
+			
+			for(int i = 0; i < movesForPlayer.length && i < MAX_ENUM; i++){			
+				MovesValue mv = movesForPlayer[i]; 
+				
+				int initSize = allOrders.size();
+				
+				allOrders.add(mv.moves);
+			
+				enumerateMoves(bst, allOrders, playerOrders, players, player+1, scores);
+			
+				allOrders.remove(mv.moves);
+				
+				int endSize = allOrders.size();
+				
+				if(initSize != endSize) throw new Exception("orders size before "+initSize+" now "+endSize);
+			}
+		}
+	}
+	
+	Random r = new Random();
+	
+	
 	private class InternalSearch implements Runnable{
 		
 		//TODO this doesn't do anything especially useful yet
@@ -102,8 +246,8 @@ public class GameSearch {
 						Set<Order> orders = new HashSet<Order>();
 						
 						//	movement turn
-						if( boardState.currentPhase == Phase.SPR || 
-							boardState.currentPhase == Phase.FAL){
+						if( boardState.time.phase == Phase.SPR || 
+							boardState.time.phase == Phase.FAL){
 							
 							//	put down something dumb at first so we have orders at least
 							
@@ -114,9 +258,7 @@ public class GameSearch {
 							Set<TerritorySquare> supported = new HashSet<TerritorySquare>();
 							
 							for(TerritorySquare ts: unitSquares){
-								
-								System.out.println("Looking at "+ts.getName());
-								
+
 								//	find something to support hold on
 								
 								Set<TerritorySquare> supportable = 
@@ -129,9 +271,7 @@ public class GameSearch {
 								boolean foundOriginal = false;
 								for(TerritorySquare neighbor: supportable){
 									if(!supported.contains(neighbor)){
-										
-										System.out.println("Decided to support "+neighbor.getName());
-										
+
 										orders.add(new SupportHold(boardState, relevantPlayer, ts, neighbor));
 										supported.add(neighbor);
 										
@@ -144,14 +284,9 @@ public class GameSearch {
 								if(!foundOriginal && supportable.size() > 0){
 									
 									TerritorySquare target = supportable.iterator().next();
-									
-									System.out.println("randomly picking "+target.getName());
-									
-									
+							
 									orders.add(new SupportHold(boardState, relevantPlayer, ts, target));
 								}else if(!foundOriginal){
-									
-									System.out.println("giving up and holding");
 									
 									orders.add(new Hold(boardState, relevantPlayer, ts));
 								}
@@ -162,11 +297,18 @@ public class GameSearch {
 							
 							currentOrders = orders;
 							
+							moveSearch(boardState);
+							
+							System.out.println("Done with move search!");
+							System.out.println("Moves will be: ");
+							for(Order ord: currentOrders){
+								System.out.println("\t"+ord.toOrder(boardState));
+							}
 						}
 						
 						//	retreat time
-						else if(boardState.currentPhase == Phase.SUM ||
-								 boardState.currentPhase == Phase.AUT){
+						else if(boardState.time.phase == Phase.SUM ||
+								 boardState.time.phase == Phase.AUT){
 							
 							//	just a dumb first guess
 							
@@ -202,7 +344,7 @@ public class GameSearch {
 						}
 						
 						//	build/disband time 
-						else if(boardState.currentPhase == Phase.WIN){
+						else if(boardState.time.phase == Phase.WIN){
 							
 							int equalize = boardConfiguration.getRequiredBuilds(boardState, relevantPlayer);
 							
@@ -212,8 +354,18 @@ public class GameSearch {
 							
 								for(TerritorySquare poss: possibleBuilds){
 									
-									orders.add(new Build(boardState, relevantPlayer, new Unit(relevantPlayer, true), poss));
-									
+									if(poss.hasAnySeaBorders()){
+										
+										if(r.nextBoolean()){
+											orders.add(new Build(boardState, relevantPlayer, new Unit(relevantPlayer, true), poss));
+										}else{
+											orders.add(new Build(boardState, relevantPlayer, new Unit(relevantPlayer, false), poss, poss.getCoasts().iterator().next()));
+										}
+										
+									}else{
+										orders.add(new Build(boardState, relevantPlayer, new Unit(relevantPlayer, true), poss));
+									}
+										
 									equalize--;
 									
 									if(equalize == 0) break;
@@ -237,7 +389,8 @@ public class GameSearch {
 								}
 							}
 							
-							//TODO intelligent reasoning about what and where to build
+							//TODO intelligent reasoning about what and where to build--compare quality
+							//	of states
 							
 							currentOrders = orders;
 							

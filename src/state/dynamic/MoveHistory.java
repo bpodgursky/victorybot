@@ -76,7 +76,9 @@ public class MoveHistory {
 				if(square.getOccupier(bst) != null) return false;
 				
 				//	if units contested it, it's an invalid retreat (standoff)
-				if(moves.ordersTo.containsKey(square)) return false;
+				//	only 1 if there was a head to head battle
+				if(moves.ordersTo.containsKey(square) &&
+						moves.ordersTo.get(square).size() > 1) return false;
 				
 				//	can't retreat where your attacker came from
 				if(moves.ordersFrom.get(square) != null){

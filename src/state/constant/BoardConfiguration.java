@@ -152,7 +152,7 @@ public class BoardConfiguration {
 		activePlayers.put(Country.AUS, aus);
 		activePlayers.put(Country.TUR, tur);
 		
-		BoardState bst = new BoardState(1901, Phase.SPR, this);
+		BoardState bst = new BoardState(new YearPhase(1901, Phase.SPR), this);
 
 
 		
@@ -1141,7 +1141,7 @@ public class BoardConfiguration {
 			
 			for(Order ord: competitors){
 				
-				if(ord.actionResult == Result.BNC) continue;
+				//if(ord.actionResult == Result.BNC) continue;
 				
 				if(ord.actionResult == Result.DSR ||
 						ord.actionResult == Result.NSO) continue;
@@ -1153,14 +1153,19 @@ public class BoardConfiguration {
 				
 				if(supporterCount > mostSupports){
 					mostSupports = supporterCount;
-					mostSupported = ord;
+					
+					//	if it's not already bounce from a head to head
+					if(ord.actionResult != Result.BNC){
+						mostSupported = ord;
+					}
+					
 					numWithSupportCount = 1;
 				}else if(supporterCount == mostSupports){
 					numWithSupportCount++;
 				}
 			}
 			
-			if(numWithSupportCount == 1){
+			if(numWithSupportCount == 1 && mostSupported != null){
 				
 				if(!obliteratedMoves.contains(mostSupported)){
 					mostSupportForTerritory.put(terr, mostSupported);
@@ -1266,7 +1271,7 @@ public class BoardConfiguration {
 			Map<Order, Set<Order>> supportMoves,
 			Map<TerritorySquare, Order> mostSupportForTerritory,
 			Map<TerritorySquare, Set<Order>> movesWantLocation,
-			Map<TerritorySquare, Order> moveOrigins){
+			Map<TerritorySquare, Order> moveOrigins) throws Exception{
 		
 		while(!unresolvedMoves.isEmpty()){
 			
@@ -1317,6 +1322,10 @@ public class BoardConfiguration {
 							
 							Order friendlyAt = moveOrigins.get(moveDestination);
 							
+							if(friendlyAt == null){
+								throw new Exception("friendlyAt null wtf");
+							}
+							
 							if( friendlyAt.getClass() == Move.class || 
 								friendlyAt.getClass() == MoveByConvoy.class){
 								
@@ -1366,8 +1375,10 @@ public class BoardConfiguration {
 									//	should only be a convoy or hold here...
 									else{
 										
-										otherOrd.actionResult = Result.FAIL;
-										unresolvedMoves.remove(otherOrd);
+										if(successfulOrder.player != otherOrd.player){
+											otherOrd.actionResult = Result.FAIL;
+											unresolvedMoves.remove(otherOrd);
+										}
 									}
 								}
 							}
@@ -1853,15 +1864,18 @@ public class BoardConfiguration {
 		
 		long tEnd = System.currentTimeMillis();
 		
-		System.out.println("Time to resolve: "+(tEnd-tStart));
+		//System.out.println("Time to resolve: "+(tEnd-tStart));
 		
+
+
+			
 
 		//	check to see how disastrously we are off in our resolutions
 		if(check){
 			
 			//	print data for debugging
 			printMaps(moves, supportMoves, mostSupportForTerritory, movesWantLocation, moveOrigins, bst);
-			
+				
 			for(Order ord: moves){
 				
 				Result calculatedResult = ord.actionResult;
@@ -1888,7 +1902,7 @@ public class BoardConfiguration {
 	}
 	
 	
-	public BoardState update(int year, Phase phase, BoardState orig, Set<Order> moves, boolean fromServer) throws Exception{
+	public BoardState update(YearPhase time, BoardState orig, Set<Order> moves, boolean fromServer) throws Exception{
 
 		//	figure out which moves were successful
 		
@@ -1896,18 +1910,18 @@ public class BoardConfiguration {
 		resolve(orig, moves, fromServer);
 		
 		
-		BoardState bst = orig.clone(year, phase);
+		BoardState bst = orig.clone(time);
 		
 		//process movements separately--slightly more complex resolutions
 		Set<Order> successfulMoves = new HashSet<Order>();
 		
 		//	note that retreats are being processed, so supports might look wonky
 		//	(with "unoccupied" where they are supporting)
-		System.out.println("Successful orders to process:");
+		//System.out.println("Successful orders to process:");
 		for(Order ord: moves){
 				
 			if(ord.actionResult == Result.SUC){
-				System.out.println(ord.toOrder(bst)+ " "+ord.getResult());
+				//System.out.println(ord.toOrder(bst)+ " "+ord.getResult());
 				
 				if(ord.getClass() == Build.class){
 					Build b = (Build)ord;
@@ -2041,14 +2055,14 @@ public class BoardConfiguration {
 			}
 		}
 		
-		bst.updateHistory(orig.currentYear, orig.currentPhase, moves);
+		bst.updateHistory(orig.time.year, orig.time.phase, moves);
 		
-		if(phase == Phase.WIN){
+		if(time.phase == Phase.WIN){
 			updateSupplyControl(bst);
 		}
 		
 		//	even if winter didn't happen, update controls
-		if(phase == Phase.SPR && orig.currentPhase != Phase.WIN){
+		if(time.phase == Phase.SPR && orig.time.phase != Phase.WIN){
 			updateSupplyControl(bst);
 		}
 		
@@ -2085,8 +2099,8 @@ public class BoardConfiguration {
 	
 	public void assertCanMove(BoardState bst, Player p, TerritorySquare from, TerritorySquare to, String destinationCoast) throws Exception{
 		
-		if(bst.currentPhase == Phase.WIN || bst.currentPhase == Phase.SUM || bst.currentPhase == Phase.AUT){
-			throw new Exception("wrong season: "+bst.currentPhase);
+		if(bst.time.phase == Phase.WIN || bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
+			throw new Exception("wrong season: "+bst.time.phase);
 		}
 		
 		//	make sure unit is there
@@ -2117,7 +2131,7 @@ public class BoardConfiguration {
 	
 	public boolean canMove(BoardState bst, Player p, TerritorySquare from, TerritorySquare to, String destinationCoast){
 		
-		if(bst.currentPhase == Phase.WIN || bst.currentPhase == Phase.SUM || bst.currentPhase == Phase.AUT){
+		if(bst.time.phase == Phase.WIN || bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
 			return false;
 		}
 		
@@ -2154,8 +2168,8 @@ public class BoardConfiguration {
 	
 	public void assertCanSupportHold(BoardState bst, Player p, TerritorySquare from, TerritorySquare to) throws Exception{
 		
-		if(bst.currentPhase == Phase.WIN || bst.currentPhase == Phase.SUM || bst.currentPhase == Phase.AUT){
-			throw new Exception("wrong season: "+bst.currentPhase);
+		if(bst.time.phase == Phase.WIN || bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
+			throw new Exception("wrong season: "+bst.time.phase);
 		}
 		
 		if(to.getOccupier(bst) == null){
@@ -2171,7 +2185,7 @@ public class BoardConfiguration {
 	
 	public boolean canSupportHold(BoardState bst, Player p, TerritorySquare from, TerritorySquare to){
 		
-		if(bst.currentPhase == Phase.WIN || bst.currentPhase == Phase.SUM || bst.currentPhase == Phase.AUT){
+		if(bst.time.phase == Phase.WIN || bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
 			return false;
 		}
 		
@@ -2189,8 +2203,8 @@ public class BoardConfiguration {
 	
 	public void assertCanSupportMove(BoardState bst, Player p, TerritorySquare supporter, TerritorySquare from, TerritorySquare to) throws Exception{
 		
-		if(bst.currentPhase == Phase.WIN || bst.currentPhase == Phase.SUM || bst.currentPhase == Phase.AUT){
-			throw new Exception("wrong season: "+bst.currentPhase);
+		if(bst.time.phase == Phase.WIN || bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
+			throw new Exception("wrong season: "+bst.time.phase);
 		}
 		
 		
@@ -2215,7 +2229,7 @@ public class BoardConfiguration {
 	
 	public boolean canSupportMove(BoardState bst, Player p, TerritorySquare supporter, TerritorySquare from, TerritorySquare to){
 		
-		if(bst.currentPhase == Phase.WIN || bst.currentPhase == Phase.SUM || bst.currentPhase == Phase.AUT){
+		if(bst.time.phase == Phase.WIN || bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
 			return false;
 		}
 		
@@ -2244,8 +2258,8 @@ public class BoardConfiguration {
 	
 	public boolean assertCanAssistConvoy(BoardState bst, Player p, TerritorySquare convoyer, TerritorySquare from, TerritorySquare to) throws Exception{
 		
-		if(bst.currentPhase == Phase.WIN || bst.currentPhase == Phase.SUM || bst.currentPhase == Phase.AUT){
-			throw new Exception("wrong season: "+bst.currentPhase);
+		if(bst.time.phase == Phase.WIN || bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
+			throw new Exception("wrong season: "+bst.time.phase);
 		}
 		
 		if(convoyer.getOccupier(bst) == null){
@@ -2276,7 +2290,7 @@ public class BoardConfiguration {
 	
 	public boolean canAssistConvoy(BoardState bst, Player p, TerritorySquare convoyer, TerritorySquare from, TerritorySquare to){
 		
-		if(bst.currentPhase == Phase.WIN || bst.currentPhase == Phase.SUM || bst.currentPhase == Phase.AUT){
+		if(bst.time.phase == Phase.WIN || bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
 			return false;
 		}
 		
@@ -2304,8 +2318,8 @@ public class BoardConfiguration {
 	
 	public void assertCanConvoy(BoardState bst, Player p, TerritorySquare from, TerritorySquare to, List<TerritorySquare> transit) throws Exception{
 		
-		if(bst.currentPhase == Phase.WIN || bst.currentPhase == Phase.SUM || bst.currentPhase == Phase.AUT){
-			throw new Exception("wrong season: "+bst.currentPhase);
+		if(bst.time.phase == Phase.WIN || bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
+			throw new Exception("wrong season: "+bst.time.phase);
 		}
 		
 		//	units need to exist, territories have to be sea, only fleets convoy
@@ -2345,7 +2359,7 @@ public class BoardConfiguration {
 	
 	public boolean canConvoy(BoardState bst, Player p, TerritorySquare from, TerritorySquare to, List<TerritorySquare> transit){
 		
-		if(bst.currentPhase == Phase.WIN || bst.currentPhase == Phase.SUM || bst.currentPhase == Phase.AUT){
+		if(bst.time.phase == Phase.WIN || bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
 			return false;
 		}
 		
@@ -2388,7 +2402,7 @@ public class BoardConfiguration {
 	
 	public boolean canHold(BoardState bst, Player p, TerritorySquare holder){
 		
-		if(bst.currentPhase == Phase.WIN || bst.currentPhase == Phase.SUM || bst.currentPhase == Phase.AUT){
+		if(bst.time.phase == Phase.WIN || bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
 			return false;
 		}
 		
@@ -2407,8 +2421,8 @@ public class BoardConfiguration {
 	
 	public void assertCanHold(BoardState bst, Player p, TerritorySquare holder) throws Exception{
 		
-		if(bst.currentPhase == Phase.WIN || bst.currentPhase == Phase.SUM || bst.currentPhase == Phase.AUT){
-			throw new Exception("wrong season: "+bst.currentPhase);
+		if(bst.time.phase == Phase.WIN || bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
+			throw new Exception("wrong season: "+bst.time.phase);
 		}
 		
 		if(holder.getOccupier(bst) == null){
@@ -2423,8 +2437,8 @@ public class BoardConfiguration {
 	public void assertCanBuild(BoardState bst, Player p, Unit u, TerritorySquare location) throws Exception{
 		
 		//	it must be winter
-		if(bst.currentPhase != Phase.WIN){
-			throw new Exception("wrong season: "+bst.currentPhase);
+		if(bst.time.phase != Phase.WIN){
+			throw new Exception("wrong season: "+bst.time.phase);
 		}
 		
 		//	location must be unoccupied
@@ -2461,7 +2475,7 @@ public class BoardConfiguration {
 	public boolean canBuild(BoardState bst, Player p, TerritorySquare location){
 		
 		//	it must be winter
-		if(bst.currentPhase != Phase.WIN){
+		if(bst.time.phase != Phase.WIN){
 			return false;
 		}
 		
@@ -2496,7 +2510,7 @@ public class BoardConfiguration {
 	public boolean canBuild(BoardState bst, Player p, Unit u, TerritorySquare location){
 		
 		//	it must be winter
-		if(bst.currentPhase != Phase.WIN){
+		if(bst.time.phase != Phase.WIN){
 			return false;
 		}
 		
@@ -2535,8 +2549,8 @@ public class BoardConfiguration {
 	public boolean assertCanWaive(BoardState bst, Player p) throws Exception{
 		
 		//	it must be winter
-		if(bst.currentPhase != Phase.WIN){
-			throw new Exception("wrong season: "+bst.currentPhase);
+		if(bst.time.phase != Phase.WIN){
+			throw new Exception("wrong season: "+bst.time.phase);
 		}
 		
 		//	controller must have spare builds--fewer occupied territories than controlled territories
@@ -2550,7 +2564,7 @@ public class BoardConfiguration {
 	public boolean canWaive(BoardState bst, Player p){
 		
 		//	it must be winter
-		if(bst.currentPhase != Phase.WIN){
+		if(bst.time.phase != Phase.WIN){
 			return false;
 		}
 		
@@ -2565,8 +2579,8 @@ public class BoardConfiguration {
 	public void assertCanDisband(BoardState bst, Player p, TerritorySquare location) throws Exception{
 		
 		//	it must be retreat season
-		if(bst.currentPhase != Phase.AUT && bst.currentPhase != Phase.SUM){
-			throw new Exception("wrong season: "+bst.currentPhase);
+		if(bst.time.phase != Phase.AUT && bst.time.phase != Phase.SUM){
+			throw new Exception("wrong season: "+bst.time.phase);
 		}
 		
 		//	there must be a pending retreat from this location
@@ -2587,7 +2601,7 @@ public class BoardConfiguration {
 	public boolean canDisband(BoardState bst, Player p, TerritorySquare location){
 		
 		//	it must be retreat season
-		if(bst.currentPhase != Phase.AUT && bst.currentPhase != Phase.SUM){
+		if(bst.time.phase != Phase.AUT && bst.time.phase != Phase.SUM){
 			return false;
 		}
 		
@@ -2624,8 +2638,8 @@ public class BoardConfiguration {
 	
 	public boolean assertCanRetreat(BoardState bst, Player p, TerritorySquare from, TerritorySquare to, String destinationCoast) throws Exception{
 		
-		if(bst.currentPhase != Phase.AUT && bst.currentPhase != Phase.SUM){
-			throw new Exception("wrong season: "+bst.currentPhase);
+		if(bst.time.phase != Phase.AUT && bst.time.phase != Phase.SUM){
+			throw new Exception("wrong season: "+bst.time.phase);
 		}
 		
 		//	there must be a pending retreat from this location
@@ -2668,7 +2682,7 @@ public class BoardConfiguration {
 	
 	public boolean canRetreat(BoardState bst, Player p, TerritorySquare from, TerritorySquare to, String destinationCoast) throws Exception{
 		
-		if(bst.currentPhase != Phase.AUT && bst.currentPhase != Phase.SUM){
+		if(bst.time.phase != Phase.AUT && bst.time.phase != Phase.SUM){
 			return false;
 		}
 		
@@ -2713,8 +2727,8 @@ public class BoardConfiguration {
 	public void assertCanRemove(BoardState bst, Player p, TerritorySquare location) throws Exception{
 		
 		//	it must be winter
-		if(bst.currentPhase != Phase.WIN){
-			throw new Exception("wrong season: "+bst.currentPhase);
+		if(bst.time.phase != Phase.WIN){
+			throw new Exception("wrong season: "+bst.time.phase);
 		}
 		
 		//	location must have a unit
@@ -2734,7 +2748,7 @@ public class BoardConfiguration {
 	public boolean canRemove(BoardState bst, Player p, TerritorySquare location){
 		
 		//	it must be winter
-		if(bst.currentPhase != Phase.WIN){
+		if(bst.time.phase != Phase.WIN){
 			return false;
 		}
 		
@@ -2867,7 +2881,98 @@ public class BoardConfiguration {
 		return possibilities;
 	}
 	
+	//	ok this is a bit sketchy but necessary to deal with complexity.  
+	//	a relevant player is defined as a player whose units could tactically
+	//	affect
+	//	the success of yours in a turn.  That is, they border any of the 
+	//	territories you border
+	public Set<Player> getRelevantPlayers(BoardState bst, Player p){
+		
+		Set<Player> foundPlayers = new HashSet<Player>();
+		Set<TerritorySquare> relevantTerritories = new HashSet<TerritorySquare>();
+		
+		foundPlayers.add(p);
+		
+		//	first layer: those in squares bordering your possessions
+		for(TerritorySquare tsquare: p.getControlledTerritories(bst)){
+			relevantTerritories.add(tsquare);
+			relevantTerritories.addAll(tsquare.getBorders());
+		}
+		for(TerritorySquare tsquare: p.getOccupiedTerritories(bst)){
+			relevantTerritories.add(tsquare);
+			relevantTerritories.addAll(tsquare.getBorders());
+		}
+		
+		//	need to worry about one more layer out, because those will be
+		//	moving into your squares
+		
+		Set<TerritorySquare> affectingTerritories = new HashSet<TerritorySquare>();
+		
+		for(TerritorySquare tsquare: relevantTerritories){
+			
+			affectingTerritories.add(tsquare);
+			affectingTerritories.addAll(tsquare.getBorders());
+		}
+		
+		//	in theory we eventually need to worry about one more layer out,
+		//	because these could cut the support of those moving into these...
+		//	only really relevant when we have allies
+		
+		for(TerritorySquare tsquare: affectingTerritories){
+			
+			if(tsquare.getOccupier(bst) != null){
+				foundPlayers.add(tsquare.getOccupier(bst).belongsTo);
+			}
+			
+			if(tsquare.getController(bst) != null){
+				foundPlayers.add(tsquare.getController(bst));
+			}
+		}
+		
+		return foundPlayers;
+	}
 	
+	public static class YearPhase{
+		
+		public final int year;
+		public final Phase phase;
+		
+		public YearPhase(int year, Phase phase){
+			
+			this.year = year;
+			this.phase = phase;
+			
+		}
+		
+		public YearPhase next(){
+			
+			if(phase == Phase.WIN){
+				return new YearPhase(year+1, Phase.SPR);
+			}
+			else if(phase == Phase.SPR){
+				return new YearPhase(year, Phase.SUM);
+			}
+			else if(phase == Phase.SUM){
+				return new YearPhase(year, Phase.FAL);
+			}
+			else if(phase == Phase.FAL){
+				return new YearPhase(year, Phase.AUT);
+			}
+			else {
+				return new YearPhase(year, Phase.WIN);
+			}
+		}
+	}
+	
+	public Set<Order> generateHoldsFor(BoardState bst, Player p) throws Exception{
+		
+		Set<Order> holds = new HashSet<Order>();
+		for(TerritorySquare tsquare: p.getOccupiedTerritories(bst)){
+			holds.add(new Hold(bst, p, tsquare));
+		}
+		
+		return holds;
+	}
 	
 	public static void main(String[] args) throws Exception{
 		

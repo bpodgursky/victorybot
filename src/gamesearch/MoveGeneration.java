@@ -6,16 +6,19 @@ import heuristic.NaiveHeuristic;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
 
 import order.Order;
+import order.spring_fall.Hold;
 import order.spring_fall.Move;
 import order.spring_fall.SupportMove;
 
@@ -68,13 +71,14 @@ public class MoveGeneration {
 		}
 		
 		char [] permute = str.toString().toCharArray();
-		System.out.println(str.toString());
+
 		//Create vectors to store orders of units that will move and of units that we want to support other moves
 		//Also create a HashMap between heuristic score of move and the order itself
 		Vector<Order> moveSet = new Vector<Order>();
 		Vector<Order> supportOrder = new Vector<Order>();
 		Vector<TerritorySquare> supportSet = new Vector<TerritorySquare>();
 		HashMap<Double, Order> moveScoreMap = new HashMap<Double, Order>();
+		
 		count = 0;
 		Order ord = null;
 		//Step through the array that gives us our permutations
@@ -89,7 +93,7 @@ public class MoveGeneration {
 				List<TerritoryCoast> possibleMoves = staticBoard.getMovesForUnit(dynamicState, moveOrigin);
 				
 				//TODO right now just a random territory listed.  Need to make it do all territories.
-				TerritoryCoast chosenDestination = possibleMoves.get(r.nextInt(possibleMoves.size()-1));
+				TerritoryCoast chosenDestination = possibleMoves.get(r.nextInt(possibleMoves.size()));
 				
 				ord = new Move(dynamicState, player, moveOrigin,
 						chosenDestination.sqr, chosenDestination.coast);
@@ -99,7 +103,7 @@ public class MoveGeneration {
 				
 				//TODO added the rand because if two orders have the same score, 
 				//	the second one will obliterate the first in the map
-				Double score = new Double(heuristic.orderScore(ord, dynamicState)) + new Random().nextDouble()/10000.0;
+				Double score = new Double(heuristic.orderScore(ord, dynamicState)) + r.nextDouble()/10000.0;
 				moveScoreMap.put(score, ord);
 				
 			}
@@ -114,8 +118,7 @@ public class MoveGeneration {
 		//Sort heuristic scores and now lets step through remaining units and try to support our moves
 		Double [] orderScore = (moveScoreMap.keySet().toArray(new Double[0]));
 		Arrays.sort(orderScore);
-		Vector<TerritorySquare> supportSetCopy = new Vector<TerritorySquare>(supportSet);
-		
+
 		for(Double heurVal: orderScore)
 		{
 			
@@ -124,7 +127,7 @@ public class MoveGeneration {
 			TerritorySquare suppToPoss = supportedMove.to;
 			TerritorySquare supportFromPoss = supportedMove.from;
 			
-			for(TerritorySquare support: supportSetCopy)
+			for(TerritorySquare support: supportSet.toArray(new TerritorySquare[0]))
 			{
 				
 				//Do we border where a move is trying to go
@@ -137,10 +140,17 @@ public class MoveGeneration {
 					
 				}
 			}
-			supportSetCopy = supportSet;
-			supportSet = new Vector<TerritorySquare>(supportSetCopy);
 		}
+		
 		Set<Order> finalMoveSet = new HashSet<Order>();
+		
+		for(TerritorySquare ts: supportSet){
+			
+			//TODO 	for now just hold if can't support a move.  In future,
+			//	should support holds too 
+			finalMoveSet.add(new Hold(dynamicState, player, ts));	
+		}
+		
 		for(Order ord1: supportOrder)
 		{
 			finalMoveSet.add(ord1);
@@ -154,41 +164,95 @@ public class MoveGeneration {
 		return finalMoveSet;
 	}
 	
-	public List<Set<Order>> generateOrderSets(Player player, BoardState dynamicState) throws Exception
+	//	so we can return the value associated with a set of moves
+	public static class MovesValue{
+		
+		public final double value;
+		public final Set<Order> moves;
+		
+		public MovesValue(Set<Order> moves, double value){
+			this.value = value;
+			this.moves = moves;
+		}
+	}
+	
+	public MovesValue[] generateOrderSets(Player player, BoardState dynamicState) throws Exception
 	{
 		int unitCount = player.getNumberUnits(dynamicState);
-		System.out.println(unitCount);
+
 		List<Set<Order>> unitMasks = new LinkedList<Set<Order>>();
 		Set<TerritorySquare> unit = player.getOccupiedTerritories(dynamicState);
 		for(int i = 1; i < Math.pow(2.0,(double)unitCount); i++)
 		{
-			System.out.println(i);
 			unitMasks.add(generateOrderSet(i, unitCount, unit, dynamicState, player));
 		}
-		return unitMasks;
+		
+		//	want to order these moves by the naive quality the 
+		//	board would have afterwards--basically, which of them
+		//	is the opponent most likely to do
+		//	the simplest way to calculate this is "what if everyone holds"
+		
+		Set<Order> otherOrders = new HashSet<Order>();
+		for(Player p: this.staticBoard.getPlayers()){
+			if(p == player) continue;
+			
+			otherOrders.addAll(staticBoard.generateHoldsFor(dynamicState, p));
+		}
+		
+		List<MovesValue> valMoves = new LinkedList<MovesValue>();
+		for(Set<Order> ord: unitMasks){
+			
+			Set<Order> toSubmit = new HashSet<Order>(otherOrders);
+			toSubmit.addAll(ord);
+			
+			BoardState stateAfterExecute = staticBoard.update(dynamicState.time.next(), dynamicState, toSubmit, false);
+		
+			valMoves.add(new MovesValue(ord, heuristic.boardScore(player, stateAfterExecute)));
+		}
+		
+		MovesValue[] moves = valMoves.toArray(new MovesValue[0]);
+		
+		Arrays.sort(moves, new Comparator(){
+			public int compare(Object a, Object b){
+				
+				double valA = ((MovesValue)a).value;
+				double valB = ((MovesValue)b).value;
+				
+				return -Double.compare(valA, valB);
+			}
+			
+		});
+		
+		return moves;
 	}
 	
 	public static void main(String [] args) throws Exception
 	{
-		BoardConfiguration staticBoard = null;
-		try
-		{
-			staticBoard = new BoardConfiguration();
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
+		BoardConfiguration staticBoard = new BoardConfiguration();
+
 		MoveGeneration gen = new MoveGeneration(staticBoard);
 		BoardState bst = staticBoard.getInitialState();
 		int count = 0;
-		for(Set<Order> so: gen.generateOrderSets(staticBoard.getPlayer(Country.RUS), bst))
+		
+		Map<Player, MovesValue[]> orderSetsByPlayer =
+			new HashMap<Player, MovesValue[]>();
+		
+		//	for each player, generate the a priori likely moves
+		for(Player p: staticBoard.getPlayers()){
+			orderSetsByPlayer.put(p, gen.generateOrderSets(p, bst));
+		}
+		
+		
+		//	try combinations of moves	
+		
+		
+		for(MovesValue so: gen.generateOrderSets(staticBoard.getPlayer(Country.RUS), bst))
 		{
 			count++;
 			
 			System.out.println(Integer.toBinaryString(count));
 
-			for(Order o: so)
+			for(Order o: so.moves)
 			{
 				System.out.println(o.toOrder(bst));
 			}
