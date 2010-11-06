@@ -9,13 +9,12 @@
  *****************************************************************************/
 package dip.daide.comm;
 
-import java.util.Map;
-import java.util.Iterator;
-import java.util.HashMap;
-import java.util.StringTokenizer;
-import java.util.LinkedList;
-
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * The <code>Token</code> class converts tokens between their

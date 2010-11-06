@@ -1,9 +1,7 @@
 package order;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import order.Order.Result;
 import order.Order.RetreatState;
@@ -18,7 +16,6 @@ import order.spring_fall.Move;
 import order.spring_fall.MoveByConvoy;
 import order.spring_fall.SupportHold;
 import order.spring_fall.SupportMove;
-
 import representation.Country;
 import representation.TerritorySquare;
 import representation.Unit;

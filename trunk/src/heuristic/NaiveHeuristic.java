@@ -2,7 +2,6 @@ package heuristic;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Random;
 
 import order.Order;
 import order.spring_fall.Convoy;
@@ -11,7 +10,6 @@ import order.spring_fall.Move;
 import order.spring_fall.MoveByConvoy;
 import order.spring_fall.SupportHold;
 import order.spring_fall.SupportMove;
-
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;

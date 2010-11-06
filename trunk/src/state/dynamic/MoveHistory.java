@@ -3,7 +3,6 @@ package state.dynamic;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,10 +18,8 @@ import order.spring_fall.Move;
 import order.spring_fall.MoveByConvoy;
 import order.spring_fall.SupportHold;
 import order.spring_fall.SupportMove;
-
 import representation.Player;
 import representation.TerritorySquare;
-
 import state.dynamic.BoardState.Phase;
 
 //	a history of all moves

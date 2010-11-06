@@ -1,7 +1,7 @@
 /*****************************************************************************
  * $Id: Connection.java,v 1.1 2004/09/09 06:32:18 heb Exp $ 
  *
- * Copyright © 2002, 2003, 2004 by Henrik Bylund
+ * Copyright ï¿½ 2002, 2003, 2004 by Henrik Bylund
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -9,13 +9,11 @@
  *****************************************************************************/
 package dip.daide.comm;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.ArrayList;
 import java.util.Iterator;
 
