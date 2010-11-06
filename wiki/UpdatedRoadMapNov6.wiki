@@ -14,6 +14,7 @@ Game mechanics
     Move resolution 
   Todo
     some bugs which get worked out as they arise
+    interrupt game search after updates happen so it doesn't get confused and die
 
 Game search 
   Naive heuristics for state
@@ -22,6 +23,7 @@ Game search
     The beginnings of the game search component
   Todo
     Turn the crude game search as of now into a legit pruned minimax search
+    Scale parameters with number of open moves/relevant players
 
 Diplomizer 
 Belief state
