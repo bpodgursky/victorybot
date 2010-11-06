@@ -1,19 +1,19 @@
 package gamesearch;
 
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Random;
-
 import gamesearch.MoveGeneration.MovesValue;
 import heuristic.Heuristic;
 import heuristic.NaiveHeuristic;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 import order.Order;
 import order.builds.Build;
@@ -22,10 +22,6 @@ import order.retreats.Disband;
 import order.retreats.Retreat;
 import order.spring_fall.Hold;
 import order.spring_fall.SupportHold;
-
-import java.util.HashSet;
-
-import representation.Country;
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
@@ -102,6 +98,43 @@ public class GameSearch {
 	public Set<Order> currentOrders(){
 		return currentOrders;
 	}
+	
+	//	base case of search.  Returns the best set of moves for us
+	private Set<Order> moveSearch(BoardState bst, YearPhase until){
+		
+		//	build sets of all moves for all relevant players
+		
+		//	for each of our moves, find with min the worst outcome from that move.
+		//	return the set of moves with the highest associated min
+		
+	}
+	
+	//	for the moves that we have made (friendlyOrders), what is the worst possible board 
+	//	that can result from it.  We want to return the quality of that board
+	private double min(BoardState bst, YearPhase until, Set<Order> friendlyOrders){
+		
+		//	recurse through all enemy combinations (cap for each player)
+		
+		//		base case of recursion, have a set of moves for each enemy player
+		//			combine with the friendlyOrders above to make a full set of orders
+		//			apply to gamestate, call max on this boardstate
+		
+		//	return the minimum board quality over all combinations
+	}
+	
+	private double max(BoardState bst, YearPhase until){
+		
+		// if bst's date is after until, return the quality of the board
+		
+		//	otherwise,
+		
+		//	build sets of all moves for all relevant players based on this bst
+		
+		//	for each of our moves, find with min the worst outcome from that move.
+		//	return the maximum min found
+		
+	}
+	
 	
 	
 	private Set<Order> moveSearch(BoardState bst) throws Exception{
@@ -184,7 +217,12 @@ public class GameSearch {
 	//	how many moves to enumerate for each player.  hardcode for now
 	private static final int MAX_ENUM = 5;
 	
-	private void enumerateMoves(BoardState bst, List<Set<Order>> allOrders, Map<Player, MovesValue[]> playerOrders, Player[] players, int player, List<Double> scores) throws Exception{
+	private void enumerateMoves(BoardState bst, 
+			List<Set<Order>> allOrders, 
+			Map<Player, MovesValue[]> playerOrders, 
+			Player[] players, 
+			int player, 
+			List<Double> scores) throws Exception{
 		
 		if(player == players.length){
 			// execute, evaluate quality
@@ -213,17 +251,12 @@ public class GameSearch {
 			for(int i = 0; i < movesForPlayer.length && i < MAX_ENUM; i++){			
 				MovesValue mv = movesForPlayer[i]; 
 				
-				int initSize = allOrders.size();
-				
 				allOrders.add(mv.moves);
 			
 				enumerateMoves(bst, allOrders, playerOrders, players, player+1, scores);
 			
 				allOrders.remove(mv.moves);
-				
-				int endSize = allOrders.size();
-				
-				if(initSize != endSize) throw new Exception("orders size before "+initSize+" now "+endSize);
+								
 			}
 		}
 	}

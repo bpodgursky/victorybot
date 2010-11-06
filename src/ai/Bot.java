@@ -8,24 +8,14 @@ package ai;
  * This code is released in the public domain.
  *****************************************************************************/
 
-import dip.daide.comm.MessageListener;
-import dip.daide.comm.DisconnectedException;
-import dip.daide.comm.UnknownTokenException;
-import dip.daide.comm.Server;
 import gamesearch.GameSearch;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.io.IOException;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 
 import order.Order;
 import order.OrderFactory;
-
 import representation.Country;
 import state.constant.BoardConfiguration;
 import state.constant.BoardConfiguration.YearPhase;
@@ -33,6 +23,10 @@ import state.dynamic.BeliefState;
 import state.dynamic.BoardState;
 import state.dynamic.DiplomaticState;
 import state.dynamic.BoardState.Phase;
+import dip.daide.comm.DisconnectedException;
+import dip.daide.comm.MessageListener;
+import dip.daide.comm.Server;
+import dip.daide.comm.UnknownTokenException;
 
 /**
  * An interactive client for testing the communication. Lines are read from

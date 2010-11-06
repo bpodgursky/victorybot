@@ -1,11 +1,8 @@
 package order.retreats;
 
 import order.Order;
-import order.Order.Result;
-import order.Order.RetreatState;
 import representation.Player;
 import representation.TerritorySquare;
-
 import representation.Unit;
 import state.dynamic.BoardState;
 

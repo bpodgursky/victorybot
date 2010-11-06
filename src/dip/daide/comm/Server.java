@@ -1,7 +1,7 @@
 /*****************************************************************************
  * $Id: Server.java,v 1.1 2004/09/09 06:32:18 heb Exp $ 
  *
- * Copyright © 2002, 2003, 2004 by Henrik Bylund
+ * Copyright ï¿½ 2002, 2003, 2004 by Henrik Bylund
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -9,10 +9,10 @@
  *****************************************************************************/
 package dip.daide.comm;
 
-import java.net.InetAddress;
 import java.io.IOException;
-import java.util.LinkedList;
+import java.net.InetAddress;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
  * The <code>Server</code> class wraps a <code>Connection</code>

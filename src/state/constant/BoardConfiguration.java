@@ -26,13 +26,11 @@ import order.spring_fall.Move;
 import order.spring_fall.MoveByConvoy;
 import order.spring_fall.SupportHold;
 import order.spring_fall.SupportMove;
-
 import representation.Country;
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
 import state.dynamic.BoardState;
-import state.dynamic.MoveHistory;
 import state.dynamic.BoardState.Phase;
 import state.dynamic.BoardState.RetreatSituation;
 
@@ -1766,8 +1764,6 @@ public class BoardConfiguration {
 	
 	private void resolve(BoardState bst, Set<Order> moves, boolean check) throws Exception{
 
-		long tStart = System.currentTimeMillis();
-		
 		Map<Order, Result> actualResults = new HashMap<Order, Result>();
 		Map<Order, RetreatState> actualRetreats = new HashMap<Order, RetreatState>();
 		
@@ -1864,8 +1860,6 @@ public class BoardConfiguration {
 		//	set the units that have to retreat.  Also set success on anything that hasn't 
 		//	had anything marked so far (supports and convoys)
 		setRetreats(moves, successfulMoves);
-		
-		long tEnd = System.currentTimeMillis();
 		
 		//System.out.println("Time to resolve: "+(tEnd-tStart));
 		

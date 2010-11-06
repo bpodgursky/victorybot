@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 
 import order.Order;
-
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;

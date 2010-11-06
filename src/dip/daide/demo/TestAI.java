@@ -1,21 +1,21 @@
 /*****************************************************************************
  * $Id: TestAI.java,v 1.1 2004/09/09 06:32:18 heb Exp $ 
  *
- * Copyright © 2002, 2004 by Henrik Bylund
+ * Copyright ï¿½ 2002, 2004 by Henrik Bylund
  * This code is released in the public domain.
  *****************************************************************************/
 package dip.daide.demo;
 
-import dip.daide.comm.MessageListener;
-import dip.daide.comm.DisconnectedException;
-import dip.daide.comm.UnknownTokenException;
-import dip.daide.comm.Server;
-
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.io.IOException;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+
+import dip.daide.comm.DisconnectedException;
+import dip.daide.comm.MessageListener;
+import dip.daide.comm.Server;
+import dip.daide.comm.UnknownTokenException;
 
 /**
  * An interactive client for testing the communication. Lines are read from

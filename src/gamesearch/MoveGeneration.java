@@ -3,34 +3,27 @@ package gamesearch;
 import heuristic.Heuristic;
 import heuristic.NaiveHeuristic;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.Vector;
 
 import order.Order;
 import order.spring_fall.Hold;
 import order.spring_fall.Move;
 import order.spring_fall.SupportMove;
-
 import representation.Country;
 import representation.Player;
 import representation.TerritorySquare;
-import representation.Unit;
 import state.constant.BoardConfiguration;
 import state.constant.BoardConfiguration.TerritoryCoast;
 import state.dynamic.BoardState;
-import state.dynamic.BoardState.Phase;
 
 public class MoveGeneration {
 
@@ -291,7 +284,8 @@ public class MoveGeneration {
 			}
 		});
 		
-		MovesValue[] prunedMoves = new MovesValue[MAX_PLAYER_MOVES];
+		MovesValue[] prunedMoves = new MovesValue[
+		    Math.min(MAX_PLAYER_MOVES, moves.length)];
 		for(int i = 0; i < MAX_PLAYER_MOVES && i < moves.length; i++){
 			prunedMoves[i] = moves[i];
 		}
