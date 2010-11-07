@@ -29,7 +29,7 @@ public class Remove extends Order{
 
 	@Override
 	public String toOrder(BoardState bst) {
-		return "( ( "+disbandLocation.getUnitString(bst)+" ) DSB )";
+		return "( ( "+disbandLocation.getUnitString(bst)+" ) REM )";
 	}
 
 }
