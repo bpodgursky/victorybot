@@ -2941,6 +2941,20 @@ public class BoardConfiguration {
 			
 		}
 		
+		public boolean isAfter(YearPhase yp)
+		{
+			if(this.year > yp.year)
+			{
+				return true;
+			}
+			else if(this.year == yp.year && this.phase.compareTo(yp.phase) > 0)
+			{
+				return true;
+			}
+			else
+				return false;
+		}
+		
 		public YearPhase next(){
 			
 			if(phase == Phase.WIN){

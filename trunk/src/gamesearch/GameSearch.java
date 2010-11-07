@@ -6,6 +6,7 @@ import heuristic.Heuristic;
 import heuristic.NaiveHeuristic;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,6 +39,8 @@ import state.dynamic.BoardState.RetreatSituation;
 // 	updated state, diplomatic changes, etc
 public class GameSearch {
 
+	private static final int MAX_PLAYER_MOVES = 50;
+	
 	//	keep this updated with the current best guess at orders
 	private Set<Order> currentOrders = new HashSet<Order>();
 	
@@ -106,13 +109,63 @@ public class GameSearch {
 	}
 	
 	//	base case of search.  Returns the best set of moves for us
-	private Set<Order> moveSearch(BoardState bst, YearPhase until){
+	private Set<Order> moveSearch(BoardState bst, YearPhase until) throws Exception{
 		
 		//	build sets of all moves for all relevant players
 		
+		MoveGeneration gen = new MoveGeneration(boardConfiguration);
+
+		Map<Player, MovesValue[]> orderSetsByPlayer =
+			new HashMap<Player, MovesValue[]>();
+		
+		
+		Set<Player> relevantPlayers = boardConfiguration.getRelevantPlayers(bst, relevantPlayer);
+		
+		System.out.println("This state, we "+relevantPlayer.getName()+" only care about players: ");
+		System.out.println("\t"+relevantPlayers);
+		
+		//	for each player, generate the a priori likely moves
+		List<Player> otherPlayers = new LinkedList<Player>();
+		for(Player p: boardConfiguration.getPlayers()){
+			
+			if(relevantPlayers.contains(p)){
+				orderSetsByPlayer.put(p, gen.generateOrderSets(p, bst));
+			}else{
+				
+				MovesValue[] hold = new MovesValue[1];
+				hold[0] = new MovesValue(boardConfiguration.generateHoldsFor(bst, p), -1);
+				
+				orderSetsByPlayer.put(p, hold);
+			}
+			if(p != this.relevantPlayer){
+				otherPlayers.add(p);
+			}
+		}
+		
+		Player[] playerArray = otherPlayers.toArray(new Player[0]);	
+		MovesValue [] maxSetMoves = new MovesValue[MAX_PLAYER_MOVES];
+		int count = 0;
+		
+		for(MovesValue playerOrds: orderSetsByPlayer.get(relevantPlayer)){
+			
+			System.out.println("Looking at "+playerOrds);
+			
+			List<Set<Order>> orderList = new LinkedList<Set<Order>>();
+			orderList.add(playerOrds.moves);
+			
+			List<Double> scores = new ArrayList<Double>();
+			//int year = bst.time.year;
+			//Phase phase = bst.time.phase == Phase.SPR ? Phase.SUM : Phase.WIN;
+			//YearPhase until = new YearPhase(year, phase);
+			maxSetMoves[count] = new MovesValue(playerOrds.moves, min(bst, until, playerOrds.moves, orderSetsByPlayer, playerArray));
+			count++;
+		}
+		
+		Arrays.sort(maxSetMoves);
+		
 		//	for each of our moves, find with min the worst outcome from that move.
 		//	return the set of moves with the highest associated min
-		
+		return maxSetMoves[0].moves;
 		
 		//TODO stub
 		return null;
@@ -120,38 +173,120 @@ public class GameSearch {
 	
 	//	for the moves that we have made (friendlyOrders), what is the worst possible board 
 	//	that can result from it.  We want to return the quality of that board
-	private double min(BoardState bst, YearPhase until, Set<Order> friendlyOrders){
+	private double min(BoardState bst, YearPhase until, Set<Order> friendlyOrders,
+			Map<Player, MovesValue []> orderSetsByPlayer, Player [] playerArray) throws Exception{
 		
-		//	recurse through all enemy combinations (cap for each player)
+		if(until.isAfter(bst.time))
+		{
+			return heuristic.boardScore(relevantPlayer, bst);
+		}
 		
+		//	recurse through all enemy combinations (cap for each player)	
+		
+		
+		List<Set<Order>> orderList = new LinkedList<Set<Order>>();
+		orderList.add(friendlyOrders);
+		
+		List<List<Set<Order>>> allMoveSets = enumerateMoves(bst, orderList, orderSetsByPlayer, playerArray, 0);
+		MovesValue [] moveScores = new MovesValue[allMoveSets.size()];
+		int count = 0;
+		for(List<Set<Order>> fullMoveSet: allMoveSets)
+		{
+			Set<Order> toExecute = new HashSet<Order>();
+			
+			for(Set<Order> execute: fullMoveSet){	
+				toExecute.addAll(execute);
+			}
+			BoardState updatedState = boardConfiguration.update(bst.time, bst, toExecute, false);
+			moveScores[count] = new MovesValue(toExecute, max(updatedState, updatedState.time));
+		}
 		//		base case of recursion, have a set of moves for each enemy player
 		//			combine with the friendlyOrders above to make a full set of orders
 		//			apply to gamestate, call max on this boardstate
 		
 		//	return the minimum board quality over all combinations
-		
-		//TODO stub
-		return 0;
+		Arrays.sort(moveScores);
+		return moveScores[moveScores.length].value;
 	}
 	
-	private double max(BoardState bst, YearPhase until){
+	private double max(BoardState bst, YearPhase until) throws Exception{
 		
 		// if bst's date is after until, return the quality of the board
+		if(until.isAfter(bst.time))
+		{
+			return heuristic.boardScore(relevantPlayer, bst);
+		}
+		
+		
+		
 		
 		//	otherwise,
 		
 		//	build sets of all moves for all relevant players based on this bst
 		
+		MoveGeneration gen = new MoveGeneration(boardConfiguration);
+
+		Map<Player, MovesValue[]> orderSetsByPlayer =
+			new HashMap<Player, MovesValue[]>();
+		
+		
+		Set<Player> relevantPlayers = boardConfiguration.getRelevantPlayers(bst, relevantPlayer);
+		
+		System.out.println("This state, we "+relevantPlayer.getName()+" only care about players: ");
+		System.out.println("\t"+relevantPlayers);
+		
+		//	for each player, generate the a priori likely moves
+		List<Player> otherPlayers = new LinkedList<Player>();
+		for(Player p: boardConfiguration.getPlayers()){
+			
+			if(relevantPlayers.contains(p)){
+				orderSetsByPlayer.put(p, gen.generateOrderSets(p, bst));
+			}else{
+				
+				MovesValue[] hold = new MovesValue[1];
+				hold[0] = new MovesValue(boardConfiguration.generateHoldsFor(bst, p), -1);
+				
+				orderSetsByPlayer.put(p, hold);
+			}
+			if(p != this.relevantPlayer){
+				otherPlayers.add(p);
+			}
+		}
+		
 		//	for each of our moves, find with min the worst outcome from that move.
 		//	return the maximum min found
 		
-		//TODO stub
-		return 0;
+		Player[] playerArray = otherPlayers.toArray(new Player[0]);	
+		MovesValue [] maxSetMoves = new MovesValue[MAX_PLAYER_MOVES];
+		int count = 0;
+		
+		for(MovesValue playerOrds: orderSetsByPlayer.get(relevantPlayer)){
+			
+			System.out.println("Looking at "+playerOrds);
+			
+			List<Set<Order>> orderList = new LinkedList<Set<Order>>();
+			orderList.add(playerOrds.moves);
+			
+			List<Double> scores = new ArrayList<Double>();
+			//int year = bst.time.year;
+			//Phase phase = bst.time.phase == Phase.SPR ? Phase.SUM : Phase.WIN;
+			//YearPhase until = new YearPhase(year, phase);
+			maxSetMoves[count] = new MovesValue(playerOrds.moves, min(bst, until, playerOrds.moves, orderSetsByPlayer, playerArray));
+			count++;
+		}
+		
+		Arrays.sort(maxSetMoves);
+		
+		//	for each of our moves, find with min the worst outcome from that move.
+		//	return the set of moves with the highest associated min
+		return maxSetMoves[0].value;
+		
+		
 	}
 	
 	
 	
-	private Set<Order> moveSearch(BoardState bst) throws Exception{
+	/*private Set<Order> moveSearch(BoardState bst) throws Exception{
 		//	TODO this is temporarily just a one level search
 
 		
@@ -211,7 +346,7 @@ public class GameSearch {
 			
 			List<Double> scores = new ArrayList<Double>();
 			
-			enumerateMoves(bst, orderList, orderSetsByPlayer, playerArray, 0, scores);
+			enumerateMoves(bst, orderList, orderSetsByPlayer, playerArray, 0);
 			
 			//TODO hacky hacky hacky minimax hack make this whole algorithm clear
 			Double minScore = scores.get(0);
@@ -231,37 +366,39 @@ public class GameSearch {
 		}
 		
 		return bestOrders;
-	}
+	}*/
 	
 	//	how many moves to enumerate for each player.  hardcode for now
 	private static final int MAX_ENUM = 5;
 	
-	private void enumerateMoves(BoardState bst, 
+	private List<List<Set<Order>>> enumerateMoves(BoardState bst, 
 			List<Set<Order>> allOrders, 
 			Map<Player, MovesValue[]> playerOrders, 
 			Player[] players, 
-			int player, 
-			List<Double> scores) throws Exception{
+			int player) throws Exception{
+		
+		List<List<Set<Order>>> playerEnumeration = new LinkedList<List<Set<Order>>>();
 		
 		if(player == players.length){
 			// execute, evaluate quality
 			
-			Set<Order> toExecute = new HashSet<Order>();
+			//Set<Order> toExecute = new HashSet<Order>();
 			
-			for(Set<Order> execute: allOrders){
+			//for(Set<Order> execute: allOrders){
 				
-				toExecute.addAll(execute);
-			}
+			//	toExecute.addAll(execute);
+			//}
 			
-			BoardState executed = boardConfiguration.update(bst.time.next(), bst, toExecute, false);
+			//BoardState executed = boardConfiguration.update(bst.time.next(), bst, toExecute, false);
 			
-			double stateScore = heuristic.boardScore(relevantPlayer, executed);
+			//double stateScore = heuristic.boardScore(relevantPlayer, executed);
 			
-			scores.add(stateScore);
+			//scores.add(stateScore);
+			playerEnumeration.add(allOrders);
 		}
 		
 		else if(players[player] == relevantPlayer){
-			enumerateMoves(bst, allOrders, playerOrders, players, player+1, scores);
+			enumerateMoves(bst, allOrders, playerOrders, players, player+1);
 		}
 		else{
 			
@@ -272,12 +409,13 @@ public class GameSearch {
 				
 				allOrders.add(mv.moves);
 			
-				enumerateMoves(bst, allOrders, playerOrders, players, player+1, scores);
+				enumerateMoves(bst, allOrders, playerOrders, players, player+1);
 			
 				allOrders.remove(mv.moves);
 								
 			}
 		}
+		return playerEnumeration;
 	}
 	
 	Random r = new Random();
@@ -345,7 +483,19 @@ public class GameSearch {
 							orders.add(new SupportHold(boardState, relevantPlayer, ts, target));
 						}else if(!foundOriginal){
 							
-							orders.add(new Hold(boardState, relevantPlayer, ts));
+							currentOrders = orders;
+							
+							YearPhase until;
+							until = new YearPhase(boardState.time.year,
+									boardState.time.phase == Phase.SPR ? Phase.SUM : Phase.WIN);
+							
+							moveSearch(boardState, until);
+							
+							System.out.println("Done with move search!");
+							System.out.println("Moves will be: ");
+							for(Order ord: currentOrders){
+								System.out.println("\t"+ord.toOrder(boardState));
+							}
 						}
 						
 						

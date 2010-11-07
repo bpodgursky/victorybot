@@ -231,7 +231,7 @@ public class MoveGeneration {
 	}
 	
 	//	so we can return the value associated with a set of moves
-	public static class MovesValue{
+	public static class MovesValue implements Comparable<MovesValue>{
 		
 		public final double value;
 		public final Set<Order> moves;
@@ -239,6 +239,12 @@ public class MoveGeneration {
 		public MovesValue(Set<Order> moves, double value){
 			this.value = value;
 			this.moves = moves;
+		}
+
+		@Override
+		public int compareTo(MovesValue arg0) {
+			// TODO Auto-generated method stub
+			return -Double.compare(value, arg0.value);
 		}
 	}
 	

@@ -230,43 +230,8 @@ public class NaiveHeuristic extends Heuristic {
 			.25 * (threateningSupplyCenterScore + threatenedSupplyCenterScore);
 	}
 	
-	public static String makeBinary(int num, int power)
-	{
-		StringBuilder str = new StringBuilder();
-		if(num == 0)
-		{
-			return "0";
-		}
-		
-		int count = 0;
-		
-		while(num >= 1)
-		{
-			count++;
-			if(num%2 == 1)
-			{
-				str.insert(0,"1");
-			}
-			else
-			{
-				str.insert(0,"0");
-			}
-			num = num / 2;
-		}
-		
-		for(int i = count; i < power; i++)
-		{
-			str.insert(0, "0");
-		}
-		
-		return str.toString();
-	}
-	
 	public static void main(String [] args)
 	{
-		for(int i = 1; i < Math.pow(2, 5); i++)
-		{
-			System.out.println(NaiveHeuristic.makeBinary(i, 5));
-		}
+		
 	}
 }
