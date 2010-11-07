@@ -15,6 +15,8 @@ public class Retreat extends Order{
 	
 	public final String destCoast;
 	
+	public final String fromCoast;
+	
 	public Retreat(BoardState bst, Player p, TerritorySquare from, TerritorySquare to) throws Exception{
 		this(bst, p, from, to, "NA");
 	}
@@ -33,6 +35,8 @@ public class Retreat extends Order{
 		if(from == null || to == null || destinationCoast == null){
 			throw new Exception("null arguments");
 		}
+		
+		fromCoast = bst.getRetreatForTerritory(from).originCoast;
 			
 		
 //		if(!from.board.canRetreat(p, from, to, destinationCoast)){
@@ -53,7 +57,7 @@ public class Retreat extends Order{
 	}
 	
 	public String toOrder(BoardState bst){
-		return "( ( "+TerritorySquare.getUnitString(player, retreatingUnit, from.getName(), destCoast)+" ) RTO "+
+		return "( ( "+TerritorySquare.getUnitStringParen(player, retreatingUnit, from.getName(), fromCoast)+" ) RTO "+
 			TerritorySquare.getDestString(retreatingUnit, to.getName(), destCoast)+" )";
 	}
 }

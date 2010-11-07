@@ -61,6 +61,8 @@ public class GameSearch {
 	private boolean dipUpdate;
 	private boolean beliefUpdate;
 	
+	private boolean movesReady;
+	
 	private final Heuristic heuristic;
 	
 	private final MoveGeneration gen;
@@ -90,7 +92,9 @@ public class GameSearch {
 	public void noteBoardUpdate(BoardState bst){
 		
 		this.boardState = bst;
+		this.movesReady = false;
 		this.boardUpdate = true;
+
 		
 		internalSearch.interrupt();
 	}
@@ -105,6 +109,10 @@ public class GameSearch {
 		this.beliefUpdate = true;
 		
 		internalSearch.interrupt();
+	}
+	
+	public boolean isReady(){
+		return this.movesReady;
 	}
 	
 	
@@ -628,6 +636,8 @@ public class GameSearch {
 					
 					System.out.println("Build orders submitted");
 				}
+				
+				movesReady = true;
 			}
 		}
 	}

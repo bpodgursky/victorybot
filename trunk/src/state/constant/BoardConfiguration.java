@@ -290,7 +290,7 @@ public class BoardConfiguration {
 		border("MAO", "WES", true);
 		border("MAO", "NAF", true);
 		
-		border("IRI", "CLY", true);
+		//border("IRI", "CLY", true);
 		border("IRI", "LVP", true);
 		border("IRI", "WAL", true);
 		border("IRI", "ECH", true);
@@ -370,7 +370,7 @@ public class BoardConfiguration {
 		border("AEG", "CON", true);
 		border("AEG", "SMY", true);
 		border("AEG", "EAS", true);
-		border("AEG", "BLA", true);
+		//border("AEG", "BLA", true);
 		
 		border("EAS", "SMY", true);
 		border("EAS", "SYR", true);

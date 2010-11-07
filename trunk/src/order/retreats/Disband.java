@@ -42,6 +42,6 @@ public class Disband extends Order{
 
 	@Override
 	public String toOrder(BoardState bst) {
-		return "( ( "+TerritorySquare.getUnitString(player, disband, disbandAt.getName(), disbandCoast)+" ) DSB )";
+		return "( ( "+TerritorySquare.getUnitStringParen(player, disband, disbandAt.getName(), disbandCoast)+" ) DSB )";
 	}
 }

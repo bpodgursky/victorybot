@@ -145,7 +145,9 @@ public class Bot{
 				
 					long currentTime = System.currentTimeMillis();
 					
-					if(nextOrders != -1 && currentTime + SUBMISSION_BUFFER > nextOrders && !submitted){
+					if((nextOrders != -1 && currentTime + SUBMISSION_BUFFER > nextOrders && !submitted) ||
+							(!(search==null) && search.isReady() && !submitted)){
+						
 						submitted = true;
 					
 						Order[] orders = search.currentOrders().toArray(new Order[0]);
