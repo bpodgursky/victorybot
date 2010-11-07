@@ -145,6 +145,7 @@ public class GameSearch {
 		Player[] playerArray = otherPlayers.toArray(new Player[0]);	
 		MovesValue [] maxSetMoves = new MovesValue[MAX_PLAYER_MOVES];
 		int count = 0;
+		MovesValue bestMoveSoFar = null;
 		
 		for(MovesValue playerOrds: orderSetsByPlayer.get(relevantPlayer)){
 			
@@ -154,10 +155,18 @@ public class GameSearch {
 			orderList.add(playerOrds.moves);
 			
 			List<Double> scores = new ArrayList<Double>();
-			//int year = bst.time.year;
-			//Phase phase = bst.time.phase == Phase.SPR ? Phase.SUM : Phase.WIN;
-			//YearPhase until = new YearPhase(year, phase);
+
 			maxSetMoves[count] = new MovesValue(playerOrds.moves, min(bst, until, playerOrds.moves, orderSetsByPlayer, playerArray));
+			if(bestMoveSoFar == null)
+			{
+				bestMoveSoFar = maxSetMoves[count];
+				currentOrders = bestMoveSoFar.moves;
+			}
+			if(bestMoveSoFar.value < maxSetMoves[count].value)
+			{
+				bestMoveSoFar = maxSetMoves[count];
+				currentOrders = bestMoveSoFar.moves;
+			}
 			count++;
 		}
 		
