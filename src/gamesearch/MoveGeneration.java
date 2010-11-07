@@ -262,10 +262,11 @@ public class MoveGeneration {
 		
 		//TODO the .5 cap is only for tractability to see if this makes it finish...
 		//TODO how to avoid this.... 
-		//	1) be smart about which 2/3 moves per unit to generate.  
+		//	1) be smart about which 2/3 moves per unit to generate, and cache them 
+		//	2) for each player, count only to the number of units that can affect you
 		
 		for(int i = 1; i < Math.pow(2.0, 
-				(player==ourPlayer)?unitCount:Math.ceil((double)unitCount*.5)); i++)
+				Math.min(5, unitCount)); i++)
 		{
 			unitMasks.addAll(generateOrderSets(i, unitCount, unit, dynamicState, player));
 		}

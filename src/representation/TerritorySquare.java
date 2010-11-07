@@ -212,7 +212,7 @@ public class TerritorySquare {
 		if(unit.army || coast.equals("NA")){
 			return destination;
 		}else{
-			return "("+destination+" "+coast+")";
+			return "( "+destination+" "+coast+" )";
 		}
 	}
 
@@ -235,6 +235,15 @@ public class TerritorySquare {
 		}
 		
 		return unit+" "+square+" "+coast;
+	}
+	
+	public static String getUnitStringParen(Player pow, Unit unit, String square, String coast){
+		
+		if(unit.army || coast.equals("NA")){
+			return getUnitString(pow, unit, square);
+		}
+		
+		return unit+" ( "+square+" "+coast+" )";
 	}
 }
 
