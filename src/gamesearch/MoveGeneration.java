@@ -100,7 +100,7 @@ public class MoveGeneration {
 			if(c == '1')
 			{
 				
-				//TODO cache this calculation between calls to this function
+				//TODO cache this calculation between calls to this function	
 				List<TerritoryCoast> possibleMoves = staticBoard.getMovesForUnit(dynamicState, moveOrigin);
 				List<OrderValue> orders = new LinkedList<OrderValue>();
 				
