@@ -30,9 +30,12 @@ public class MoveGeneration {
 	private BoardConfiguration staticBoard;
 	private Heuristic heuristic;
 	
-	public MoveGeneration(BoardConfiguration sBoard)
+	private final Player ourPlayer;
+	
+	public MoveGeneration(BoardConfiguration sBoard, Player ourPlayer)
 	{
 		staticBoard = sBoard;
+		this.ourPlayer = ourPlayer;
 		heuristic = new NaiveHeuristic(sBoard);
 	}
 	
@@ -97,6 +100,7 @@ public class MoveGeneration {
 			if(c == '1')
 			{
 				
+				//TODO cache this calculation between calls to this function
 				List<TerritoryCoast> possibleMoves = staticBoard.getMovesForUnit(dynamicState, moveOrigin);
 				List<OrderValue> orders = new LinkedList<OrderValue>();
 				
@@ -243,7 +247,6 @@ public class MoveGeneration {
 
 		@Override
 		public int compareTo(MovesValue arg0) {
-			// TODO Auto-generated method stub
 			return -Double.compare(value, arg0.value);
 		}
 	}
@@ -254,7 +257,15 @@ public class MoveGeneration {
 
 		List<Set<Order>> unitMasks = new LinkedList<Set<Order>>();
 		Set<TerritorySquare> unit = player.getOccupiedTerritories(dynamicState);
-		for(int i = 1; i < Math.pow(2.0,(double)unitCount); i++)
+		
+		
+		
+		//TODO the .5 cap is only for tractability to see if this makes it finish...
+		//TODO how to avoid this.... 
+		//	1) be smart about which 2/3 moves per unit to generate.  
+		
+		for(int i = 1; i < Math.pow(2.0, 
+				(player==ourPlayer)?unitCount:Math.ceil((double)unitCount*.5)); i++)
 		{
 			unitMasks.addAll(generateOrderSets(i, unitCount, unit, dynamicState, player));
 		}
@@ -303,7 +314,7 @@ public class MoveGeneration {
 	{
 		BoardConfiguration staticBoard = new BoardConfiguration();
 
-		MoveGeneration gen = new MoveGeneration(staticBoard);
+		MoveGeneration gen = new MoveGeneration(staticBoard, null);
 		BoardState bst = staticBoard.getInitialState();
 		int count = 0;
 		

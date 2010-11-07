@@ -215,6 +215,14 @@ public class TerritorySquare {
 			return "("+destination+" "+coast+")";
 		}
 	}
+
+	public static String getDestStringParenless(Unit unit, String destination, String coast){
+		if(unit.army || coast.equals("NA")){
+			return destination;
+		}else{
+			return destination+" "+coast;
+		}
+	}
 	
 	public static String getUnitString(Player pow, Unit unit, String square){
 		return unit+" "+square;

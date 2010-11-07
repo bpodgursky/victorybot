@@ -65,6 +65,6 @@ public class Move extends Order{
 	@Override
 	public String toOrder(BoardState bst) {
 		return "( ( "+from.getUnitString(bst)+" ) MTO "+
-			TerritorySquare.getDestString(unit, to.getName(), coast)+" )";
+			TerritorySquare.getDestStringParenless(unit, to.getName(), coast)+" )";
 	}
 }

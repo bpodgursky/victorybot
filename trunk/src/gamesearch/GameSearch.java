@@ -63,9 +63,13 @@ public class GameSearch {
 	
 	private final Heuristic heuristic;
 	
+	private final MoveGeneration gen;
+	
 	public GameSearch(Player player, BoardConfiguration state, DiplomaticState dipState, BeliefState beliefState){
 
 		this.relevantPlayer = player;
+		
+		this.gen = new MoveGeneration(state, relevantPlayer);
 		
 		this.searcher = new InternalSearch();
 		this.internalSearch = new Thread(searcher);
@@ -112,21 +116,23 @@ public class GameSearch {
 	private Set<Order> moveSearch(BoardState bst, YearPhase until) throws Exception{
 		
 		//	build sets of all moves for all relevant players
-		
-		MoveGeneration gen = new MoveGeneration(boardConfiguration);
-
+	
 		Map<Player, MovesValue[]> orderSetsByPlayer =
 			new HashMap<Player, MovesValue[]>();
 		
 		
 		Set<Player> relevantPlayers = boardConfiguration.getRelevantPlayers(bst, relevantPlayer);
 		
-		System.out.println("This state, we "+relevantPlayer.getName()+" only care about players: ");
-		System.out.println("\t"+relevantPlayers);
-		
+		System.out.println("Building possible order sets for players: ");
 		//	for each player, generate the a priori likely moves
 		List<Player> otherPlayers = new LinkedList<Player>();
 		for(Player p: boardConfiguration.getPlayers()){
+			
+			System.out.println("\t"+p.getName()+"...");
+			if(this.boardUpdate){
+				System.out.println("Took too long, quitting in generation...");
+				return null;
+			}
 			
 			if(relevantPlayers.contains(p)){
 				orderSetsByPlayer.put(p, gen.generateOrderSets(p, bst));
@@ -140,22 +146,31 @@ public class GameSearch {
 			if(p != this.relevantPlayer){
 				otherPlayers.add(p);
 			}
+			
+			System.out.println("\t"+p.getName()+" done");
 		}
 		
+		System.out.println("Generated orders for each player:");
+		for(Player p: orderSetsByPlayer.keySet()){
+			System.out.println("\t"+orderSetsByPlayer.get(p).length);
+		}
+		
+		System.out.println("Enumerating combinations...");
 		Player[] playerArray = otherPlayers.toArray(new Player[0]);	
-		MovesValue [] maxSetMoves = new MovesValue[MAX_PLAYER_MOVES];
+		MovesValue [] maxSetMoves = new MovesValue[orderSetsByPlayer.get(relevantPlayer).length];
 		int count = 0;
 		MovesValue bestMoveSoFar = null;
 		
 		for(MovesValue playerOrds: orderSetsByPlayer.get(relevantPlayer)){
 			
-			System.out.println("Looking at "+playerOrds);
+			if(this.boardUpdate){
+				System.out.println("Took too long, quitting...");
+				return null;
+			}
 			
 			List<Set<Order>> orderList = new LinkedList<Set<Order>>();
 			orderList.add(playerOrds.moves);
-			
-			List<Double> scores = new ArrayList<Double>();
-
+		
 			maxSetMoves[count] = new MovesValue(playerOrds.moves, min(bst, until, playerOrds.moves, orderSetsByPlayer, playerArray));
 			if(bestMoveSoFar == null)
 			{
@@ -174,7 +189,12 @@ public class GameSearch {
 		
 		//	for each of our moves, find with min the worst outcome from that move.
 		//	return the set of moves with the highest associated min
+		if(maxSetMoves.length == 0){
+			return new HashSet<Order>();
+		}
+			
 		return maxSetMoves[0].moves;
+		
 	}
 	
 	//	for the moves that we have made (friendlyOrders), what is the worst possible board 
@@ -230,7 +250,7 @@ public class GameSearch {
 		
 		//	build sets of all moves for all relevant players based on this bst
 		
-		MoveGeneration gen = new MoveGeneration(boardConfiguration);
+
 
 		Map<Player, MovesValue[]> orderSetsByPlayer =
 			new HashMap<Player, MovesValue[]>();
@@ -488,37 +508,27 @@ public class GameSearch {
 					
 							orders.add(new SupportHold(boardState, relevantPlayer, ts, target));
 						}else if(!foundOriginal){
-							
-							currentOrders = orders;
-							
-							YearPhase until;
-							until = new YearPhase(boardState.time.year,
-									boardState.time.phase == Phase.SPR ? Phase.SUM : Phase.WIN);
-							
-							moveSearch(boardState, until);
-							
-							System.out.println("Done with move search!");
-							System.out.println("Moves will be: ");
-							for(Order ord: currentOrders){
-								System.out.println("\t"+ord.toOrder(boardState));
-							}
+						
+							orders.add(new Hold(boardState, relevantPlayer, ts));
 						}
-						
-						
 					}
 					
 					//TODO intelligent search
+					
+					System.out.println("Done with basic search, starting intelligent search...");
 					
 					currentOrders = orders;
 					int year = boardState.time.year;
 					Phase phase = boardState.time.phase == Phase.SPR ? Phase.SUM : Phase.WIN;
 					YearPhase until = new YearPhase(year, phase);
-					moveSearch(boardState, until);
+					currentOrders = moveSearch(boardState, until);
 					
-					System.out.println("Done with move search!");
-					System.out.println("Moves will be: ");
-					for(Order ord: currentOrders){
-						System.out.println("\t"+ord.toOrder(boardState));
+					if(!boardUpdate){
+						System.out.println("Done with move search!");
+						System.out.println("Moves will be: ");
+						for(Order ord: currentOrders){
+							System.out.println("\t"+ord.toOrder(boardState));
+						}
 					}
 				}
 				
