@@ -166,9 +166,6 @@ public class GameSearch {
 		//	for each of our moves, find with min the worst outcome from that move.
 		//	return the set of moves with the highest associated min
 		return maxSetMoves[0].moves;
-		
-		//TODO stub
-		return null;
 	}
 	
 	//	for the moves that we have made (friendlyOrders), what is the worst possible board 
@@ -504,8 +501,10 @@ public class GameSearch {
 					//TODO intelligent search
 					
 					currentOrders = orders;
-					
-					moveSearch(boardState);
+					int year = boardState.time.year;
+					Phase phase = boardState.time.phase == Phase.SPR ? Phase.SUM : Phase.WIN;
+					YearPhase until = new YearPhase(year, phase);
+					moveSearch(boardState, until);
 					
 					System.out.println("Done with move search!");
 					System.out.println("Moves will be: ");
