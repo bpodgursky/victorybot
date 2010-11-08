@@ -126,7 +126,7 @@ public class Bot{
 
 	class BotMessageHandler implements MessageListener, Runnable {
 		
-		public final static long SUBMISSION_BUFFER = 5000; 
+		public final static long SUBMISSION_BUFFER = 500; 
 		
 		long nextOrders = -1;
 		boolean submitted = false;

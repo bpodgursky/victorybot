@@ -5,6 +5,7 @@ import heuristic.NaiveHeuristic;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,6 +16,8 @@ import java.util.Random;
 import java.util.Set;
 
 import order.Order;
+import order.retreats.Disband;
+import order.retreats.Retreat;
 import order.spring_fall.Hold;
 import order.spring_fall.Move;
 import order.spring_fall.SupportMove;
@@ -24,6 +27,8 @@ import representation.TerritorySquare;
 import state.constant.BoardConfiguration;
 import state.constant.BoardConfiguration.TerritoryCoast;
 import state.dynamic.BoardState;
+import state.dynamic.BoardState.Phase;
+import state.dynamic.BoardState.RetreatSituation;
 
 public class MoveGeneration {
 
@@ -262,64 +267,106 @@ public class MoveGeneration {
 		}
 	}
 	
+	
+	//	TODO make this also generate valid moves for retreats and winters.  that way the bot will 
+	//	understand that it's good to get off of supply centers to let us build...
 	public MovesValue[] generateOrderSets(Player player, BoardState dynamicState) throws Exception
 	{
-		int unitCount = player.getNumberUnits(dynamicState);
-
-		List<Set<Order>> unitMasks = new LinkedList<Set<Order>>();
-		Set<TerritorySquare> unit = player.getOccupiedTerritories(dynamicState);
-		
-		Map<TerritorySquare, OrderValue[]> orderPossibilities = generateMovesForUnits(dynamicState);
-		
-		//TODO the .5 cap is only for tractability to see if this makes it finish...
-		//TODO how to avoid this.... 
-		//	1) be smart about which 2/3 moves per unit to generate, and cache them 
-		//	2) for each player, count only to the number of units that can affect you
-		
-		for(int i = 1; i < Math.pow(2.0, 
-				Math.min(5, unitCount)); i++)
-		{
-			unitMasks.addAll(generateOrderSets(i, unitCount, orderPossibilities, unit, dynamicState, player));
-		}
-		
-		//	want to order these moves by the naive quality the 
-		//	board would have afterwards--basically, which of them
-		//	is the opponent most likely to do
-		//	the simplest way to calculate this is "what if everyone holds"
-		
-		Set<Order> otherOrders = new HashSet<Order>();
-		for(Player p: this.staticBoard.getPlayers()){
-			if(p == player) continue;
+		if(dynamicState.time.phase == Phase.SPR || dynamicState.time.phase == Phase.FAL){
+			int unitCount = player.getNumberUnits(dynamicState);
+	
+			List<Set<Order>> unitMasks = new LinkedList<Set<Order>>();
+			Set<TerritorySquare> unit = player.getOccupiedTerritories(dynamicState);
 			
-			otherOrders.addAll(staticBoard.generateHoldsFor(dynamicState, p));
-		}
-		
-		List<MovesValue> valMoves = new LinkedList<MovesValue>();
-		for(Set<Order> ord: unitMasks){
+			Map<TerritorySquare, OrderValue[]> orderPossibilities = generateMovesForUnits(dynamicState);
 			
-			Set<Order> toSubmit = new HashSet<Order>(otherOrders);
-			toSubmit.addAll(ord);
+			//TODO how to avoid this.... 
+			//	2) for each player, count only to the number of units that can affect you
 			
-			BoardState stateAfterExecute = staticBoard.update(dynamicState.time.next(), dynamicState, toSubmit, false);
-		
-			valMoves.add(new MovesValue(ord, heuristic.boardScore(player, stateAfterExecute)));
-		}
-		
-		MovesValue[] moves = valMoves.toArray(new MovesValue[0]);
-		
-		Arrays.sort(moves, new Comparator<MovesValue>(){
-			public int compare(MovesValue a, MovesValue b){
-				return -Double.compare(a.value, b.value);
+			for(int i = 1; i < Math.pow(2.0, 
+					Math.min(5, unitCount)); i++)
+			{
+				unitMasks.addAll(generateOrderSets(i, unitCount, orderPossibilities, unit, dynamicState, player));
 			}
-		});
+			
+			//	want to order these moves by the naive quality the 
+			//	board would have afterwards--basically, which of them
+			//	is the opponent most likely to do
+			//	the simplest way to calculate this is "what if everyone holds"
+			
+			Set<Order> otherOrders = new HashSet<Order>();
+			for(Player p: this.staticBoard.getPlayers()){
+				if(p == player) continue;
+				
+				otherOrders.addAll(staticBoard.generateHoldsFor(dynamicState, p));
+			}
+			
+			List<MovesValue> valMoves = new LinkedList<MovesValue>();
+			for(Set<Order> ord: unitMasks){
+				
+				Set<Order> toSubmit = new HashSet<Order>(otherOrders);
+				toSubmit.addAll(ord);
+				
+				BoardState stateAfterExecute = staticBoard.update(dynamicState.time.next(), dynamicState, toSubmit, false);
+			
+				valMoves.add(new MovesValue(ord, heuristic.boardScore(player, stateAfterExecute)));
+			}
+			
+			MovesValue[] moves = valMoves.toArray(new MovesValue[0]);
+			
+			Arrays.sort(moves, new Comparator<MovesValue>(){
+				public int compare(MovesValue a, MovesValue b){
+					return -Double.compare(a.value, b.value);
+				}
+			});
+			
+			MovesValue[] prunedMoves = new MovesValue[
+			    Math.min(MAX_PLAYER_MOVES, moves.length)];
+			for(int i = 0; i < MAX_PLAYER_MOVES && i < moves.length; i++){
+				prunedMoves[i] = moves[i];
+			}
+			
+			return prunedMoves;
+		}else if(dynamicState.time.phase == Phase.SUM || dynamicState.time.phase == Phase.AUT){
+			
+			//	generate all combination of valid retreats
+			Collection<RetreatSituation> retreats = dynamicState.getRetreats();
+
+			Set<RetreatSituation> playerRetreats = staticBoard.getRetreatsForPlayer(dynamicState, player);
+			
+			Map<RetreatSituation, List<Order>> retreatOptions = 
+				new HashMap<RetreatSituation, List<Order>>();
+			
+			for(RetreatSituation rsit: playerRetreats){
+				
+				//	each of the places it can retreat to
+				List<Order> unitOptions = new LinkedList<Order>();
+				for(TerritoryCoast tcst: staticBoard.getRetreatsForUnit(dynamicState, rsit)){
+					 unitOptions.add(new Retreat(dynamicState, player, rsit.from, tcst.sqr, tcst.coast));
+				}
+				
+				//	and that it can disband 
+				unitOptions.add(new Disband(dynamicState, player, rsit.from));
+				
+				retreatOptions.put(rsit, unitOptions);
+			}
+			
+		}
+		else if(dynamicState.time.phase == Phase.WIN){
 		
-		MovesValue[] prunedMoves = new MovesValue[
-		    Math.min(MAX_PLAYER_MOVES, moves.length)];
-		for(int i = 0; i < MAX_PLAYER_MOVES && i < moves.length; i++){
-			prunedMoves[i] = moves[i];
+			//
 		}
 		
-		return prunedMoves;
+		return null;
+	}
+	
+	private void enumerateRetreats(RetreatSituation[] allRetreats, int index, 
+			Map<RetreatSituation, List<Order>> choices, List<Order> choicesMade, List<List<Order>> allPossibilities){
+		
+		if(index == allRetreats.length){
+			allPossibilities.add(new LinkedList<Order>(choicesMade));
+		}
+		
 	}
 	
 	public static void main(String [] args) throws Exception
