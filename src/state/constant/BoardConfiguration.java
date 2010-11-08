@@ -2110,6 +2110,10 @@ public class BoardConfiguration {
 			throw new Exception("wrong occupying player: "+from.getOccupier(bst));
 		}
 		
+//		if(!from.getOccupier(bst).army && to.hasMultipleCoasts() && destinationCoast.equals("NA")){
+//			throw new Exception("need to specify a destination coast ");
+//		}
+		
 		if(from.getOccupier(bst).army){
 			
 			//if the unit moving is an army, make sure it can do this
@@ -2847,9 +2851,19 @@ public class BoardConfiguration {
 
 		for(TerritorySquare tsquare: from.getBorders()){
 			
-			for(String s: tsquare.getCoasts()){
-				if(canMove(boardState, occupier.belongsTo, from, tsquare, s)){
-					options.add(new TerritoryCoast(tsquare, s));
+			if(tsquare.hasMultipleCoasts()){
+				for(String s: tsquare.getCoasts()){
+					if(s.equals("NA")) continue;
+					
+					if(canMove(boardState, occupier.belongsTo, from, tsquare, s)){
+						options.add(new TerritoryCoast(tsquare, s));
+					}
+				}
+			}else{
+				for(String s: tsquare.getCoasts()){
+					if(canMove(boardState, occupier.belongsTo, from, tsquare, s)){
+						options.add(new TerritoryCoast(tsquare, s));
+					}
 				}
 			}
 		}
