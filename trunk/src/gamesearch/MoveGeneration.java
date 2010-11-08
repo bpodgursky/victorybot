@@ -6,6 +6,7 @@ import heuristic.NaiveHeuristic;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -60,9 +61,9 @@ public class MoveGeneration {
 		}
 	}
 	
-	private Map<TerritorySquare, OrderValue[]> generateMovesForUnits(BoardState dynamicState) throws Exception{
+	private Map<TerritorySquare, List<OrderValue>> generateMovesForUnits(BoardState dynamicState) throws Exception{
 		
-		Map<TerritorySquare, OrderValue[]> orderMap = new HashMap<TerritorySquare, OrderValue[]>();
+		Map<TerritorySquare, List<OrderValue>> orderMap = new HashMap<TerritorySquare, List<OrderValue>>();
 		
 		for(Player p: staticBoard.getPlayers()){
 			for(TerritorySquare sqr: dynamicState.getOccupiedTerritories(p)){
@@ -70,26 +71,27 @@ public class MoveGeneration {
 				//TODO cache this calculation between calls to this function	
 				List<TerritoryCoast> possibleMoves = staticBoard.getMovesForUnit(dynamicState, sqr);
 				List<OrderValue> orders = new LinkedList<OrderValue>();
+
 				
-				int pMoveCount = 0;
+				//int pMoveCount = 0;
 				for(TerritoryCoast tcoast: possibleMoves){
 
 					Move move = new Move(dynamicState, p, sqr, tcoast.sqr, tcoast.coast);
 					orders.add(new OrderValue(move, heuristic.orderScore(move, dynamicState)));			
 				
 					
-					if(pMoveCount++ >= MOVES_PER_UNIT) break;
+					//if(pMoveCount++ >= MOVES_PER_UNIT) break;
 				}
 
-				OrderValue[] ovArray = orders.toArray(new OrderValue[orders.size()]);
+				//OrderValue[] ovArray = orders.toArray(new OrderValue[orders.size()]);
 				
-				Arrays.sort(ovArray, new Comparator<OrderValue>(){
-					public int compare(OrderValue a, OrderValue b){
-						return -Double.compare(a.score, b.score);
-					}
-				});
+//				Arrays.sort(ovArray, new Comparator<OrderValue>(){
+//					public int compare(OrderValue a, OrderValue b){
+//						return -Double.compare(a.score, b.score);
+//					}
+//				});
 				
-				orderMap.put(sqr, ovArray);
+				orderMap.put(sqr, orders);
 				
 			}
 		}
@@ -97,7 +99,7 @@ public class MoveGeneration {
 		return orderMap;
 	}
 	
-	private List<Set<Order>> generateOrderSets(int num, int length, Map<TerritorySquare, OrderValue[]> movesForAllUnits, Set<TerritorySquare> unit, BoardState dynamicState, Player player) throws Exception
+	private List<Set<Order>> generateOrderSets(int num, int length, Map<TerritorySquare, List<OrderValue>> movesForAllUnits, Set<TerritorySquare> unit, BoardState dynamicState, Player player) throws Exception
 	{
 		StringBuilder str = new StringBuilder();
 		TerritorySquare [] unitList = unit.toArray(new TerritorySquare[0]);
@@ -130,7 +132,7 @@ public class MoveGeneration {
 		//Vector<Order> moveSet = new Vector<Order>();
 		List<TerritorySquare> supportSet = new ArrayList<TerritorySquare>();
 		
-		Map<TerritorySquare, OrderValue[]> movesPerUnit = new HashMap<TerritorySquare, OrderValue[]>();
+		Map<TerritorySquare, List<OrderValue>> movesPerUnit = new HashMap<TerritorySquare, List<OrderValue>>();
 		
 		count = 0;
 		//Step through the array that gives us our permutations
@@ -139,7 +141,17 @@ public class MoveGeneration {
 			
 			//Means we will be giving a move order
 			if(c == '1') {
-				movesPerUnit.put(moveOrigin, movesForAllUnits.get(moveOrigin));
+				
+				List<OrderValue> possibilities = movesForAllUnits.get(moveOrigin);
+				//	otherwise we'll be looking at the same choices every turn
+				Collections.shuffle(possibilities);
+				
+				List<OrderValue> topMoves = new ArrayList<OrderValue>();
+				for(int i = 0; i < Math.min(MOVES_PER_UNIT, possibilities.size()); i++){
+					topMoves.add(possibilities.get(i));
+				}
+				
+				movesPerUnit.put(moveOrigin, topMoves);
 			}
 			//If not a direct order put in supportSet for later processing
 			else {
@@ -157,7 +169,7 @@ public class MoveGeneration {
 		return ordersToPopulate;
 	}
 	
-	private void enumerateMoves(BoardState bst, Player p, TerritorySquare[] terrs, List<OrderValue> allOrders, int terrIndex, Map<TerritorySquare, OrderValue[]> movesPerUnit, List<TerritorySquare> supportSet, List<Set<Order>> toPopulate) throws Exception{
+	private void enumerateMoves(BoardState bst, Player p, TerritorySquare[] terrs, List<OrderValue> allOrders, int terrIndex, Map<TerritorySquare, List<OrderValue>> movesPerUnit, List<TerritorySquare> supportSet, List<Set<Order>> toPopulate) throws Exception{
 		
 		if(terrIndex == terrs.length){
 			
@@ -237,7 +249,7 @@ public class MoveGeneration {
 		}else{
 			
 			TerritorySquare thisOrigin = terrs[terrIndex];
-			OrderValue[] ordersForTerr = movesPerUnit.get(thisOrigin);
+			List<OrderValue> ordersForTerr = movesPerUnit.get(thisOrigin);
 			
 			for(OrderValue ov: ordersForTerr){
 			
@@ -278,7 +290,7 @@ public class MoveGeneration {
 			List<Set<Order>> unitMasks = new LinkedList<Set<Order>>();
 			Set<TerritorySquare> unit = player.getOccupiedTerritories(dynamicState);
 			
-			Map<TerritorySquare, OrderValue[]> orderPossibilities = generateMovesForUnits(dynamicState);
+			Map<TerritorySquare, List<OrderValue>> orderPossibilities = generateMovesForUnits(dynamicState);
 			
 			//TODO how to avoid this.... 
 			//	2) for each player, count only to the number of units that can affect you
