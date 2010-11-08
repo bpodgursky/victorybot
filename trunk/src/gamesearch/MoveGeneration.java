@@ -41,7 +41,7 @@ public class MoveGeneration {
 	
 	private Random r = new Random();
 	
-	private static final int MOVES_PER_UNIT = 3;
+	private static final int MOVES_PER_UNIT = 4;
 	private static final int MAX_PLAYER_MOVES = 50;
 	
 	public static class OrderValue{
@@ -55,7 +55,44 @@ public class MoveGeneration {
 		}
 	}
 	
-	private List<Set<Order>> generateOrderSets(int num, int length, Set<TerritorySquare> unit, BoardState dynamicState, Player player) throws Exception
+	private Map<TerritorySquare, OrderValue[]> generateMovesForUnits(BoardState dynamicState) throws Exception{
+		
+		Map<TerritorySquare, OrderValue[]> orderMap = new HashMap<TerritorySquare, OrderValue[]>();
+		
+		for(Player p: staticBoard.getPlayers()){
+			for(TerritorySquare sqr: dynamicState.getOccupiedTerritories(p)){
+				
+				//TODO cache this calculation between calls to this function	
+				List<TerritoryCoast> possibleMoves = staticBoard.getMovesForUnit(dynamicState, sqr);
+				List<OrderValue> orders = new LinkedList<OrderValue>();
+				
+				int pMoveCount = 0;
+				for(TerritoryCoast tcoast: possibleMoves){
+
+					Move move = new Move(dynamicState, p, sqr, tcoast.sqr, tcoast.coast);
+					orders.add(new OrderValue(move, heuristic.orderScore(move, dynamicState)));			
+				
+					
+					if(pMoveCount++ >= MOVES_PER_UNIT) break;
+				}
+
+				OrderValue[] ovArray = orders.toArray(new OrderValue[orders.size()]);
+				
+				Arrays.sort(ovArray, new Comparator<OrderValue>(){
+					public int compare(OrderValue a, OrderValue b){
+						return -Double.compare(a.score, b.score);
+					}
+				});
+				
+				orderMap.put(sqr, ovArray);
+				
+			}
+		}
+		
+		return orderMap;
+	}
+	
+	private List<Set<Order>> generateOrderSets(int num, int length, Map<TerritorySquare, OrderValue[]> movesForAllUnits, Set<TerritorySquare> unit, BoardState dynamicState, Player player) throws Exception
 	{
 		StringBuilder str = new StringBuilder();
 		TerritorySquare [] unitList = unit.toArray(new TerritorySquare[0]);
@@ -92,41 +129,15 @@ public class MoveGeneration {
 		
 		count = 0;
 		//Step through the array that gives us our permutations
-		for(char c: permute)
-		{
+		for(char c: permute) {
 			TerritorySquare moveOrigin = unitList[count];
 			
 			//Means we will be giving a move order
-			if(c == '1')
-			{
-				
-				//TODO cache this calculation between calls to this function	
-				List<TerritoryCoast> possibleMoves = staticBoard.getMovesForUnit(dynamicState, moveOrigin);
-				List<OrderValue> orders = new LinkedList<OrderValue>();
-				
-				int pMoveCount = 0;
-				for(TerritoryCoast tcoast: possibleMoves){
-
-					Move move = new Move(dynamicState, player, moveOrigin, tcoast.sqr, tcoast.coast);
-					orders.add(new OrderValue(move, heuristic.orderScore(move, dynamicState)));			
-				
-					
-					if(pMoveCount++ >= MOVES_PER_UNIT) break;
-				}
-
-				OrderValue[] ovArray = orders.toArray(new OrderValue[orders.size()]);
-				
-				Arrays.sort(ovArray, new Comparator<OrderValue>(){
-					public int compare(OrderValue a, OrderValue b){
-						return -Double.compare(a.score, b.score);
-					}
-				});
-				
-				movesPerUnit.put(moveOrigin, ovArray);
+			if(c == '1') {
+				movesPerUnit.put(moveOrigin, movesForAllUnits.get(moveOrigin));
 			}
 			//If not a direct order put in supportSet for later processing
-			else
-			{
+			else {
 				supportSet.add(moveOrigin);
 			}
 			count++;
@@ -258,7 +269,7 @@ public class MoveGeneration {
 		List<Set<Order>> unitMasks = new LinkedList<Set<Order>>();
 		Set<TerritorySquare> unit = player.getOccupiedTerritories(dynamicState);
 		
-		
+		Map<TerritorySquare, OrderValue[]> orderPossibilities = generateMovesForUnits(dynamicState);
 		
 		//TODO the .5 cap is only for tractability to see if this makes it finish...
 		//TODO how to avoid this.... 
@@ -268,7 +279,7 @@ public class MoveGeneration {
 		for(int i = 1; i < Math.pow(2.0, 
 				Math.min(5, unitCount)); i++)
 		{
-			unitMasks.addAll(generateOrderSets(i, unitCount, unit, dynamicState, player));
+			unitMasks.addAll(generateOrderSets(i, unitCount, orderPossibilities, unit, dynamicState, player));
 		}
 		
 		//	want to order these moves by the naive quality the 

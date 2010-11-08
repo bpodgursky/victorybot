@@ -1,1 +1,1 @@
-REJ( SUB() ) message received : REJ ( SUB ( ( FRA FLT BRE ) BLD ) ) 
+REJ( SUB() ) message received : REJ ( SUB ( ( FRA AMY GAS ) REM ) ( ( FRA FLT BEL ) REM ) ( ( FRA FLT ( SPA SCS ) ) REM ) ) 

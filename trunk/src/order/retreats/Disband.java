@@ -16,7 +16,6 @@ public class Disband extends Order{
 	public Disband(BoardState bst, Player p, TerritorySquare location) throws Exception{
 		this(bst, p, location, "NA");
 	}
-
 	
 	public Disband(BoardState bst, Player p, TerritorySquare location, String coast) throws Exception{
 		super(p, Result.SUC, RetreatState.NA);
@@ -24,6 +23,8 @@ public class Disband extends Order{
 		if(location == null){
 			throw new Exception("null arguments");
 		}
+		
+		
 		
 //		if(!location.board.canDisband(p, location)){
 //			throw new Exception("invalid disband");

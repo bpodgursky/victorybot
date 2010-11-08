@@ -19,6 +19,7 @@ import java.util.Set;
 import order.Order;
 import order.builds.Build;
 import order.builds.Remove;
+import order.builds.Waive;
 import order.retreats.Disband;
 import order.retreats.Retreat;
 import order.spring_fall.Hold;
@@ -106,6 +107,10 @@ public class GameSearch {
 	}
 	
 	public void noteBeliefUpdate(){
+		
+		this.currentOrders = new HashSet<Order>();
+		this.movesReady = false;
+		
 		this.beliefUpdate = true;
 		
 		internalSearch.interrupt();
@@ -217,7 +222,6 @@ public class GameSearch {
 		
 		//	recurse through all enemy combinations (cap for each player)	
 		
-		
 		List<Set<Order>> orderList = new LinkedList<Set<Order>>();
 		orderList.add(friendlyOrders);
 		
@@ -250,9 +254,6 @@ public class GameSearch {
 		{
 			return heuristic.boardScore(relevantPlayer, bst);
 		}
-		
-		
-		
 		
 		//	otherwise,
 		
@@ -432,7 +433,7 @@ public class GameSearch {
 		}
 		
 		else if(players[player] == relevantPlayer){
-			enumerateMoves(bst, allOrders, playerOrders, players, player+1);
+			playerEnumeration.addAll(enumerateMoves(bst, allOrders, playerOrders, players, player+1));
 		}
 		else{
 			
@@ -443,7 +444,7 @@ public class GameSearch {
 				
 				allOrders.add(mv.moves);
 			
-				enumerateMoves(bst, allOrders, playerOrders, players, player+1);
+				playerEnumeration.addAll(enumerateMoves(bst, allOrders, playerOrders, players, player+1));
 			
 				allOrders.remove(mv.moves);
 								
@@ -626,6 +627,13 @@ public class GameSearch {
 								
 								if(equalize == 0) break;
 							}	
+						}
+					}
+					
+					//	we have to waive if we can't build more
+					if(equalize > 0){
+						for(int i = 0; i < equalize; i++){
+							orders.add(new Waive(boardState, relevantPlayer));
 						}
 					}
 					

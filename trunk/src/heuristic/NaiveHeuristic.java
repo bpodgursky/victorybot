@@ -48,12 +48,12 @@ public class NaiveHeuristic extends Heuristic {
 				
 				else{
 					
-					//	defending our own territory is nice too					
+					//	defense?  who cares about that?
 					for(TerritorySquare neighbor: mov.to.getBorders()){
 						if(neighbor.getOccupier(bst) != null &&
 								neighbor.getOccupier(bst).belongsTo != orderFor){
 							
-							return 2.0;
+							return .9;
 						}
 					}
 					
@@ -85,12 +85,12 @@ public class NaiveHeuristic extends Heuristic {
 				
 				else{
 					
-					//	defending our own territory is nice too					
+					//	defense is irrelevant				
 					for(TerritorySquare neighbor: mov.convoyDestination.getBorders()){
 						if(neighbor.getOccupier(bst) != null &&
 								neighbor.getOccupier(bst).belongsTo != orderFor){
 							
-							return 2.0;
+							return .9;
 						}
 					}
 					
@@ -183,7 +183,7 @@ public class NaiveHeuristic extends Heuristic {
 			for(TerritorySquare neighbor: sqr.getBorders()){
 				
 				//	if you don't control it yet
-				if(neighbor.getController(dynamicBoard) != player){
+				if(neighbor.isSupplyCenter() && neighbor.getController(dynamicBoard) != player){
 					
 					//	if nobody is there, it's worth a lot potentially
 					if(neighbor.getOccupier(dynamicBoard) == null){

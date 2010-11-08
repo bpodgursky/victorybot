@@ -2838,6 +2838,7 @@ public class BoardConfiguration {
 		return options;
 	}
 	
+	
 	public List<TerritoryCoast> getMovesForUnit(BoardState boardState, TerritorySquare from){
 		
 		Unit occupier = from.getOccupier(boardState);
