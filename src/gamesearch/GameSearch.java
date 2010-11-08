@@ -429,7 +429,7 @@ public class GameSearch {
 			//double stateScore = heuristic.boardScore(relevantPlayer, executed);
 			
 			//scores.add(stateScore);
-			playerEnumeration.add(allOrders);
+			playerEnumeration.add(new LinkedList<Set<Order>>(allOrders));
 		}
 		
 		else if(players[player] == relevantPlayer){
