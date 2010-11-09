@@ -254,7 +254,7 @@ public class NaiveHeuristic extends Heuristic {
 		
 		//	add a bonus for coming out of this with more units (will probably be represented elsewhere,
 		//	but oh well.)  Hopefully this will reward plans that don't have retreats or disbands
-		double liveUnitBonus = .5*player.getOccupiedTerritories(dynamicBoard).size();
+		double liveUnitBonus = player.getOccupiedTerritories(dynamicBoard).size();
 		
 		//	take the expected supply center count, and discounted other positions
 		return mySupplyCenterCount + 

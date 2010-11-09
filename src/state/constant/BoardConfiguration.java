@@ -2994,7 +2994,45 @@ public class BoardConfiguration {
 		}
 	}
 	
-	public Set<Order> generateHoldsFor(BoardState bst, Player p) throws Exception{
+	//	generate whatever makes sense for the season.  Waive, retreats, holds.
+	//	so game search can get an a priori estimate of move quality.
+	//	can't completely punt for disbands, so choose randomly
+	public Set<Order> generateDefaultOrdersFor(BoardState bst, Player p) throws Exception{
+		
+		if(bst.time.phase == Phase.SPR || bst.time.phase == Phase.FAL){
+			return generateHoldsFor(bst, p);
+		}else if(bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
+			return generateDisbandsFor(bst, p);
+		}else{
+			return generateBuildsFor(bst, p);
+		}
+	}
+	
+	private Set<Order> generateBuildsFor(BoardState bst, Player p) throws Exception{
+		
+		Set<Order> orders = new HashSet<Order>();
+		
+		int required =  this.getRequiredBuilds(bst, p);
+		
+		TerritorySquare[] allUnits = bst.getOccupiedTerritories(p).toArray(new TerritorySquare[0]);
+		int destroyedIndex = 0;
+		
+		while(required != 0){
+			
+			if(required > 0){
+				orders.add(new Waive(bst, p));
+				required--;
+				
+			}else if(required < 0){
+				orders.add(new Remove(bst, p, allUnits[destroyedIndex++]));
+				required++;
+			}
+		}
+		
+		return orders;
+	}
+	
+	private Set<Order> generateHoldsFor(BoardState bst, Player p) throws Exception{
 		
 		Set<Order> holds = new HashSet<Order>();
 		for(TerritorySquare tsquare: p.getOccupiedTerritories(bst)){
@@ -3004,7 +3042,7 @@ public class BoardConfiguration {
 		return holds;
 	}
 	
-	public Set<Order> generateDisbandsFor(BoardState bst, Player p) throws Exception{
+	private Set<Order> generateDisbandsFor(BoardState bst, Player p) throws Exception{
 		
 		Set<Order> disbands = new HashSet<Order>();
 		
