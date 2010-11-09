@@ -47,6 +47,10 @@ public class TerritorySquare {
 		bst.setController(this, p);
 	}
 	
+	public boolean isHomeSupply(){
+		return homeSupplyFor != null;
+	}
+	
 	public void setOccupier(BoardState bst, Unit u, String coast) throws Exception{
 		
 		if(!coasts.contains(coast)){

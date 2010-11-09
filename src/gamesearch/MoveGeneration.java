@@ -21,6 +21,7 @@ import order.retreats.Disband;
 import order.retreats.Retreat;
 import order.spring_fall.Hold;
 import order.spring_fall.Move;
+import order.spring_fall.SupportHold;
 import order.spring_fall.SupportMove;
 import representation.Country;
 import representation.Player;
@@ -68,7 +69,6 @@ public class MoveGeneration {
 		for(Player p: staticBoard.getPlayers()){
 			for(TerritorySquare sqr: dynamicState.getOccupiedTerritories(p)){
 				
-				//TODO cache this calculation between calls to this function	
 				List<TerritoryCoast> possibleMoves = staticBoard.getMovesForUnit(dynamicState, sqr);
 				List<OrderValue> orders = new LinkedList<OrderValue>();
 
@@ -79,18 +79,8 @@ public class MoveGeneration {
 					Move move = new Move(dynamicState, p, sqr, tcoast.sqr, tcoast.coast);
 					orders.add(new OrderValue(move, heuristic.orderScore(move, dynamicState)));			
 				
-					
-					//if(pMoveCount++ >= MOVES_PER_UNIT) break;
 				}
 
-				//OrderValue[] ovArray = orders.toArray(new OrderValue[orders.size()]);
-				
-//				Arrays.sort(ovArray, new Comparator<OrderValue>(){
-//					public int compare(OrderValue a, OrderValue b){
-//						return -Double.compare(a.score, b.score);
-//					}
-//				});
-				
 				orderMap.put(sqr, orders);
 				
 			}
@@ -188,6 +178,8 @@ public class MoveGeneration {
 			Double [] orderScore = (moveScoreMap.keySet().toArray(new Double[0]));
 			Arrays.sort(orderScore);
 	
+			List<TerritorySquare> supportHoldable = new LinkedList<TerritorySquare>(supportSetCopy);
+			
 			for(Double heurVal: orderScore)
 			{
 				
@@ -211,15 +203,32 @@ public class MoveGeneration {
 				}
 			}
 			
+			//	anything left in here either holds or supports holds
 			for(TerritorySquare ts: supportSetCopy){
+
+				//	find something to support hold on
 				
-				//TODO 	for now just hold if can't support a move.  In future,
-				//	should support holds too 
-				finalMoveSet.add(new Hold(bst, p, ts));	
+				//	TODO this is not done intelligently.  rank the locations by 
+				//	how much danger they are in, or enumerate the possibilities, or 
+				//	something
+				
+				boolean foundSomething = false;
+				for(TerritorySquare sq: supportHoldable){
+					
+					if(staticBoard.canSupportHold(bst, p, ts, sq)){
+						finalMoveSet.add(new SupportHold(bst, p, ts, sq));
+						
+						foundSomething = true;
+						break;
+					}	
+				}
+				
+				if(!foundSomething){
+					finalMoveSet.add(new Hold(bst, p, ts));
+				}	
 			}
 
-			for(OrderValue ov: allOrders)
-			{
+			for(OrderValue ov: allOrders) {
 				finalMoveSet.add(ov.order);
 			}
 			
@@ -266,9 +275,9 @@ public class MoveGeneration {
 	public static class MovesValue implements Comparable<MovesValue>{
 		
 		public final double value;
-		public final Set<Order> moves;
+		public final Collection<Order> moves;
 		
-		public MovesValue(Set<Order> moves, double value){
+		public MovesValue(Collection<Order> moves, double value){
 			this.value = value;
 			this.moves = moves;
 		}
@@ -296,8 +305,7 @@ public class MoveGeneration {
 			//	2) for each player, count only to the number of units that can affect you
 			
 			for(int i = 1; i < Math.pow(2.0, 
-					Math.min(5, unitCount)); i++)
-			{
+					Math.min(5, unitCount)); i++){
 				unitMasks.addAll(generateOrderSets(i, unitCount, orderPossibilities, unit, dynamicState, player));
 			}
 			
@@ -326,11 +334,7 @@ public class MoveGeneration {
 			
 			MovesValue[] moves = valMoves.toArray(new MovesValue[0]);
 			
-			Arrays.sort(moves, new Comparator<MovesValue>(){
-				public int compare(MovesValue a, MovesValue b){
-					return -Double.compare(a.value, b.value);
-				}
-			});
+			Arrays.sort(moves);
 			
 			MovesValue[] prunedMoves = new MovesValue[
 			    Math.min(MAX_PLAYER_MOVES, moves.length)];
@@ -341,8 +345,7 @@ public class MoveGeneration {
 			return prunedMoves;
 		}else if(dynamicState.time.phase == Phase.SUM || dynamicState.time.phase == Phase.AUT){
 			
-			//	generate all combination of valid retreats
-			Collection<RetreatSituation> retreats = dynamicState.getRetreats();
+			//	generate all combination of valid retreats for the player
 
 			Set<RetreatSituation> playerRetreats = staticBoard.getRetreatsForPlayer(dynamicState, player);
 			
@@ -363,6 +366,39 @@ public class MoveGeneration {
 				retreatOptions.put(rsit, unitOptions);
 			}
 			
+			Set<Order> otherOrders = new HashSet<Order>();
+			for(Player p: staticBoard.getPlayers()){
+				if(p == player) continue;
+				
+				otherOrders.addAll(staticBoard.generateDisbandsFor(dynamicState, p));
+			}
+			
+			List<List<Order>> allPossibilities = new LinkedList<List<Order>>();
+			enumerateRetreats(playerRetreats.toArray(new RetreatSituation[0]), 0, retreatOptions, new LinkedList<Order>(), allPossibilities);
+			
+			//	so this is everything we can do with our retreat.  now we need to naively rank them: do so by
+			//	seeing what would happen if every other retreat was a disband, and evaluating board states
+			
+			List<MovesValue> valMoves = new LinkedList<MovesValue>();
+			for(List<Order> ord: allPossibilities){
+				
+				Set<Order> toSubmit = new HashSet<Order>(otherOrders);
+				toSubmit.addAll(ord);
+				
+				BoardState stateAfterExecute = staticBoard.update(dynamicState.time.next(), dynamicState, toSubmit, false);
+			
+				valMoves.add(new MovesValue(ord, heuristic.boardScore(player, stateAfterExecute)));
+			}
+		
+			MovesValue[] moves = valMoves.toArray(new MovesValue[0]);
+			
+			Arrays.sort(moves);
+			
+			MovesValue[] prunedMoves = new MovesValue[
+			    Math.min(MAX_PLAYER_MOVES, moves.length)];
+			for(int i = 0; i < MAX_PLAYER_MOVES && i < moves.length; i++){
+				prunedMoves[i] = moves[i];
+			}
 		}
 		else if(dynamicState.time.phase == Phase.WIN){
 		
