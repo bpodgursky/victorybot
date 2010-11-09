@@ -2988,6 +2988,10 @@ public class BoardConfiguration {
 				return new YearPhase(year, Phase.WIN);
 			}
 		}
+		
+		public String toString(){
+			return year+" "+phase.toString();
+		}
 	}
 	
 	public Set<Order> generateHoldsFor(BoardState bst, Player p) throws Exception{
@@ -2998,6 +3002,17 @@ public class BoardConfiguration {
 		}
 		
 		return holds;
+	}
+	
+	public Set<Order> generateDisbandsFor(BoardState bst, Player p) throws Exception{
+		
+		Set<Order> disbands = new HashSet<Order>();
+		
+		for(RetreatSituation ret: getRetreatsForPlayer(bst, p)){
+			disbands.add(new Disband(bst, p, ret.from, ret.originCoast));
+		}
+		
+		return disbands;
 	}
 	
 	public static void main(String[] args) throws Exception{

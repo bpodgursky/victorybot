@@ -43,7 +43,7 @@ public class GameSearch {
 	private static final int MAX_PLAYER_MOVES = 50;
 	
 	//	keep this updated with the current best guess at orders
-	private Set<Order> currentOrders = new HashSet<Order>();
+	private Collection<Order> currentOrders = new HashSet<Order>();
 	
 	//	use these as base for search, heuristic for search, and to inform
 	//	move success probabilities, respectively
@@ -121,12 +121,12 @@ public class GameSearch {
 	}
 	
 	
-	public Set<Order> currentOrders(){
+	public Collection<Order> currentOrders(){
 		return currentOrders;
 	}
 	
 	//	base case of search.  Returns the best set of moves for us
-	private Set<Order> moveSearch(BoardState bst, YearPhase until) throws Exception{
+	private Collection<Order> moveSearch(BoardState bst, YearPhase until) throws Exception{
 		
 		//	build sets of all moves for all relevant players
 	
@@ -181,7 +181,7 @@ public class GameSearch {
 				return null;
 			}
 			
-			List<Set<Order>> orderList = new LinkedList<Set<Order>>();
+			List<Collection<Order>> orderList = new LinkedList<Collection<Order>>();
 			orderList.add(playerOrds.moves);
 		
 			maxSetMoves[count] = new MovesValue(playerOrds.moves, min(bst, until, playerOrds.moves, orderSetsByPlayer, playerArray));
@@ -212,31 +212,32 @@ public class GameSearch {
 	
 	//	for the moves that we have made (friendlyOrders), what is the worst possible board 
 	//	that can result from it.  We want to return the quality of that board
-	private double min(BoardState bst, YearPhase until, Set<Order> friendlyOrders,
+	private double min(BoardState bst, YearPhase until, Collection<Order> friendlyOrders,
 			Map<Player, MovesValue []> orderSetsByPlayer, Player [] playerArray) throws Exception{
 		
-		if(until.isAfter(bst.time))
-		{
+		System.out.println("Board state "+bst.time+", searching until "+until);
+		
+		if(bst.time.isAfter(until)) {
 			return heuristic.boardScore(relevantPlayer, bst);
 		}
 		
 		//	recurse through all enemy combinations (cap for each player)	
 		
-		List<Set<Order>> orderList = new LinkedList<Set<Order>>();
+		List<Collection<Order>> orderList = new LinkedList<Collection<Order>>();
 		orderList.add(friendlyOrders);
 		
-		List<List<Set<Order>>> allMoveSets = enumerateMoves(bst, orderList, orderSetsByPlayer, playerArray, 0);
+		List<List<Collection<Order>>> allMoveSets = enumerateMoves(bst, orderList, orderSetsByPlayer, playerArray, 0);
 		MovesValue [] moveScores = new MovesValue[allMoveSets.size()];
 		int count = 0;
-		for(List<Set<Order>> fullMoveSet: allMoveSets)
+		for(List<Collection<Order>> fullMoveSet: allMoveSets)
 		{
 			Set<Order> toExecute = new HashSet<Order>();
 			
-			for(Set<Order> execute: fullMoveSet){	
+			for(Collection<Order> execute: fullMoveSet){	
 				toExecute.addAll(execute);
 			}
-			BoardState updatedState = boardConfiguration.update(bst.time, bst, toExecute, false);
-			moveScores[count] = new MovesValue(toExecute, max(updatedState, updatedState.time));
+			BoardState updatedState = boardConfiguration.update(bst.time.next(), bst, toExecute, false);
+			moveScores[count] = new MovesValue(toExecute, max(updatedState, until));
 		}
 		//		base case of recursion, have a set of moves for each enemy player
 		//			combine with the friendlyOrders above to make a full set of orders
@@ -250,16 +251,16 @@ public class GameSearch {
 	private double max(BoardState bst, YearPhase until) throws Exception{
 		
 		// if bst's date is after until, return the quality of the board
-		if(until.isAfter(bst.time))
-		{
+		
+		System.out.println("Board state "+bst.time+", searching until "+until);
+		
+		if(bst.time.isAfter(until)) {
 			return heuristic.boardScore(relevantPlayer, bst);
 		}
 		
 		//	otherwise,
 		
 		//	build sets of all moves for all relevant players based on this bst
-		
-
 
 		Map<Player, MovesValue[]> orderSetsByPlayer =
 			new HashMap<Player, MovesValue[]>();
@@ -299,7 +300,7 @@ public class GameSearch {
 			
 			System.out.println("Looking at "+playerOrds);
 			
-			List<Set<Order>> orderList = new LinkedList<Set<Order>>();
+			List<Collection<Order>> orderList = new LinkedList<Collection<Order>>();
 			orderList.add(playerOrds.moves);
 			
 			List<Double> scores = new ArrayList<Double>();
@@ -319,117 +320,20 @@ public class GameSearch {
 		
 	}
 	
-	
-	
-	/*private Set<Order> moveSearch(BoardState bst) throws Exception{
-		//	TODO this is temporarily just a one level search
-
-		
-		MoveGeneration gen = new MoveGeneration(boardConfiguration);
-
-		Map<Player, MovesValue[]> orderSetsByPlayer =
-			new HashMap<Player, MovesValue[]>();
-		
-		
-		Set<Player> relevantPlayers = boardConfiguration.getRelevantPlayers(bst, relevantPlayer);
-		
-		System.out.println("This state, we "+relevantPlayer.getName()+" only care about players: ");
-		System.out.println("\t"+relevantPlayers);
-		
-		//	for each player, generate the a priori likely moves
-		List<Player> otherPlayers = new LinkedList<Player>();
-		for(Player p: boardConfiguration.getPlayers()){
-			
-			if(relevantPlayers.contains(p)){
-				orderSetsByPlayer.put(p, gen.generateOrderSets(p, bst));
-			}else{
-				
-				MovesValue[] hold = new MovesValue[1];
-				hold[0] = new MovesValue(boardConfiguration.generateHoldsFor(bst, p), -1);
-				
-				orderSetsByPlayer.put(p, hold);
-			}
-			
-			if(p != this.relevantPlayer){
-				otherPlayers.add(p);
-			}
-		}
-		
-		System.out.println("Possible moves for players calculated: ");
-		for(Player p: orderSetsByPlayer.keySet()){
-			System.out.println("\t"+p.getName()+"\t"+orderSetsByPlayer.get(p).length);
-		}
-		
-		//	try combinations of moves
-		
-		Player[] playerArray = otherPlayers.toArray(new Player[0]);		
-
-		Set<Order> bestOrders = null;
-		double bestScore = 0;
-		
-		System.out.println("Processing minimax...");
-		for(MovesValue playerOrds: orderSetsByPlayer.get(relevantPlayer)){
-			
-			//	then we've taken too long.  get out of here and start over
-			if(boardUpdate){
-				return null;
-			}
-			
-			
-			List<Set<Order>> orderList = new LinkedList<Set<Order>>();
-			orderList.add(playerOrds.moves);
-			
-			List<Double> scores = new ArrayList<Double>();
-			
-			enumerateMoves(bst, orderList, orderSetsByPlayer, playerArray, 0);
-			
-			//TODO hacky hacky hacky minimax hack make this whole algorithm clear
-			Double minScore = scores.get(0);
-			for(Double d: scores){
-				if(d < minScore){
-					minScore = d;
-				}
-			}
-			
-			if(bestOrders == null || minScore > bestScore){
-				bestOrders = playerOrds.moves;
-				bestScore = minScore;
-				
-				currentOrders = bestOrders;
-			}
-			
-		}
-		
-		return bestOrders;
-	}*/
-	
 	//	how many moves to enumerate for each player.  hardcode for now
 	private static final int MAX_ENUM = 5;
 	
-	private List<List<Set<Order>>> enumerateMoves(BoardState bst, 
-			List<Set<Order>> allOrders, 
+	private List<List<Collection<Order>>> enumerateMoves(BoardState bst, 
+			List<Collection<Order>> allOrders, 
 			Map<Player, MovesValue[]> playerOrders, 
 			Player[] players, 
 			int player) throws Exception{
 		
-		List<List<Set<Order>>> playerEnumeration = new LinkedList<List<Set<Order>>>();
+		List<List<Collection<Order>>> playerEnumeration = new LinkedList<List<Collection<Order>>>();
 		
 		if(player == players.length){
-			// execute, evaluate quality
-			
-			//Set<Order> toExecute = new HashSet<Order>();
-			
-			//for(Set<Order> execute: allOrders){
-				
-			//	toExecute.addAll(execute);
-			//}
-			
-			//BoardState executed = boardConfiguration.update(bst.time.next(), bst, toExecute, false);
-			
-			//double stateScore = heuristic.boardScore(relevantPlayer, executed);
-			
-			//scores.add(stateScore);
-			playerEnumeration.add(new LinkedList<Set<Order>>(allOrders));
+
+			playerEnumeration.add(new LinkedList<Collection<Order>>(allOrders));
 		}
 		
 		else if(players[player] == relevantPlayer){
@@ -522,12 +426,11 @@ public class GameSearch {
 						}
 					}
 					
-					//TODO intelligent search
-					
 					System.out.println("Done with basic search, starting intelligent search...");
 					
 					currentOrders = orders;
 					int year = boardState.time.year;
+					
 					Phase phase = boardState.time.phase == Phase.SPR ? Phase.SUM : Phase.WIN;
 					YearPhase until = new YearPhase(year, phase);
 					currentOrders = moveSearch(boardState, until);

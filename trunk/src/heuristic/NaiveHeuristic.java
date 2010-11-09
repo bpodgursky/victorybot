@@ -157,7 +157,7 @@ public class NaiveHeuristic extends Heuristic {
 	private double playerScore(Player player, BoardState dynamicBoard){
 
 		//	count the supply centers we expect this gives us
-		int mySupplyCenterCount = player.getNumberSupplyCenters(dynamicBoard);
+		double mySupplyCenterCount = player.getNumberSupplyCenters(dynamicBoard);
 
 		//	add in ones you're on that won't control quite yet
 		for(TerritorySquare sqr:player.getOccupiedTerritories(dynamicBoard)){
@@ -174,7 +174,7 @@ public class NaiveHeuristic extends Heuristic {
 		}
 		
 		//	get an idea of how close we are to taking other centers
-		int threateningSupplyCenterScore = 0;
+		double threateningSupplyCenterScore = 0;
 		
 		//	look everywhere we have units
 		for(TerritorySquare sqr: player.getOccupiedTerritories(dynamicBoard)){
@@ -185,21 +185,30 @@ public class NaiveHeuristic extends Heuristic {
 				//	if you don't control it yet
 				if(neighbor.isSupplyCenter() && neighbor.getController(dynamicBoard) != player){
 					
+					double threatenScore = 0;
+					
 					//	if nobody is there, it's worth a lot potentially
 					if(neighbor.getOccupier(dynamicBoard) == null){
-						threateningSupplyCenterScore++;
+						threatenScore++;
 					}
 					
 					//slightly less if it's not open
 					else if(neighbor.getOccupier(dynamicBoard).belongsTo != player){
-						threateningSupplyCenterScore+=.5;
+						threatenScore+=.5;
 					}
+					
+					//	if it's our home supply center, this is very important
+					if(neighbor.getHomePlayer() == player){
+						threatenScore*=2;
+					}
+					
+					threateningSupplyCenterScore+=threatenScore;
 				}
 			}
 		}
 		
 		//	and then see how close we are to losing centers
-		int threatenedSupplyCenterScore = 0;
+		double threatenedSupplyCenterScore = 0;
 		
 		//	look everywhere we control
 		for(TerritorySquare sqr: player.getControlledTerritories(dynamicBoard)){
@@ -212,22 +221,46 @@ public class NaiveHeuristic extends Heuristic {
 				
 				if(force != null && force.belongsTo != player){
 					
+					double threatenScore = 0;
+					
 					//	if the square is unoccupied, that is bad
 					if(sqr.getOccupier(dynamicBoard) == null){
-						threatenedSupplyCenterScore--;
+						threatenScore--;
 					}
 					
 					//slightly less if it's not open
 					else if(sqr.getOccupier(dynamicBoard).belongsTo == player){
-						threatenedSupplyCenterScore-=.5;
+						threatenScore-=.5;
 					}
+					
+					//	if it's our home supply center, this is very bad
+					if(neighbor.getHomePlayer() == player){
+						threatenScore*=2;
+					}
+					
+					threateningSupplyCenterScore+=threatenScore;
 				}
 			}
 		}
 		
+		double lostHomeSupplyPenalty = 0;
+		
+		//	add a penalty for losing our own home supply centers
+		for(TerritorySquare homeSupply: player.getHomeCenters()){
+			if(homeSupply.getController(dynamicBoard) != player){
+				lostHomeSupplyPenalty--;
+			}
+		}
+		
+		//	add a bonus for coming out of this with more units (will probably be represented elsewhere,
+		//	but oh well.)  Hopefully this will reward plans that don't have retreats or disbands
+		double liveUnitBonus = .5*player.getOccupiedTerritories(dynamicBoard).size();
+		
 		//	take the expected supply center count, and discounted other positions
 		return mySupplyCenterCount + 
-			.25 * (threateningSupplyCenterScore + threatenedSupplyCenterScore);
+			.25 * (threateningSupplyCenterScore + threatenedSupplyCenterScore) +
+			lostHomeSupplyPenalty +
+			liveUnitBonus;
 	}
 	
 	public static void main(String [] args)
