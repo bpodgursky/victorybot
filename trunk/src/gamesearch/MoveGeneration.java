@@ -17,6 +17,9 @@ import java.util.Random;
 import java.util.Set;
 
 import order.Order;
+import order.builds.Build;
+import order.builds.Remove;
+import order.builds.Waive;
 import order.retreats.Disband;
 import order.retreats.Retreat;
 import order.spring_fall.Hold;
@@ -26,6 +29,7 @@ import order.spring_fall.SupportMove;
 import representation.Country;
 import representation.Player;
 import representation.TerritorySquare;
+import representation.Unit;
 import state.constant.BoardConfiguration;
 import state.constant.BoardConfiguration.TerritoryCoast;
 import state.dynamic.BoardState;
@@ -48,8 +52,8 @@ public class MoveGeneration {
 	
 	private Random r = new Random();
 	
-	private static final int MOVES_PER_UNIT = 4;
-	private static final int MAX_PLAYER_MOVES = 50;
+	private static final int MOVES_PER_UNIT = 3;
+	private static final int MAX_PLAYER_MOVES = 20;
 	
 	public static class OrderValue{
 		
@@ -288,15 +292,14 @@ public class MoveGeneration {
 		}
 	}
 	
-	
-	//	TODO make this also generate valid moves for retreats and winters.  that way the bot will 
-	//	understand that it's good to get off of supply centers to let us build...
 	public MovesValue[] generateOrderSets(Player player, BoardState dynamicState) throws Exception
 	{
+
+		List<Collection<Order>> allCombinations = new LinkedList<Collection<Order>>();
+		
 		if(dynamicState.time.phase == Phase.SPR || dynamicState.time.phase == Phase.FAL){
 			int unitCount = player.getNumberUnits(dynamicState);
-	
-			List<Set<Order>> unitMasks = new LinkedList<Set<Order>>();
+
 			Set<TerritorySquare> unit = player.getOccupiedTerritories(dynamicState);
 			
 			Map<TerritorySquare, List<OrderValue>> orderPossibilities = generateMovesForUnits(dynamicState);
@@ -306,43 +309,10 @@ public class MoveGeneration {
 			
 			for(int i = 1; i < Math.pow(2.0, 
 					Math.min(5, unitCount)); i++){
-				unitMasks.addAll(generateOrderSets(i, unitCount, orderPossibilities, unit, dynamicState, player));
+				allCombinations.addAll(generateOrderSets(i, unitCount, orderPossibilities, unit, dynamicState, player));
 			}
 			
-			//	want to order these moves by the naive quality the 
-			//	board would have afterwards--basically, which of them
-			//	is the opponent most likely to do
-			//	the simplest way to calculate this is "what if everyone holds"
-			
-			Set<Order> otherOrders = new HashSet<Order>();
-			for(Player p: this.staticBoard.getPlayers()){
-				if(p == player) continue;
-				
-				otherOrders.addAll(staticBoard.generateHoldsFor(dynamicState, p));
-			}
-			
-			List<MovesValue> valMoves = new LinkedList<MovesValue>();
-			for(Set<Order> ord: unitMasks){
-				
-				Set<Order> toSubmit = new HashSet<Order>(otherOrders);
-				toSubmit.addAll(ord);
-				
-				BoardState stateAfterExecute = staticBoard.update(dynamicState.time.next(), dynamicState, toSubmit, false);
-			
-				valMoves.add(new MovesValue(ord, heuristic.boardScore(player, stateAfterExecute)));
-			}
-			
-			MovesValue[] moves = valMoves.toArray(new MovesValue[0]);
-			
-			Arrays.sort(moves);
-			
-			MovesValue[] prunedMoves = new MovesValue[
-			    Math.min(MAX_PLAYER_MOVES, moves.length)];
-			for(int i = 0; i < MAX_PLAYER_MOVES && i < moves.length; i++){
-				prunedMoves[i] = moves[i];
-			}
-			
-			return prunedMoves;
+
 		}else if(dynamicState.time.phase == Phase.SUM || dynamicState.time.phase == Phase.AUT){
 			
 			//	generate all combination of valid retreats for the player
@@ -365,56 +335,170 @@ public class MoveGeneration {
 				
 				retreatOptions.put(rsit, unitOptions);
 			}
-			
-			Set<Order> otherOrders = new HashSet<Order>();
-			for(Player p: staticBoard.getPlayers()){
-				if(p == player) continue;
-				
-				otherOrders.addAll(staticBoard.generateDisbandsFor(dynamicState, p));
-			}
-			
-			List<List<Order>> allPossibilities = new LinkedList<List<Order>>();
-			enumerateRetreats(playerRetreats.toArray(new RetreatSituation[0]), 0, retreatOptions, new LinkedList<Order>(), allPossibilities);
+
+			enumerateRetreats(playerRetreats.toArray(new RetreatSituation[0]), 0, retreatOptions, new LinkedList<Order>(), allCombinations);
 			
 			//	so this is everything we can do with our retreat.  now we need to naively rank them: do so by
 			//	seeing what would happen if every other retreat was a disband, and evaluating board states
 			
-			List<MovesValue> valMoves = new LinkedList<MovesValue>();
-			for(List<Order> ord: allPossibilities){
-				
-				Set<Order> toSubmit = new HashSet<Order>(otherOrders);
-				toSubmit.addAll(ord);
-				
-				BoardState stateAfterExecute = staticBoard.update(dynamicState.time.next(), dynamicState, toSubmit, false);
-			
-				valMoves.add(new MovesValue(ord, heuristic.boardScore(player, stateAfterExecute)));
-			}
-		
-			MovesValue[] moves = valMoves.toArray(new MovesValue[0]);
-			
-			Arrays.sort(moves);
-			
-			MovesValue[] prunedMoves = new MovesValue[
-			    Math.min(MAX_PLAYER_MOVES, moves.length)];
-			for(int i = 0; i < MAX_PLAYER_MOVES && i < moves.length; i++){
-				prunedMoves[i] = moves[i];
-			}
+
 		}
 		else if(dynamicState.time.phase == Phase.WIN){
 		
-			//
+			//	generate all bcombinations of builds for the player
+			
+			//	basically, we want every combination of build locations and units to build there
+			//	this should be small enough we can enumerate them... 
+		
+			int equalize = staticBoard.getRequiredBuilds(dynamicState, player);
+
+			if(equalize > 0){
+				enumerateBuilds(dynamicState, player, player.getHomeCenters(), equalize, new LinkedList<Order>(), allCombinations);
+			}else if(equalize < 0){
+				
+				enumerateRemoves(dynamicState, player, player.getOccupiedTerritories(dynamicState), -equalize, new LinkedList<Order>(), allCombinations);
+			}else{
+				allCombinations.add(new LinkedList<Order>());
+			}
 		}
 		
-		return null;
+		if(allCombinations.size() == 0){
+			throw new Exception("no orders generated for a player "+player.getName()+" in "+dynamicState.time);
+		}
+		
+		//	want to order these moves by the naive quality the 
+		//	board would have afterwards--basically, which of them
+		//	is the opponent most likely to do
+		//	the simplest way to calculate this is "what if everyone holds"
+		
+		Set<Order> otherOrders = new HashSet<Order>();
+		for(Player p: staticBoard.getPlayers()){
+			if(p == player) continue;
+			
+			otherOrders.addAll(staticBoard.generateDefaultOrdersFor(dynamicState, p));
+		}
+		
+		List<MovesValue> valMoves = new LinkedList<MovesValue>();
+		for(Collection<Order> ord: allCombinations){
+			
+			Set<Order> toSubmit = new HashSet<Order>(otherOrders);
+			toSubmit.addAll(ord);
+			
+			BoardState stateAfterExecute = staticBoard.update(dynamicState.time.next(), dynamicState, toSubmit, false);
+		
+			valMoves.add(new MovesValue(ord, heuristic.boardScore(player, stateAfterExecute)));
+		}
+	
+		MovesValue[] moves = valMoves.toArray(new MovesValue[0]);
+		
+		Arrays.sort(moves);
+		
+		MovesValue[] prunedMoves = new MovesValue[
+		    Math.min(MAX_PLAYER_MOVES, moves.length)];
+		for(int i = 0; i < MAX_PLAYER_MOVES && i < moves.length; i++){
+			prunedMoves[i] = moves[i];
+		}
+		
+		return prunedMoves;
+	}
+	
+	private void enumerateRemoves(BoardState bst, Player p,
+			Collection<TerritorySquare> occupied,
+			int moreDisbands,
+			List<Order> ordersSoFar,
+			List<Collection<Order>> allDisbandCombos) throws Exception{
+		
+		//	no way to satisfy the disbands, return
+		if(occupied.size() < moreDisbands) return;
+		
+		if(moreDisbands == 0){
+			allDisbandCombos.add(ordersSoFar);
+		}
+		else if(!occupied.isEmpty()){
+			
+			TerritorySquare toLookAt = occupied.iterator().next();
+			List<TerritorySquare> occupiedCopy = new LinkedList<TerritorySquare>(occupied);
+			occupiedCopy.remove(toLookAt);
+			
+			//	remove it
+			
+			List<Order> ordersCopy = new LinkedList<Order>(ordersSoFar);
+			ordersCopy.add(new Remove(bst, p, toLookAt));
+			enumerateRemoves(bst, p, occupiedCopy, moreDisbands-1, ordersCopy, allDisbandCombos);
+			
+			//	or don't
+			
+			List<Order> ordersSame= new LinkedList<Order>(ordersSoFar);
+			enumerateRemoves(bst, p, occupiedCopy, moreDisbands, ordersSame, allDisbandCombos);
+		}
+	}
+	
+	private void enumerateBuilds(BoardState bst, Player p,
+			Collection<TerritorySquare> homeCenters, 
+			int moreBuilds, 
+			List<Order> ordersSoFar, 
+			List<Collection<Order>> allCombinations) throws Exception{
+		
+		if(homeCenters.isEmpty()){
+			
+			for(int i = 0; i < moreBuilds; i++){
+				ordersSoFar.add(new Waive(bst, p));
+			}
+			
+			allCombinations.add(ordersSoFar);
+			
+		}else if(moreBuilds == 0){
+			
+			allCombinations.add(ordersSoFar);
+			
+		}else{
+			TerritorySquare decide = homeCenters.iterator().next();
+			
+			List<TerritorySquare> remainingCenters = new LinkedList<TerritorySquare>(homeCenters);
+			remainingCenters.remove(decide);
+			
+			//	build an army if can (can't if occupied or don't own it)
+			if(staticBoard.canBuild(bst, p, new Unit(p, true), decide)){
+
+				List<Order> ordersWithArmy = new LinkedList<Order>(ordersSoFar);
+				ordersWithArmy.add(new Build(bst, p, new Unit(p, true), decide));
+			
+				enumerateBuilds(bst, p, remainingCenters, moreBuilds-1, ordersWithArmy, allCombinations);
+
+			}
+
+			//	fleet if can
+			if(staticBoard.canBuild(bst, p, new Unit(p, false), decide)){
+
+				List<Order> ordersWithFleet = new LinkedList<Order>(ordersSoFar);
+				ordersWithFleet.add(new Build(bst, p, new Unit(p, false), decide));
+
+				enumerateBuilds(bst, p, remainingCenters, moreBuilds-1, ordersWithFleet, allCombinations);
+					
+			}
+			
+			//	and nothing
+			enumerateBuilds(bst, p, remainingCenters, moreBuilds, new LinkedList<Order>(ordersSoFar), allCombinations);
+		}
+		
 	}
 	
 	private void enumerateRetreats(RetreatSituation[] allRetreats, int index, 
-			Map<RetreatSituation, List<Order>> choices, List<Order> choicesMade, List<List<Order>> allPossibilities){
+			Map<RetreatSituation, List<Order>> choices, List<Order> choicesMade, List<Collection<Order>> allPossibilities){
 		
 		if(index == allRetreats.length){
 			allPossibilities.add(new LinkedList<Order>(choicesMade));
+		}else{
+			
+			for(Order ord: choices.get(allRetreats[index])){
+				
+				choicesMade.add(ord);
+				
+				enumerateRetreats(allRetreats, index+1, choices, choicesMade, allPossibilities);
+				
+				choicesMade.remove(ord);
+			}
 		}
-		
 	}
 	
 	public static void main(String [] args) throws Exception
