@@ -1,0 +1,31 @@
+#summary One-sentence summary of this page.
+
+= Introduction =
+
+Final roadmap to victory
+
+
+= Details =
+
+1) bugs
+  ->  end of weekend, feel confident the code does what we think it does
+  ->  meet this weekend step through that
+2) efficiency
+  ->  end of weekend, same as above
+  
+3) adaptations to search--  Ben
+  -> expected mini max
+  -> different heuristics
+     -> fix as we step through things.  
+
+4) level 10 press --  Drew 
+  -> store diplomatic arrangements in 
+      diplomatic state
+  -> adapt the heuristics
+      to use diplomatic state in evaluating board 
+      
+Dec 1
+  code freeze--everything works and it beats everyone
+      
+due Dec 8     
+  ->some kind of format
