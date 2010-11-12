@@ -1,6 +1,9 @@
 package state.constant;
 
 
+import gamesearch.MoveGeneration.OrderValue;
+import heuristic.Heuristic;
+
 import java.io.FileWriter;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,6 +14,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import ai.Bot;
 
 import order.Order;
 import order.Order.Result;
@@ -2774,8 +2779,12 @@ public class BoardConfiguration {
 	//	methods which can help in move generation
 	//	TODO a lot of these methods may not be the most efficent ways to produce these stats.  Maybe
 	//	compute after a board update and store them...
-	
+	//	TODO for now ignore selfOnly
 	public Set<TerritorySquare> getSupportableTerritories(BoardState boardState, Player p, TerritorySquare location, boolean selfOnly){
+		
+		if(boardState.getSupportable(location) != null){
+			return boardState.getSupportable(location);
+		}
 		
 		Set<TerritorySquare> potentialSupports = new HashSet<TerritorySquare>();
 		
@@ -2793,6 +2802,8 @@ public class BoardConfiguration {
 				
 			}
 		}
+		
+		boardState.setSupportable(location, potentialSupports);
 		
 		return potentialSupports;
 	}
@@ -2827,6 +2838,10 @@ public class BoardConfiguration {
 	//	map from the square to the coast
 	public List<TerritoryCoast> getRetreatsForUnit(BoardState boardState, RetreatSituation rsit) throws Exception{
 		
+		if(boardState.getRetreatsForUnit(rsit) != null){
+			return boardState.getRetreatsForUnit(rsit);
+		}
+		
 		List<TerritoryCoast> options = new LinkedList<TerritoryCoast>();
 		TerritorySquare from = rsit.from;
 
@@ -2839,16 +2854,59 @@ public class BoardConfiguration {
 			}
 		}
 		
+		boardState.setRetreatsForUnit(rsit, options);
+		
 		return options;
 	}
 	
+	public Map<TerritorySquare, List<OrderValue>> getMovesForUnits(BoardState dynamicState, Heuristic heuristic) throws Exception{
+		
+		if(dynamicState.getMovesForUnits() != null){
+			return dynamicState.getMovesForUnits();
+		}
+		
+		Map<TerritorySquare, List<OrderValue>> orderMap = new HashMap<TerritorySquare, List<OrderValue>>();
+		
+		for(Player p: getPlayers()){
+			for(TerritorySquare sqr: dynamicState.getOccupiedTerritories(p)){
+				
+				List<TerritoryCoast> possibleMoves = getMovesForUnit(dynamicState, sqr);
+				List<OrderValue> orders = new LinkedList<OrderValue>();
+
+				for(TerritoryCoast tcoast: possibleMoves){
+
+					Move move = new Move(dynamicState, p, sqr, tcoast.sqr, tcoast.coast);
+					orders.add(new OrderValue(move, heuristic.orderScore(move, dynamicState)));			
+				
+				}
+
+				orderMap.put(sqr, orders);
+				
+			}
+		}
+		
+		if(Bot.DEBUG){
+			System.out.println("All moves for units: ");
+			for(TerritorySquare sqr: orderMap.keySet()){
+				System.out.println("\t"+sqr.getName());
+				for(OrderValue ov: orderMap.get(sqr)){
+					System.out.println("\t"+ov.score+"\t"+ov.order.toOrder(dynamicState));
+				}
+			}
+		}
+		
+		dynamicState.setMoveForUnits(orderMap);
+		
+		return orderMap;
+	}
 	
-	public List<TerritoryCoast> getMovesForUnit(BoardState boardState, TerritorySquare from){
+	private List<TerritoryCoast> getMovesForUnit(BoardState boardState, TerritorySquare from){
 		
 		Unit occupier = from.getOccupier(boardState);
 		
 		List<TerritoryCoast> options = new LinkedList<TerritoryCoast>();
 
+		//TODO cache a list of borders for a unit and for a fleet for each coast in the territory square
 		for(TerritorySquare tsquare: from.getBorders()){
 			
 			if(tsquare.hasMultipleCoasts()){
@@ -2900,6 +2958,10 @@ public class BoardConfiguration {
 	//	territories you border
 	public Set<Player> getRelevantPlayers(BoardState bst, Player p){
 		
+		if(bst.getRelevantPlayers(p) != null){
+			return bst.getRelevantPlayers(p);
+		}
+		
 		Set<Player> foundPlayers = new HashSet<Player>();
 		Set<TerritorySquare> relevantTerritories = new HashSet<TerritorySquare>();
 		
@@ -2940,6 +3002,8 @@ public class BoardConfiguration {
 				foundPlayers.add(tsquare.getController(bst));
 			}
 		}
+		
+		bst.setRelevantPlayers(p, foundPlayers);
 		
 		return foundPlayers;
 	}
@@ -2999,13 +3063,22 @@ public class BoardConfiguration {
 	//	can't completely punt for disbands, so choose randomly
 	public Set<Order> generateDefaultOrdersFor(BoardState bst, Player p) throws Exception{
 		
-		if(bst.time.phase == Phase.SPR || bst.time.phase == Phase.FAL){
-			return generateHoldsFor(bst, p);
-		}else if(bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
-			return generateDisbandsFor(bst, p);
-		}else{
-			return generateBuildsFor(bst, p);
+		if(bst.getDefaultOrders(p) != null){
+			return bst.getDefaultOrders(p);
 		}
+		
+		Set<Order> toReturn = null;
+		if(bst.time.phase == Phase.SPR || bst.time.phase == Phase.FAL){
+			toReturn = generateHoldsFor(bst, p);
+		}else if(bst.time.phase == Phase.SUM || bst.time.phase == Phase.AUT){
+			toReturn = generateDisbandsFor(bst, p);
+		}else{
+			toReturn = generateBuildsFor(bst, p);
+		}
+		
+		bst.setDefaultOrders(p, toReturn);
+		
+		return toReturn;
 	}
 	
 	private Set<Order> generateBuildsFor(BoardState bst, Player p) throws Exception{

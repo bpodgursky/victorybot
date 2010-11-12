@@ -1,1 +1,1 @@
-Failed to connect to Server. Error code 10061
+REJ( SUB() ) message received : REJ ( SUB ( ( ENG FLT LON ) BLD ) ) 

@@ -176,15 +176,17 @@ public class GameSearch {
 		
 		for(MovesValue playerOrds: orderSetsByPlayer.get(relevantPlayer)){
 			
+			List<Collection<Order>> orderList = new LinkedList<Collection<Order>>();
+			orderList.add(playerOrds.moves);
+		
+			maxSetMoves[count] = new MovesValue(playerOrds.moves, min(bst, until, playerOrds.moves, orderSetsByPlayer, playerArray));
+			
+			
 			if(this.boardUpdate){
 				System.out.println("Took too long, quitting...");
 				return null;
 			}
 			
-			List<Collection<Order>> orderList = new LinkedList<Collection<Order>>();
-			orderList.add(playerOrds.moves);
-		
-			maxSetMoves[count] = new MovesValue(playerOrds.moves, min(bst, until, playerOrds.moves, orderSetsByPlayer, playerArray));
 			if(bestMoveSoFar == null)
 			{
 				bestMoveSoFar = maxSetMoves[count];
@@ -197,7 +199,13 @@ public class GameSearch {
 			}
 			count++;
 			
-			if(count % 1 == 0) System.out.println("\t"+count+" processed...");
+			//if(count % 1 == 0) System.out.println("\t"+count+" processed...");
+		
+			System.out.println(maxSetMoves[count-1].value);
+			for(Order ord: playerOrds.moves){
+				System.out.println("\t"+ord.toOrder(boardState));
+			}
+		
 		}
 		System.out.println("Done enumerating");
 		
@@ -232,10 +240,21 @@ public class GameSearch {
 		
 		List<List<Collection<Order>>> allMoveSets = enumerateMoves(bst, orderList, orderSetsByPlayer, playerArray, 0);
 		
+		if(boardUpdate){
+			System.out.println("Took too long, quitting...");
+			return -1;
+		}
+		
 		MovesValue [] moveScores = new MovesValue[allMoveSets.size()];
 		int count = 0;
 		for(List<Collection<Order>> fullMoveSet: allMoveSets)
 		{
+			
+			if(boardUpdate){
+				System.out.println("Took too long, quitting...");
+				return -1;
+			}
+			
 			Set<Order> toExecute = new HashSet<Order>();
 			
 			for(Collection<Order> execute: fullMoveSet){	
@@ -322,13 +341,19 @@ public class GameSearch {
 	}
 	
 	//	how many moves to enumerate for each player.  hardcode for now
-	private static final int MAX_ENUM = 4;
+	private static final int MAX_ENUM = 3;
 	
 	private List<List<Collection<Order>>> enumerateMoves(BoardState bst, 
 			List<Collection<Order>> allOrders, 
 			Map<Player, MovesValue[]> playerOrders, 
 			Player[] players, 
 			int player) throws Exception{
+		
+		
+		if(this.boardUpdate){
+			System.out.println("Took too long, quitting...");
+			return null;
+		}
 		
 		List<List<Collection<Order>>> playerEnumeration = new LinkedList<List<Collection<Order>>>();
 		
@@ -479,7 +504,7 @@ public class GameSearch {
 					
 					int year = boardState.time.year;
 					
-					Phase phase = boardState.time.phase == Phase.SUM ? Phase.FAL : Phase.WIN;
+					Phase phase = boardState.time.phase == Phase.SUM ? Phase.SUM : Phase.WIN;
 					
 					YearPhase until = new YearPhase(year, phase);
 					currentOrders = moveSearch(boardState, until);
