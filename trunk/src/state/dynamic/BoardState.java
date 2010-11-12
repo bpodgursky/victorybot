@@ -1,8 +1,11 @@
 package state.dynamic;
 
+import gamesearch.MoveGeneration.OrderValue;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,6 +14,7 @@ import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
 import state.constant.BoardConfiguration;
+import state.constant.BoardConfiguration.TerritoryCoast;
 import state.constant.BoardConfiguration.YearPhase;
 
 //	the general contract: don't change data in the class except 
@@ -68,7 +72,57 @@ public class BoardState {
 	
 	final Map<TerritorySquare, RetreatSituation> retreats = new HashMap<TerritorySquare, RetreatSituation>();
 	
+	//////////////////////////////////////////////////////
+	//	cached data 
+	//		stuff that should be stored if computed, but
+	//		not copied with the board states
+	//////////////////////////////////////////////////////
 	
+	Map<TerritorySquare, List<OrderValue>> allMovesForUnits = null;
+	Map<RetreatSituation, List<TerritoryCoast>> retreatsForUnits = new HashMap<RetreatSituation, List<TerritoryCoast>>();
+	Map<TerritorySquare, Set<TerritorySquare>> supportableTerritories = new HashMap<TerritorySquare, Set<TerritorySquare>>();
+	Map<Player, Set<Player>> relevantPlayers = new HashMap<Player, Set<Player>>();
+	Map<Player, Set<Order>> defaultOrders = new HashMap<Player, Set<Order>>();
+	
+	public Set<Order> getDefaultOrders(Player p){
+		return defaultOrders.get(p);
+	}
+	
+	public void setDefaultOrders(Player p, Set<Order> orders){
+		defaultOrders.put(p, orders);
+	}
+	
+	public void setRelevantPlayers(Player p, Set<Player> others){
+		relevantPlayers.put(p, others);
+	}
+	
+	public Set<Player> getRelevantPlayers(Player p){
+		return relevantPlayers.get(p);
+	}
+	
+	public void setSupportable(TerritorySquare sqr, Set<TerritorySquare> supportable){
+		supportableTerritories.put(sqr, supportable);
+	}
+	
+	public Set<TerritorySquare> getSupportable(TerritorySquare sqr){
+		return supportableTerritories.get(sqr);
+	}
+	
+	public void setRetreatsForUnit(RetreatSituation sqr, List<TerritoryCoast> possibilities){
+		retreatsForUnits.put(sqr, possibilities);
+	}
+	
+	public List<TerritoryCoast> getRetreatsForUnit(RetreatSituation sqr){
+		return retreatsForUnits.get(sqr);
+	}
+	
+	public void setMoveForUnits(Map<TerritorySquare, List<OrderValue>> movesForUnits){
+		allMovesForUnits = movesForUnits;
+	}
+	
+	public Map<TerritorySquare, List<OrderValue>> getMovesForUnits(){
+		return allMovesForUnits;
+	}
 	
 	//////////////////////////////////////////////////////
 	//	methods

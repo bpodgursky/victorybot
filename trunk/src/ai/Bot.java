@@ -40,6 +40,8 @@ import dip.daide.comm.UnknownTokenException;
 public class Bot{
 	static String VERSION = "v 0.7";
 	
+	public final static boolean DEBUG = false;
+	
 	public final String name;
 	private final Server serv;
 	boolean atPrompt;

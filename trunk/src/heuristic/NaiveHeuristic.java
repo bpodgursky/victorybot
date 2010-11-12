@@ -149,7 +149,7 @@ public class NaiveHeuristic extends Heuristic {
 		}
 		
 		//	return the difference between your score and the other players' average
-		double score = myScore - sumOtherScores/staticBoard.getPlayers().size();
+		double score = myScore - sumOtherScores/(staticBoard.getPlayers().size()-1);
 		
 		return score;
 	}

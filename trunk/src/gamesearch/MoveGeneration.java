@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import ai.Bot;
+
 import order.Order;
 import order.builds.Build;
 import order.builds.Remove;
@@ -66,32 +68,7 @@ public class MoveGeneration {
 		}
 	}
 	
-	private Map<TerritorySquare, List<OrderValue>> generateMovesForUnits(BoardState dynamicState) throws Exception{
-		
-		Map<TerritorySquare, List<OrderValue>> orderMap = new HashMap<TerritorySquare, List<OrderValue>>();
-		
-		for(Player p: staticBoard.getPlayers()){
-			for(TerritorySquare sqr: dynamicState.getOccupiedTerritories(p)){
-				
-				List<TerritoryCoast> possibleMoves = staticBoard.getMovesForUnit(dynamicState, sqr);
-				List<OrderValue> orders = new LinkedList<OrderValue>();
 
-				
-				//int pMoveCount = 0;
-				for(TerritoryCoast tcoast: possibleMoves){
-
-					Move move = new Move(dynamicState, p, sqr, tcoast.sqr, tcoast.coast);
-					orders.add(new OrderValue(move, heuristic.orderScore(move, dynamicState)));			
-				
-				}
-
-				orderMap.put(sqr, orders);
-				
-			}
-		}
-		
-		return orderMap;
-	}
 	
 	private List<Set<Order>> generateOrderSets(int num, int length, Map<TerritorySquare, List<OrderValue>> movesForAllUnits, Set<TerritorySquare> unit, BoardState dynamicState, Player player) throws Exception
 	{
@@ -100,22 +77,19 @@ public class MoveGeneration {
 		
 		int count = 0;
 		
-		while(num >= 1)
-		{
+		while(num >= 1){
 			count++;
-			if(num%2 == 1)
-			{
+			
+			if(num%2 == 1){
 				str.insert(0,"1");
 			}
-			else
-			{
+			else{
 				str.insert(0,"0");
 			}
 			num = num / 2;
 		}
 		
-		for(int i = count; i < length; i++)
-		{
+		for(int i = count; i < length; i++){
 			str.insert(0, "0");
 		}
 		
@@ -181,11 +155,10 @@ public class MoveGeneration {
 			//Sort heuristic scores and now lets step through remaining units and try to support our moves
 			Double [] orderScore = (moveScoreMap.keySet().toArray(new Double[0]));
 			Arrays.sort(orderScore);
-	
+			
 			List<TerritorySquare> supportHoldable = new LinkedList<TerritorySquare>(supportSetCopy);
 			
-			for(Double heurVal: orderScore)
-			{
+			for(Double heurVal: orderScore){
 				
 				Move supportedMove = (Move)moveScoreMap.get(heurVal);
 				
@@ -302,7 +275,7 @@ public class MoveGeneration {
 
 			Set<TerritorySquare> unit = player.getOccupiedTerritories(dynamicState);
 			
-			Map<TerritorySquare, List<OrderValue>> orderPossibilities = generateMovesForUnits(dynamicState);
+			Map<TerritorySquare, List<OrderValue>> orderPossibilities = staticBoard.getMovesForUnits(dynamicState, heuristic);
 			
 			//TODO how to avoid this.... 
 			//	2) for each player, count only to the number of units that can affect you
@@ -397,6 +370,16 @@ public class MoveGeneration {
 		    Math.min(MAX_PLAYER_MOVES, moves.length)];
 		for(int i = 0; i < MAX_PLAYER_MOVES && i < moves.length; i++){
 			prunedMoves[i] = moves[i];
+		}
+		
+		if(Bot.DEBUG){
+			System.out.println("Reasonable sets of moves for player "+player.getName()+":");
+			for(MovesValue mv: prunedMoves){
+				System.out.println(mv.value+":");
+				for(Order ord: mv.moves){
+					System.out.println("\t\t"+ord.toOrder(dynamicState));
+				}
+			}
 		}
 		
 		return prunedMoves;
