@@ -19,6 +19,8 @@ import java.util.Set;
 import ai.Bot;
 
 import order.Order;
+import order.Order.MovesValue;
+import order.Order.OrderValue;
 import order.builds.Build;
 import order.builds.Remove;
 import order.builds.Waive;
@@ -54,21 +56,8 @@ public class MoveGeneration {
 	
 	private Random r = new Random();
 	
-	private static final int MOVES_PER_UNIT = 3;
+	private static final int MOVES_PER_UNIT = 5;
 	private static final int MAX_PLAYER_MOVES = 20;
-	
-	public static class OrderValue{
-		
-		public final double score;
-		public final Order order;
-		
-		public OrderValue(Order ord, double score){
-			this.score = score;
-			this.order = ord;
-		}
-	}
-	
-
 	
 	private List<Set<Order>> generateOrderSets(int num, int length, Map<TerritorySquare, List<OrderValue>> movesForAllUnits, Set<TerritorySquare> unit, BoardState dynamicState, Player player) throws Exception
 	{
@@ -247,23 +236,7 @@ public class MoveGeneration {
 			}
 		}
 	}
-	
-	//	so we can return the value associated with a set of moves
-	public static class MovesValue implements Comparable<MovesValue>{
-		
-		public final double value;
-		public final Collection<Order> moves;
-		
-		public MovesValue(Collection<Order> moves, double value){
-			this.value = value;
-			this.moves = moves;
-		}
 
-		@Override
-		public int compareTo(MovesValue arg0) {
-			return -Double.compare(value, arg0.value);
-		}
-	}
 	
 	public MovesValue[] generateOrderSets(Player player, BoardState dynamicState) throws Exception
 	{
