@@ -1,5 +1,7 @@
 package order;
 
+import java.util.Collection;
+
 import representation.Player;
 import state.dynamic.BoardState;
 
@@ -28,12 +30,6 @@ public abstract class Order {
 		this.retreatState = retreat;
 	}
 	
-//	public Order(Player player){
-//		this.player = player;
-//		this.actionResult = Result.NA;
-//		this.retreatState = RetreatState.NA;
-//	}
-	
 	public abstract void execute();
 	
 	public abstract String toOrder(BoardState bst);
@@ -45,4 +41,35 @@ public abstract class Order {
 	public String toString(BoardState bst){
 		return this.toOrder(bst);
 	}
+	
+	//for packaging orders
+
+	//	so we can return the value associated with a set of moves
+	public static class MovesValue implements Comparable<MovesValue>{
+		
+		public final double value;
+		public final Collection<Order> moves;
+		
+		public MovesValue(Collection<Order> moves, double value){
+			this.value = value;
+			this.moves = moves;
+		}
+
+		@Override
+		public int compareTo(MovesValue arg0) {
+			return -Double.compare(value, arg0.value);
+		}
+	}
+	
+	public static class OrderValue{
+		
+		public final double score;
+		public final Order order;
+		
+		public OrderValue(Order ord, double score){
+			this.score = score;
+			this.order = ord;
+		}
+	}
+	
 }

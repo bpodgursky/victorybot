@@ -1,7 +1,6 @@
 package state.constant;
 
 
-import gamesearch.MoveGeneration.OrderValue;
 import heuristic.Heuristic;
 
 import java.io.FileWriter;
@@ -18,6 +17,7 @@ import java.util.Set;
 import ai.Bot;
 
 import order.Order;
+import order.Order.OrderValue;
 import order.Order.Result;
 import order.Order.RetreatState;
 import order.builds.Build;

@@ -9,6 +9,7 @@ package ai;
  *****************************************************************************/
 
 import gamesearch.GameSearch;
+import gamesearch.MiniMaxSearch;
 
 import java.net.InetAddress;
 import java.util.HashSet;
@@ -128,7 +129,7 @@ public class Bot{
 
 	class BotMessageHandler implements MessageListener, Runnable {
 		
-		public final static long SUBMISSION_BUFFER = 500; 
+		public final static long SUBMISSION_BUFFER = 1000; 
 		
 		long nextOrders = -1;
 		boolean submitted = false;
@@ -145,6 +146,7 @@ public class Bot{
 			while(true){
 				try{
 				
+					//TODO it's not submitting for some reason sometimes if it doesn't finish search
 					long currentTime = System.currentTimeMillis();
 					
 					if((nextOrders != -1 && currentTime + SUBMISSION_BUFFER > nextOrders && !submitted) ||
@@ -262,10 +264,12 @@ public class Bot{
 					}
 					
 					settings = new GameSettings(power, password, lvl, mtl, rtl, btl, dsd, aoa);
-					search = new GameSearch(board.getPlayer(power), board, diplomaticState, beliefs);
+					search = new MiniMaxSearch(board.getPlayer(power), board, diplomaticState, beliefs);
 
 				}
 				else if(message[0].equals("NOW")){
+					
+					submitted = false;
 					
 					if(message[2].equals("SPR") || message[2].equals("FAL")){
 						if(settings.mtl != -1){
@@ -308,7 +312,7 @@ public class Bot{
 					search.noteDiplomaticUpdate();
 					search.noteBeliefUpdate();
 					
-					submitted = false;
+
 					
 				}
 				else if (message[0].equals("ORD")) {

@@ -1,7 +1,5 @@
 package state.dynamic;
 
-import gamesearch.MoveGeneration.OrderValue;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import order.Order;
+import order.Order.OrderValue;
 import representation.Player;
 import representation.TerritorySquare;
 import representation.Unit;
