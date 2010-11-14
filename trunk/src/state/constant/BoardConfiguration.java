@@ -1904,7 +1904,7 @@ public class BoardConfiguration {
 	}
 	
 	
-	public static void quickResolve(BoardState bst, Set<Order> orders, Player us)
+	public void quickResolve(BoardState bst, Set<Order> orders, Player us)
 	{
 		Map<TerritorySquare, Move> needsSupport = new HashMap<TerritorySquare, Move>();
 		Set<SupportMove> supports = new HashSet<SupportMove>();
@@ -2951,7 +2951,7 @@ public class BoardConfiguration {
 				for(TerritoryCoast tcoast: possibleMoves){
 
 					Move move = new Move(dynamicState, p, sqr, tcoast.sqr, tcoast.coast);
-					orders.add(new OrderValue(move, heuristic.orderScore(move, dynamicState)));			
+					orders.add(new OrderValue(move, 1));			
 				
 				}
 
