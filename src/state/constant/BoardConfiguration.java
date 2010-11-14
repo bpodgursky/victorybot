@@ -1904,6 +1904,56 @@ public class BoardConfiguration {
 	}
 	
 	
+	public static void quickResolve(BoardState bst, Set<Order> orders, Player us)
+	{
+		Map<TerritorySquare, Move> needsSupport = new HashMap<TerritorySquare, Move>();
+		Set<SupportMove> supports = new HashSet<SupportMove>();
+		for(Order o: orders)
+		{
+			if(o.getClass() == Hold.class)
+			{
+				o.actionResult = Result.SUC;
+			}
+			
+			if(o.getClass() == Move.class)
+			{
+				Move moveOrder = (Move)o;
+				if(moveOrder.to.getOccupier(bst) == null)
+				{
+					moveOrder.actionResult = Result.SUC;
+				}
+				else if(moveOrder.to.getOccupier(bst).belongsTo == us)
+				{
+					//TODO If we need to
+				}
+				else
+				{
+					needsSupport.put(moveOrder.to, moveOrder);
+					moveOrder.actionResult = Result.FAIL;
+				}
+			}
+			
+			if(o.getClass() == SupportMove.class)
+			{
+				SupportMove support = (SupportMove)o;
+				supports.add(support);
+			}
+		}
+		
+		for(SupportMove sm: supports)
+		{
+			if(needsSupport.containsKey(sm.supportInto))
+			{
+				needsSupport.get(sm.supportInto).actionResult = Result.SUC;
+				sm.actionResult = Result.SUC;
+			}
+			else
+			{
+				sm.actionResult = Result.FAIL;
+			}
+		}
+	}
+	
 	public BoardState update(YearPhase time, BoardState orig, Set<Order> moves, boolean fromServer) throws Exception{
 
 		long tStart = System.nanoTime();

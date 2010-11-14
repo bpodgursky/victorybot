@@ -1,4 +1,6 @@
-KissMyBot.exe -smaginot.diplomacy.se
-KissMyBot.exe -smaginot.diplomacy.se
-KissMyBot.exe -smaginot.diplomacy.se
-KissMyBot.exe -smaginot.diplomacy.se
+start /b KissMyBot.exe
+start /b KissMyBot.exe
+start /b KissMyBot.exe
+start /b KissMyBot.exe
+start /b KissMyBot.exe
+start /b KissMyBot.exe
