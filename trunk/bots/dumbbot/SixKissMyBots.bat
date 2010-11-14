@@ -1,1 +1,6 @@
-DumbBot.exe -smaginot.diplomacy.se
+start /b DumbBot.exe
+start /b DumbBot.exe
+start /b DumbBot.exe
+start /b DumbBot.exe
+start /b DumbBot.exe
+start /b DumbBot.exe
