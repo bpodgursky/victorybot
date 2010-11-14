@@ -22,6 +22,7 @@ import ai.Bot;
 import order.Order;
 import order.Order.MovesValue;
 import order.Order.OrderValue;
+import order.Order.Result;
 import order.builds.Build;
 import order.builds.Remove;
 import order.builds.Waive;
@@ -510,9 +511,18 @@ public class MoveGeneration {
 			
 			Set<Order> toSubmit = new HashSet<Order>(otherOrders);
 			toSubmit.addAll(ord);
-			
+			//staticBoard.quickResolve(dynamicState, toSubmit, player);
+			//Set<Order> sucMoves = new HashSet<Order>();
 			BoardState stateAfterExecute = staticBoard.update(dynamicState.time.next(), dynamicState, toSubmit, false);
 			
+//			for(Order o: toSubmit)
+//			{
+//				if(o.actionResult == Result.SUC)
+//				{
+//					sucMoves.add(o);
+//				}
+//			}
+
 			valMoves.add(new MovesValue(ord, heuristic.boardScore(player, stateAfterExecute)));
 		}
 	
@@ -538,6 +548,9 @@ public class MoveGeneration {
 		
 		return prunedMoves;
 	}
+	
+	double resolveTime = 0;
+	double count = 0;
 	
 	private void enumerateRemoves(BoardState bst, Player p,
 			Collection<TerritorySquare> occupied,
