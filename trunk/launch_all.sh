@@ -1,4 +1,4 @@
-./server_launcher.sh 15 15 15
+./server_launcher.sh 30 30 30
 sleep 2
 ./mapper_launcher.sh
 sleep 2

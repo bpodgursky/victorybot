@@ -265,7 +265,7 @@ public class Bot{
 					}
 					
 					settings = new GameSettings(power, password, lvl, mtl, rtl, btl, dsd, aoa);
-					search = new MiniMaxSearch(board.getPlayer(power), board, diplomaticState, beliefs);
+					search = new ExpectiMaxSearch(board.getPlayer(power), board, diplomaticState, beliefs);
 
 				}
 				else if(message[0].equals("NOW")){
