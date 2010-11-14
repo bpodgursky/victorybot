@@ -147,9 +147,9 @@ public class ExpectiMaxSearch extends GameSearch{
 			return -1;
 		}
 		
-		//MovesValue [] moveScores = new MovesValue[allMoveSets.size()];
-		
 		double utilitySum = 0;
+		double sumProb = 0;
+		
 		for(List<Collection<Order>> fullMoveSet: moveProbabilities.keySet())
 		{
 			double probability = moveProbabilities.get(fullMoveSet);
@@ -166,9 +166,11 @@ public class ExpectiMaxSearch extends GameSearch{
 			}
 			BoardState updatedState = boardConfiguration.update(bst.time.next(), bst, toExecute, false);
 			
-			utilitySum = probability*max(updatedState, until);
-
+			utilitySum += probability*max(updatedState, until);
+			sumProb+=probability;
 		}
+		
+		//System.out.println("Prob sums to: "+sumProb);
 
 		return utilitySum;
 	}

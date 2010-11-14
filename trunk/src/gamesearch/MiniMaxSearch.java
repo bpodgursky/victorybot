@@ -253,7 +253,7 @@ public class MiniMaxSearch extends GameSearch{
 		
 		if(this.boardUpdate){
 			System.out.println("Took too long, quitting...");
-			return null;
+			return new LinkedList<List<Collection<Order>>>();
 		}
 		
 		List<List<Collection<Order>>> playerEnumeration = new LinkedList<List<Collection<Order>>>();

@@ -10,6 +10,7 @@ package ai;
 
 import gamesearch.GameSearch;
 import gamesearch.MiniMaxSearch;
+import gamesearch.ExpectiMaxSearch;
 
 import java.net.InetAddress;
 import java.util.HashSet;

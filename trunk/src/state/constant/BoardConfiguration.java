@@ -1906,13 +1906,18 @@ public class BoardConfiguration {
 	
 	public BoardState update(YearPhase time, BoardState orig, Set<Order> moves, boolean fromServer) throws Exception{
 
+		long tStart = System.nanoTime();
+		
 		//	figure out which moves were successful
 		
 		//TODO for now call resolve even if from server; in future skip this if the moves are already resolved
 		resolve(orig, moves, fromServer);
 		
+		long tAfterResolve = System.nanoTime();
 		
 		BoardState bst = orig.clone(time);
+		
+		long tAfterClone = System.nanoTime();
 		
 		//process movements separately--slightly more complex resolutions
 		Set<Order> successfulMoves = new HashSet<Order>();
@@ -2068,8 +2073,28 @@ public class BoardConfiguration {
 			updateSupplyControl(bst);
 		}
 		
+		long tAfterUpdate = System.nanoTime();
+		
+		if(orig.time.phase == Phase.SPR || orig.time.phase == Phase.FAL){
+			runResolve+=((tAfterResolve- tStart));
+			runClone+=((tAfterClone-tAfterResolve));
+			runUpdate+=((tAfterUpdate-tAfterClone));
+		}
+		
+		if(count++%10000==0){
+			System.out.println("Resolve: "+runResolve/count);
+			System.out.println("Clone: "+runClone/count);
+			System.out.println("Update: "+runUpdate/count);
+		}
+		
 		return bst;
 	}
+	
+	double count = 0;
+	
+	long runResolve = 0;
+	long runClone = 0;
+	long runUpdate = 0;
 	
 	public String toString(){
 		

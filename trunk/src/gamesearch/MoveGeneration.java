@@ -58,6 +58,7 @@ public class MoveGeneration {
 	
 	private static final int MOVES_PER_UNIT = 5;
 	private static final int MAX_PLAYER_MOVES = 20;
+	private static final int MAX_PERMUTE_COUNT = 25;
 	
 	private List<Set<Order>> generateOrderSets(int num, int length, Map<TerritorySquare, List<OrderValue>> movesForAllUnits, Set<TerritorySquare> unit, BoardState dynamicState, Player player) throws Exception
 	{
@@ -253,10 +254,24 @@ public class MoveGeneration {
 			//TODO how to avoid this.... 
 			//	2) for each player, count only to the number of units that can affect you
 			
-			for(int i = 1; i < Math.pow(2.0, 
-					Math.min(5, unitCount)); i++){
-				allCombinations.addAll(generateOrderSets(i, unitCount, orderPossibilities, unit, dynamicState, player));
+			int maxPermute = (int)Math.pow(2.0, unitCount);
+			
+			//for(int i = 1; i < Math.pow(2.0, 
+			//		Math.min(5, unitCount)); i++)
+			
+			int generated = 0;
+			
+			Set<Integer> generatedPermutations = new HashSet<Integer>();
+			while(generated < .95*Math.min(maxPermute, MAX_PERMUTE_COUNT)){
+				int toGenerate = r.nextInt(maxPermute);
+				
+				if(!generatedPermutations.contains(toGenerate)){
+					allCombinations.addAll(generateOrderSets(r.nextInt(maxPermute), unitCount, orderPossibilities, unit, dynamicState, player));
+					generated++;
+				}
 			}
+			
+			System.out.println(allCombinations.size());
 			
 
 		}else if(dynamicState.time.phase == Phase.SUM || dynamicState.time.phase == Phase.AUT){
@@ -331,7 +346,7 @@ public class MoveGeneration {
 			toSubmit.addAll(ord);
 			
 			BoardState stateAfterExecute = staticBoard.update(dynamicState.time.next(), dynamicState, toSubmit, false);
-		
+			
 			valMoves.add(new MovesValue(ord, heuristic.boardScore(player, stateAfterExecute)));
 		}
 	
