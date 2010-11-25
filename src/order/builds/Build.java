@@ -1,5 +1,6 @@
 package order.builds;
 
+import ai.Bot;
 import order.Order;
 import representation.Player;
 import representation.TerritorySquare;
@@ -25,7 +26,9 @@ public class Build extends Order{
 			throw new Exception("null arguments");
 		}
 		
-		location.board.assertCanBuild(bst, p, u, location);
+		if(Bot.ASSERTS){
+			location.board.assertCanBuild(bst, p, u, location);
+		}
 		
 		this.build = u;
 		this.location = location;
@@ -34,13 +37,17 @@ public class Build extends Order{
 	}
 	
 	public String toOrder(BoardState bst){
-		return "( ( "+TerritorySquare.getUnitString(player, build, location.getName(), coast)+" ) BLD )";
+		return "( ( "+TerritorySquare.getUnitStringParen(player, build, location.getName(), coast)+" ) BLD )";
 	}
 
 	@Override
 	public void execute() {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	public int hashCode2(){
+		return build.hashCode2()+location.hashCode2()+coast.hashCode()+super.hashCode2();
 	}
 
 }

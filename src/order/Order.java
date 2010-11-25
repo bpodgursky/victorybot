@@ -1,6 +1,8 @@
 package order;
 
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import representation.Player;
 import state.dynamic.BoardState;
@@ -24,10 +26,18 @@ public abstract class Order {
 	
 	public final Player player;
 	
+	//	for hashing.  is this a good idea?  it will be until this is 
+	//	distributed and this count is no longer consistent.  Deal with that
+	//	if this ever happens
+	//private static AtomicLong idCount = new AtomicLong(0);
+	//private final long id;
+	
 	public Order(Player player, Result result, RetreatState retreat){
 		this.player = player;
 		this.actionResult = result;
 		this.retreatState = retreat;
+		
+//		id = idCount.incrementAndGet();
 	}
 	
 	public abstract void execute();
@@ -41,6 +51,21 @@ public abstract class Order {
 	public String toString(BoardState bst){
 		return this.toOrder(bst);
 	}
+	
+//	//TODO lame lame lame
+	public int hashCode2(){
+		return actionResult.hashCode()+retreatState.hashCode()+player.hashCode2();
+	}
+//	
+//	@Override
+//	public boolean equals(Object other){
+//		
+//		if(other == null || !(other instanceof Order)){
+//			return false;
+//		}
+//		
+//		return id == ((Order)other).id;
+//	}
 	
 	//for packaging orders
 

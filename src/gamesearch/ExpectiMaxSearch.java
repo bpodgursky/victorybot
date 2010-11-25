@@ -1,6 +1,5 @@
 package gamesearch;
 
-import heuristic.NaiveHeuristic;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,11 +21,17 @@ import state.dynamic.DiplomaticState;
 
 public class ExpectiMaxSearch extends GameSearch{
 	
+	//	how many moves to enumerate for each player.  hardcode for now
+	//private static final int MAX_ENUM = 4;
+	
+	private static final int MAX_TOTAL_ENUM = 100000;
+	private int maxEnumTmp;
+	
 	public ExpectiMaxSearch(Player player, BoardConfiguration state, DiplomaticState dipState, BeliefState beliefState){
 		super(player, state, dipState, beliefState);
 	}
 	
-//	base case of search.  Returns the best set of moves for us
+	//	base case of search.  Returns the best set of moves for us
 	protected Collection<Order> moveSearch(BoardState bst, YearPhase until) throws Exception{
 		
 		//	build sets of all moves for all relevant players
@@ -34,8 +39,7 @@ public class ExpectiMaxSearch extends GameSearch{
 		Map<Player, MovesValue[]> orderSetsByPlayer =
 			new HashMap<Player, MovesValue[]>();
 		
-		
-		Set<Player> relevantPlayers = boardConfiguration.getRelevantPlayers(bst, relevantPlayer);
+		Collection<Player> relevantPlayers = heuristic.relevance.getRelevantPlayers(bst, relevantPlayer);
 		
 		System.out.println("Building possible order sets for players: ");
 		//	for each player, generate the a priori likely moves
@@ -64,6 +68,13 @@ public class ExpectiMaxSearch extends GameSearch{
 			System.out.println("\t"+p.getName()+" done");
 		}
 		
+		
+		int relevantPlayerCount = relevantPlayers.size();	
+		int movesUntil = bst.time.movesUntil(until);
+		maxEnumTmp = (int)Math.pow(MAX_TOTAL_ENUM, 1.0/(movesUntil*relevantPlayerCount));
+		
+		System.out.println("Enumerating per player: "+maxEnumTmp);
+		
 		System.out.println("Generated orders for each player:");
 		for(Player p: orderSetsByPlayer.keySet()){
 			System.out.println("\t"+orderSetsByPlayer.get(p).length);
@@ -88,20 +99,17 @@ public class ExpectiMaxSearch extends GameSearch{
 				return null;
 			}
 			
-			if(bestMoveSoFar == null)
-			{
+			if(bestMoveSoFar == null){
 				bestMoveSoFar = maxSetMoves[count];
 				currentOrders = bestMoveSoFar.moves;
 			}
-			if(bestMoveSoFar.value < maxSetMoves[count].value)
-			{
+			
+			if(bestMoveSoFar.value < maxSetMoves[count].value){
 				bestMoveSoFar = maxSetMoves[count];
 				currentOrders = bestMoveSoFar.moves;
 			}
 			count++;
 			
-			//if(count % 1 == 0) System.out.println("\t"+count+" processed...");
-		
 			System.out.println(maxSetMoves[count-1].value);
 			for(Order ord: playerOrds.moves){
 				System.out.println("\t"+ord.toOrder(boardState));
@@ -127,11 +135,8 @@ public class ExpectiMaxSearch extends GameSearch{
 	private double expect(BoardState bst, YearPhase until, Collection<Order> friendlyOrders,
 			Map<Player, MovesValue []> orderSetsByPlayer, Player [] playerArray) throws Exception{
 		
-		//System.out.println("\tmin entered until "+until+"...");
-		//System.out.println("\tboard is "+bst.time+"...");
 		if(bst.time.isAfter(until)) {
-			//System.out.println("\tquitting");
-			return heuristic.boardScore(relevantPlayer, bst);
+			return heuristic.scorer.boardScore(relevantPlayer, bst);
 		}
 		
 		//	recurse through all enemy combinations (cap for each player)	
@@ -170,8 +175,6 @@ public class ExpectiMaxSearch extends GameSearch{
 			sumProb+=probability;
 		}
 		
-		//System.out.println("Prob sums to: "+sumProb);
-
 		return utilitySum;
 	}
 	
@@ -180,7 +183,7 @@ public class ExpectiMaxSearch extends GameSearch{
 		// if bst's date is after until, return the quality of the board
 
 		if(bst.time.isAfter(until)) {
-			return heuristic.boardScore(relevantPlayer, bst);
+			return heuristic.scorer.boardScore(relevantPlayer, bst);
 		}
 		
 		//	otherwise,
@@ -190,8 +193,7 @@ public class ExpectiMaxSearch extends GameSearch{
 		Map<Player, MovesValue[]> orderSetsByPlayer =
 			new HashMap<Player, MovesValue[]>();
 		
-		
-		Set<Player> relevantPlayers = boardConfiguration.getRelevantPlayers(bst, relevantPlayer);
+		Collection<Player> relevantPlayers = heuristic.relevance.getRelevantPlayers(bst, relevantPlayer);
 
 		//	for each player, generate the a priori likely moves
 		List<Player> otherPlayers = new LinkedList<Player>();
@@ -235,19 +237,14 @@ public class ExpectiMaxSearch extends GameSearch{
 		
 		//	for each of our moves, find with min the worst outcome from that move.
 		//	return the set of moves with the highest associated min
-		return maxSetMoves[0].value;
-		
-		
+		return maxSetMoves[0].value;	
 	}
 	
-	//	how many moves to enumerate for each player.  hardcode for now
-	private static final int MAX_ENUM = 4;
-	
-	private void enumerateMoves(BoardState bst, 
-			List<Collection<Order>> allOrders, 
+	private void enumerateMoves(BoardState bst,
+			List<Collection<Order>> allOrders,
 			double ordersetLikelihood,
 			Map<Player, MovesValue[]> playerOrders, 
-			Player[] players, 
+			Player[] players,
 			int player,
 			Map<List<Collection<Order>>, Double> moveAndLikelihood) throws Exception{
 		
@@ -268,7 +265,7 @@ public class ExpectiMaxSearch extends GameSearch{
 			
 			MovesValue[] movesForPlayer = playerOrders.get(players[player]);
 			
-			int toExpand = Math.min(movesForPlayer.length, MAX_ENUM);
+			int toExpand = Math.min(movesForPlayer.length, maxEnumTmp);
 			for(int i = 0; i < toExpand; i++){			
 				MovesValue mv = movesForPlayer[i]; 
 				

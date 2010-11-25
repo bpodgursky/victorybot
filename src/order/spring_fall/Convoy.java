@@ -1,5 +1,6 @@
 package order.spring_fall;
 
+import ai.Bot;
 import order.Order;
 import representation.Player;
 import representation.TerritorySquare;
@@ -26,12 +27,10 @@ public class Convoy extends Order{
 		if(convoyer == null || from == null || to == null){
 			throw new Exception("null arguments");
 		}
-		
-//		if(!convoyer.board.canAssistConvoy(p, convoyer, from, to)){
-//			throw new Exception("cannot convoy with "+convoyer+" from "+from+" to "+to);
-//		}
-		
-		convoyer.board.assertCanAssistConvoy(bst, p, convoyer, from, to);
+
+		if(Bot.ASSERTS){
+			convoyer.board.assertCanAssistConvoy(bst, p, convoyer, from, to);
+		}
 		
 		convoyingUnit = convoyer.getOccupier(bst);
 		convoyedUnit = from.getOccupier(bst);
@@ -56,5 +55,11 @@ public class Convoy extends Order{
 	public String toOrder(BoardState bst) {
 		return "( ( "+convoyer.getUnitString(bst)+" ) CVY ( "+
 			from.getUnitString(bst)+" ) CTO "+to.getName()+" )";
+	}
+	
+	
+	@Override
+	public int hashCode2(){
+		return convoyedUnit.hashCode2()+convoyingUnit.hashCode2()+convoyer.hashCode2()+from.hashCode2()+to.hashCode2()+super.hashCode2();
 	}
 }

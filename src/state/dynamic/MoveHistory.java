@@ -60,6 +60,19 @@ public class MoveHistory {
 		return false;
 	}
 	
+	public OrderSet getLastMoves(){
+		
+		for(int i = moveHistory.size()-1; i >= 0; i--){
+			OrderSet moves = moveHistory.get(i);
+			
+			if(moves.phase == Phase.SPR || moves.phase == Phase.FAL){
+				return moves;
+			}
+		}
+		
+		return null;
+	}
+	
 	public boolean isValidRetreat(BoardState bst, TerritorySquare from, TerritorySquare square) throws Exception{
 		
 		if(moveHistory.size() == 0) return true;
@@ -98,114 +111,123 @@ public class MoveHistory {
 		//	won't actually get here
 		throw new Exception("history incomplete");
 	}
-}
 
-class OrderSet{
-	
-	final Set<Order> allOrders = new HashSet<Order>();
-	
-	final Map<Player, Set<Order>> orders = new HashMap<Player, Set<Order>>();
-	
-	//TODO for now only move and movebyconvoy to 
-	final Map<TerritorySquare, Set<Order>> ordersTo = new HashMap<TerritorySquare, Set<Order>>();
-	final Map<TerritorySquare, Order> ordersFrom = new HashMap<TerritorySquare, Order>();
-	
-	final int year;
-	final Phase phase;
-
-	public OrderSet(int year, Phase phase, Set<Order>  orders){
-				
-		this.year = year;
-		this.phase = phase;
+	public static class OrderSet{
 		
-		this.allOrders.addAll(orders); 
+		final Set<Order> allOrders = new HashSet<Order>();
 		
-		//	mark where the orders were to
-		for(Order ord: orders){
-			if(ord.getClass() == Move.class){
-				Move move = (Move)ord;
-				
-				if(!ordersTo.containsKey(move.to)){
-					ordersTo.put(move.to, new HashSet<Order>());
-				}
-				
-				ordersTo.get(move.to).add(move);
-			}else if (ord.getClass() == MoveByConvoy.class){
-				MoveByConvoy mbc = (MoveByConvoy)ord;
-				
-				if(!ordersTo.containsKey(mbc.convoyDestination)){
-					ordersTo.put(mbc.convoyDestination, new HashSet<Order>());
-				}
-				
-				ordersTo.get(mbc.convoyDestination).add(mbc);
-			}
+		final Map<Player, Set<Order>> orders = new HashMap<Player, Set<Order>>();
+		
+		//TODO for now only move and movebyconvoy to 
+		final Map<TerritorySquare, Set<Order>> ordersTo = new HashMap<TerritorySquare, Set<Order>>();
+		final Map<TerritorySquare, Order> ordersFrom = new HashMap<TerritorySquare, Order>();
+		
+		final int year;
+		final Phase phase;
+		
+		public Set<Order> getOrdersForPlayer(Player p){
+			return orders.get(p);
 		}
 		
-		for(Order ord: orders){
-			if(ord.getClass() == Build.class){
-				Build build = (Build)ord;
-				
-				ordersFrom.put(build.location, build);
-				
-			}else if (ord.getClass() == Hold.class){
-				Hold hold = (Hold)ord;
-				
-				ordersFrom.put(hold.holdingSquare, hold);
-				
-			}else if (ord.getClass() == Remove.class){
-				Remove remove = (Remove)ord;
-				
-				ordersFrom.put(remove.disbandLocation, remove);
-				
-			}else if (ord.getClass() == Disband.class){
-				Disband disband = (Disband)ord;
-				
-				ordersFrom.put(disband.disbandAt, disband);
-				
-			}else if (ord.getClass() == Retreat.class){
-				Retreat retreat = (Retreat)ord;
-				
-				//	to or from?
-				ordersFrom.put(retreat.from, retreat);
-				
-			}else if (ord.getClass() == Convoy.class){
-				Convoy convoy = (Convoy)ord;
-				
-				ordersFrom.put(convoy.convoyer, convoy);
-				
-			}else if (ord.getClass() == Move.class){
-				Move move = (Move)ord;
-				
-				ordersFrom.put(move.from, move);
-				
-			}else if (ord.getClass() == MoveByConvoy.class){
-				MoveByConvoy move = (MoveByConvoy)ord;
-				
-				ordersFrom.put(move.convoyOrigin, move);
-				
-			}else if (ord.getClass() == SupportHold.class){
-				SupportHold shold = (SupportHold)ord;
-				
-				ordersFrom.put(shold.supportFrom, shold);
-				
-			}else if (ord.getClass() == SupportMove.class){
-				SupportMove smove = (SupportMove)ord;
-				
-				ordersFrom.put(smove.supportFrom, smove);
-				
-			}
+		public Set<Order> getOrdersTo(TerritorySquare sqr){
+			return ordersTo.get(sqr);
 		}
-		
-		//	and which players made them
-		for(Order ord: orders){
+
+		public OrderSet(int year, Phase phase, Set<Order>  orders){
+					
+			this.year = year;
+			this.phase = phase;
 			
-			if(!this.orders.containsKey(ord.player)){
-				this.orders.put(ord.player, new HashSet<Order>());
+			this.allOrders.addAll(orders); 
+			
+			//	mark where the orders were to
+			for(Order ord: orders){
+				if(ord.getClass() == Move.class){
+					Move move = (Move)ord;
+					
+					if(!ordersTo.containsKey(move.to)){
+						ordersTo.put(move.to, new HashSet<Order>());
+					}
+					
+					ordersTo.get(move.to).add(move);
+				}else if (ord.getClass() == MoveByConvoy.class){
+					MoveByConvoy mbc = (MoveByConvoy)ord;
+					
+					if(!ordersTo.containsKey(mbc.convoyDestination)){
+						ordersTo.put(mbc.convoyDestination, new HashSet<Order>());
+					}
+					
+					ordersTo.get(mbc.convoyDestination).add(mbc);
+				}
 			}
 			
-			this.orders.get(ord.player).add(ord);
+			for(Order ord: orders){
+				if(ord.getClass() == Build.class){
+					Build build = (Build)ord;
+					
+					ordersFrom.put(build.location, build);
+					
+				}else if (ord.getClass() == Hold.class){
+					Hold hold = (Hold)ord;
+					
+					ordersFrom.put(hold.holdingSquare, hold);
+					
+				}else if (ord.getClass() == Remove.class){
+					Remove remove = (Remove)ord;
+					
+					ordersFrom.put(remove.disbandLocation, remove);
+					
+				}else if (ord.getClass() == Disband.class){
+					Disband disband = (Disband)ord;
+					
+					ordersFrom.put(disband.disbandAt, disband);
+					
+				}else if (ord.getClass() == Retreat.class){
+					Retreat retreat = (Retreat)ord;
+					
+					//	to or from?
+					ordersFrom.put(retreat.from, retreat);
+					
+				}else if (ord.getClass() == Convoy.class){
+					Convoy convoy = (Convoy)ord;
+					
+					ordersFrom.put(convoy.convoyer, convoy);
+					
+				}else if (ord.getClass() == Move.class){
+					Move move = (Move)ord;
+					
+					ordersFrom.put(move.from, move);
+					
+				}else if (ord.getClass() == MoveByConvoy.class){
+					MoveByConvoy move = (MoveByConvoy)ord;
+					
+					ordersFrom.put(move.convoyOrigin, move);
+					
+				}else if (ord.getClass() == SupportHold.class){
+					SupportHold shold = (SupportHold)ord;
+					
+					ordersFrom.put(shold.supportFrom, shold);
+					
+				}else if (ord.getClass() == SupportMove.class){
+					SupportMove smove = (SupportMove)ord;
+					
+					ordersFrom.put(smove.supportFrom, smove);
+					
+				}
+			}
+			
+			//	and which players made them
+			for(Order ord: orders){
+				
+				if(!this.orders.containsKey(ord.player)){
+					this.orders.put(ord.player, new HashSet<Order>());
+				}
+				
+				this.orders.get(ord.player).add(ord);
+			}
+			
 		}
 		
 	}
-	
 }
+

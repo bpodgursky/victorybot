@@ -1,5 +1,6 @@
 package order.builds;
 
+import ai.Bot;
 import order.Order;
 import representation.Player;
 import representation.TerritorySquare;
@@ -17,8 +18,10 @@ public class Remove extends Order{
 			throw new Exception("null arguments");
 		}
 		
-		disbandAt.board.assertCanRemove(bst, p, disbandAt);
-		
+		if(Bot.ASSERTS){
+			disbandAt.board.assertCanRemove(bst, p, disbandAt);
+		}
+			
 		this.disbandLocation = disbandAt;
 	}
 	
@@ -30,6 +33,12 @@ public class Remove extends Order{
 	@Override
 	public String toOrder(BoardState bst) {
 		return "( ( "+disbandLocation.getUnitString(bst)+" ) REM )";
+	}
+	
+	
+	@Override
+	public int hashCode2(){
+		return disbandLocation.hashCode2()+super.hashCode2();
 	}
 
 }

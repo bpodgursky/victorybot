@@ -1,5 +1,6 @@
 package order.retreats;
 
+import ai.Bot;
 import order.Order;
 import representation.Player;
 import representation.TerritorySquare;
@@ -42,8 +43,9 @@ public class Retreat extends Order{
 //		if(!from.board.canRetreat(p, from, to, destinationCoast)){
 //			throw new Exception("invalid retreat");
 //		}
-		
-		from.board.assertCanRetreat(bst, p, from, to, destinationCoast);
+		if(Bot.ASSERTS){
+			from.board.assertCanRetreat(bst, p, from, to, destinationCoast);
+		}
 		
 		this.from = from;
 		this.to = to;
@@ -59,5 +61,9 @@ public class Retreat extends Order{
 	public String toOrder(BoardState bst){
 		return "( ( "+TerritorySquare.getUnitStringParen(player, retreatingUnit, from.getName(), fromCoast)+" ) RTO "+
 			TerritorySquare.getDestString(retreatingUnit, to.getName(), destCoast)+" )";
+	}
+	
+	public int hashCode2(){
+		return from.hashCode2()+to.hashCode2()+retreatingUnit.hashCode()+destCoast.hashCode()+fromCoast.hashCode()+super.hashCode2();
 	}
 }

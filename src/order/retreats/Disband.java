@@ -1,5 +1,6 @@
 package order.retreats;
 
+import ai.Bot;
 import order.Order;
 import representation.Player;
 import representation.TerritorySquare;
@@ -24,14 +25,10 @@ public class Disband extends Order{
 			throw new Exception("null arguments");
 		}
 		
-		
-		
-//		if(!location.board.canDisband(p, location)){
-//			throw new Exception("invalid disband");
-//		}
-		
-		location.board.assertCanDisband(bst, p, location);
-		
+		if(Bot.ASSERTS){
+			location.board.assertCanDisband(bst, p, location);
+		}
+			
 		this.disbandAt = location;
 		this.disband = bst.getRetreatingUnit(location);
 		this.disbandCoast = coast;
@@ -44,5 +41,10 @@ public class Disband extends Order{
 	@Override
 	public String toOrder(BoardState bst) {
 		return "( ( "+TerritorySquare.getUnitStringParen(player, disband, disbandAt.getName(), disbandCoast)+" ) DSB )";
+	}
+	
+	
+	public int hashCode2(){
+		return disband.hashCode2()+disbandAt.hashCode2()+disbandCoast.hashCode()+super.hashCode2();
 	}
 }

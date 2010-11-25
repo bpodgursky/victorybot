@@ -1,5 +1,6 @@
 package order.spring_fall;
 
+import ai.Bot;
 import order.Order;
 import representation.Player;
 import representation.TerritorySquare;
@@ -40,11 +41,10 @@ public class Move extends Order{
 		if(from == null || to == null || destinationCoast == null){
 			throw new Exception("null arguments");
 		}
-//		if(!from.board.canMove(p, from, to, destinationCoast)){
-//			throw new Exception("player "+p.getName()+"cannot move from "+ from+ " to "+to+" on coast "+destinationCoast);
-//		}
-		
-		from.board.assertCanMove(bst, p, from, to, destinationCoast);
+
+		if(Bot.ASSERTS){
+			from.board.assertCanMove(bst, p, from, to, destinationCoast);
+		}
 		
 		this.unit = from.getOccupier(bst);
 		this.from = from;
@@ -62,6 +62,12 @@ public class Move extends Order{
 		
 	}
 
+	
+	@Override
+	public int hashCode2(){
+		return unit.hashCode2()+from.hashCode2()+to.hashCode2()+coast.hashCode()+super.hashCode2();
+	}
+	
 	@Override
 	public String toOrder(BoardState bst) {
 		return "( ( "+from.getUnitString(bst)+" ) MTO "+

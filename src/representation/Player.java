@@ -29,6 +29,10 @@ public class Player {
 		this.homeCenters.addAll(homeCenters);
 	}
 	
+	public int hashCode2(){
+		return power.hashCode();
+	}
+	
 	public Set<TerritorySquare> getOccupiedTerritories(BoardState bst){
 		return bst.getOccupiedTerritories(this);
 	}
