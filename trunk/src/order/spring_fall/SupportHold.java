@@ -1,5 +1,6 @@
 package order.spring_fall;
 
+import ai.Bot;
 import order.Order;
 import representation.Player;
 import representation.TerritorySquare;
@@ -30,13 +31,11 @@ public class SupportHold extends Order{
 		if(supportFrom == null || supportTo == null){
 			throw new Exception("null arguments");
 		}
-		
-//		if(!supportFrom.board.canSupportHold(p, supportFrom, supportTo)){
-//			throw new Exception("cannot support hold from "+supportFrom+" to "+supportTo);
-//		}
-		
-		supportFrom.board.assertCanSupportHold(bst, p, supportFrom, supportTo);
-		
+
+		if(Bot.ASSERTS){
+			supportFrom.board.assertCanSupportHold(bst, p, supportFrom, supportTo);
+		}
+			
 		this.supportFrom = supportFrom;
 		this.supportTo = supportTo;
 		
@@ -57,4 +56,10 @@ public class SupportHold extends Order{
 		// TODO Auto-generated method stub
 		
 	}
+	
+	@Override
+	public int hashCode2(){
+		return supportFrom.hashCode2()+supported.hashCode2()+supportTo.hashCode2()+supporter.hashCode2()+super.hashCode2();
+	}
+	
 }

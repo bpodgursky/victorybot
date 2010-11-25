@@ -167,6 +167,10 @@ public class BoardState {
 		this.occupiedCoast.put(terr, coast);
 	}
 	
+	public MoveHistory getHistory(){
+		return this.history;
+	}
+	
 	//	a map of territories which have to retreat this turn.  A little awkward; the territory's state will already
 	//	have been updated, so a new unit will be in the territory.  So this map is from the territory to the unit
 	//	which needs to retreat from there.  To make things more annoying, we need to remember which coast to retreat

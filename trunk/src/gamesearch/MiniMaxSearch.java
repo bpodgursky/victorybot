@@ -1,7 +1,5 @@
 package gamesearch;
 
-import heuristic.NaiveHeuristic;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,11 +20,14 @@ import state.dynamic.DiplomaticState;
 
 public class MiniMaxSearch extends GameSearch{
 	
+	private static final int MAX_TOTAL_ENUM = 100000;
+	private int maxEnumTmp;
+	
 	public MiniMaxSearch(Player player, BoardConfiguration state, DiplomaticState dipState, BeliefState beliefState){
 		super(player, state, dipState, beliefState);
 	}
 	
-//	base case of search.  Returns the best set of moves for us
+	//	base case of search.  Returns the best set of moves for us
 	protected Collection<Order> moveSearch(BoardState bst, YearPhase until) throws Exception{
 		
 		//	build sets of all moves for all relevant players
@@ -35,7 +36,7 @@ public class MiniMaxSearch extends GameSearch{
 			new HashMap<Player, MovesValue[]>();
 		
 		
-		Set<Player> relevantPlayers = boardConfiguration.getRelevantPlayers(bst, relevantPlayer);
+		Collection<Player> relevantPlayers = heuristic.relevance.getRelevantPlayers(bst, relevantPlayer);
 		
 		System.out.println("Building possible order sets for players: ");
 		//	for each player, generate the a priori likely moves
@@ -63,6 +64,11 @@ public class MiniMaxSearch extends GameSearch{
 			
 			System.out.println("\t"+p.getName()+" done");
 		}
+		
+		
+		int relevantPlayerCount = relevantPlayers.size();	
+		int movesUntil = bst.time.movesUntil(until);
+		maxEnumTmp = (int)Math.pow(MAX_TOTAL_ENUM, 1.0/(movesUntil*relevantPlayerCount));
 		
 		System.out.println("Generated orders for each player:");
 		for(Player p: orderSetsByPlayer.keySet()){
@@ -100,8 +106,6 @@ public class MiniMaxSearch extends GameSearch{
 			}
 			count++;
 			
-			//if(count % 1 == 0) System.out.println("\t"+count+" processed...");
-		
 			System.out.println(maxSetMoves[count-1].value);
 			for(Order ord: playerOrds.moves){
 				System.out.println("\t"+ord.toOrder(boardState));
@@ -131,7 +135,7 @@ public class MiniMaxSearch extends GameSearch{
 		//System.out.println("\tboard is "+bst.time+"...");
 		if(bst.time.isAfter(until)) {
 			//System.out.println("\tquitting");
-			return heuristic.boardScore(relevantPlayer, bst);
+			return heuristic.scorer.boardScore(relevantPlayer, bst);
 		}
 		
 		//	recurse through all enemy combinations (cap for each player)	
@@ -166,7 +170,7 @@ public class MiniMaxSearch extends GameSearch{
 		
 			count++;
 		}
-		//System.out.println("\tdone...");
+		
 		//		base case of recursion, have a set of moves for each enemy player
 		//			combine with the friendlyOrders above to make a full set of orders
 		//			apply to gamestate, call max on this boardstate
@@ -181,7 +185,7 @@ public class MiniMaxSearch extends GameSearch{
 		// if bst's date is after until, return the quality of the board
 
 		if(bst.time.isAfter(until)) {
-			return heuristic.boardScore(relevantPlayer, bst);
+			return heuristic.scorer.boardScore(relevantPlayer, bst);
 		}
 		
 		//	otherwise,
@@ -192,7 +196,7 @@ public class MiniMaxSearch extends GameSearch{
 			new HashMap<Player, MovesValue[]>();
 		
 		
-		Set<Player> relevantPlayers = boardConfiguration.getRelevantPlayers(bst, relevantPlayer);
+		Collection<Player> relevantPlayers = heuristic.relevance.getRelevantPlayers(bst, relevantPlayer);
 
 		//	for each player, generate the a priori likely moves
 		List<Player> otherPlayers = new LinkedList<Player>();
@@ -241,9 +245,6 @@ public class MiniMaxSearch extends GameSearch{
 		
 	}
 	
-	//	how many moves to enumerate for each player.  hardcode for now
-	private static final int MAX_ENUM = 3;
-	
 	private List<List<Collection<Order>>> enumerateMoves(BoardState bst, 
 			List<Collection<Order>> allOrders, 
 			Map<Player, MovesValue[]> playerOrders, 
@@ -270,7 +271,7 @@ public class MiniMaxSearch extends GameSearch{
 			
 			MovesValue[] movesForPlayer = playerOrders.get(players[player]);
 			
-			for(int i = 0; i < movesForPlayer.length && i < MAX_ENUM; i++){			
+			for(int i = 0; i < movesForPlayer.length && i < maxEnumTmp; i++){			
 				MovesValue mv = movesForPlayer[i]; 
 				
 				allOrders.add(mv.moves);

@@ -43,6 +43,7 @@ public class Bot{
 	static String VERSION = "v 0.7";
 	
 	public final static boolean DEBUG = false;
+	public final static boolean ASSERTS = false;
 	
 	public final String name;
 	private final Server serv;
@@ -130,7 +131,7 @@ public class Bot{
 
 	class BotMessageHandler implements MessageListener, Runnable {
 		
-		public final static long SUBMISSION_BUFFER = 1000; 
+		public final static long SUBMISSION_BUFFER = 2000; 
 		
 		long nextOrders = -1;
 		boolean submitted = false;
@@ -149,9 +150,30 @@ public class Bot{
 				
 					//TODO it's not submitting for some reason sometimes if it doesn't finish search
 					long currentTime = System.currentTimeMillis();
+//					
+//					System.out.println("\nNext: "+nextOrders);
+//					System.out.println("Now :"+(currentTime + SUBMISSION_BUFFER));
+//					System.out.println("Sub :"+submitted);
 					
 					if((nextOrders != -1 && currentTime + SUBMISSION_BUFFER > nextOrders && !submitted) ||
 							(!(search==null) && search.isReady() && !submitted)){
+						
+						if(nextOrders != -1 && currentTime + SUBMISSION_BUFFER > nextOrders && !submitted){
+							System.out.println("Move time is up, submitting orders:");
+						
+							System.out.println("Moves will be: ");
+							for(Order ord: search.currentOrders()){
+								System.out.println("\t"+ord.toOrder(boardState));
+							}
+						}
+						
+						if((!(search==null) && search.isReady() && !submitted)){
+							System.out.println("Search is  ready, submitting orders:");
+							
+							for(Order ord: search.currentOrders()){
+								System.out.println("\t"+ord.toOrder(boardState));
+							}
+						}
 						
 						submitted = true;
 					
@@ -180,7 +202,7 @@ public class Bot{
 						
 						//TODO resubmit only if they have changed
 					}else{
-						Thread.sleep(10);
+						Thread.sleep(1000);
 					}
 				}catch(Exception e){
 					e.printStackTrace();

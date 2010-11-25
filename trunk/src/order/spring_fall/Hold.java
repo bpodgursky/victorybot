@@ -1,5 +1,6 @@
 package order.spring_fall;
 
+import ai.Bot;
 import order.Order;
 import representation.Player;
 import representation.TerritorySquare;
@@ -23,12 +24,10 @@ public class Hold extends Order{
 			throw new Exception("null arguments");
 		}
 		
-//		if(!square.board.canHold(p, square)){
-//			throw new Exception("hold by "+p.getName()+" is not valid for "+square);
-//		}
-		
-		square.board.assertCanHold(bst, p, square);
-		
+		if(Bot.ASSERTS){
+			square.board.assertCanHold(bst, p, square);
+		}
+			
 		holdingSquare = square;
 		holdingUnit = square.getOccupier(bst);
 		
@@ -39,8 +38,12 @@ public class Hold extends Order{
 		System.out.println("Doing Hold!");
 		
 	}
-
-
+	
+	@Override
+	public int hashCode2(){
+		return holdingUnit.hashCode2()+holdingSquare.hashCode2()+super.hashCode2();
+	}
+	
 	@Override
 	public String toOrder(BoardState bst) {
 		return "( ( "+holdingSquare.getUnitString(bst)+" ) HLD )";

@@ -43,6 +43,10 @@ public class TerritorySquare {
 	
 	//dynamic
 	
+	public int hashCode2(){
+		return name.hashCode();
+	}
+	
 	public void setController(BoardState bst, Player p){
 		bst.setController(this, p);
 	}

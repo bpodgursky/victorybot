@@ -3,6 +3,8 @@ package order.spring_fall;
 import java.util.LinkedList;
 import java.util.List;
 
+import ai.Bot;
+
 import order.Order;
 import representation.Player;
 import representation.TerritorySquare;
@@ -31,11 +33,9 @@ public class MoveByConvoy extends Order{
 			throw new Exception("null arguments");
 		}
 		
-//		if(!origin.board.canConvoy(p, origin, destination, transits)){
-//			throw new Exception("invalid convoy");
-//		}
-		
-		origin.board.assertCanConvoy(bst, p, origin, destination, transits);
+		if(Bot.ASSERTS){
+			origin.board.assertCanConvoy(bst, p, origin, destination, transits);
+		}
 		
 		this.convoyedUnit = origin.getOccupier(bst);
 		
@@ -52,6 +52,20 @@ public class MoveByConvoy extends Order{
 	public void execute() {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	
+	@Override
+	public int hashCode2(){
+		return convoyedUnit.hashCode2()+hashConvoy(transits)+convoyOrigin.hashCode2()+convoyDestination.hashCode2()+super.hashCode2();
+	}
+	
+	private int hashConvoy(List<TerritorySquare> transits){
+		int sum = 0;
+		for(TerritorySquare sqr: transits){
+			sum+=sqr.hashCode2();
+		}
+		return sum;
 	}
 
 	@Override

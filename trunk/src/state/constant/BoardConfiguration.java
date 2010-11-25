@@ -1547,7 +1547,7 @@ public class BoardConfiguration {
 							
 							next = moveOrigins.get(dest);
 							
-						}while(next != top);
+						}while(next != top && next != null);
 						
 						if(cycle.size() > 2){
 							for(Order ord: cycle){
@@ -1903,7 +1903,9 @@ public class BoardConfiguration {
 		}
 	}
 	
-	
+	//	a VERY rough pass through the moves.  Meant to quickly (and not really correctly) see which
+	//	moves would succeed if nobody else did anything, so we don't have to update the whole board
+	//	state or go through an expensive resolve call
 	public void quickResolve(BoardState bst, Set<Order> orders, Player us)
 	{
 		Map<TerritorySquare, Move> needsSupport = new HashMap<TerritorySquare, Move>();
@@ -1963,11 +1965,11 @@ public class BoardConfiguration {
 		//TODO for now call resolve even if from server; in future skip this if the moves are already resolved
 		resolve(orig, moves, fromServer);
 		
-		long tAfterResolve = System.nanoTime();
+//		long tAfterResolve = System.nanoTime();
 		
 		BoardState bst = orig.clone(time);
 		
-		long tAfterClone = System.nanoTime();
+//		long tAfterClone = System.nanoTime();
 		
 		//process movements separately--slightly more complex resolutions
 		Set<Order> successfulMoves = new HashSet<Order>();
@@ -2123,28 +2125,28 @@ public class BoardConfiguration {
 			updateSupplyControl(bst);
 		}
 		
-		long tAfterUpdate = System.nanoTime();
+//		long tAfterUpdate = System.nanoTime();
 		
-		if(orig.time.phase == Phase.SPR || orig.time.phase == Phase.FAL){
-			runResolve+=((tAfterResolve- tStart));
-			runClone+=((tAfterClone-tAfterResolve));
-			runUpdate+=((tAfterUpdate-tAfterClone));
-		}
-		
-		if(count++%10000==0){
-			System.out.println("Resolve: "+runResolve/count);
-			System.out.println("Clone: "+runClone/count);
-			System.out.println("Update: "+runUpdate/count);
-		}
+//		if(orig.time.phase == Phase.SPR || orig.time.phase == Phase.FAL){
+//			runResolve+=((tAfterResolve- tStart));
+//			runClone+=((tAfterClone-tAfterResolve));
+//			runUpdate+=((tAfterUpdate-tAfterClone));
+//		}
+//		
+//		if(count++%10000==0){
+//			System.out.println("Resolve: "+runResolve/count);
+//			System.out.println("Clone: "+runClone/count);
+//			System.out.println("Update: "+runUpdate/count);
+//		}
 		
 		return bst;
 	}
 	
 	double count = 0;
-	
-	long runResolve = 0;
-	long runClone = 0;
-	long runUpdate = 0;
+//	
+//	long runResolve = 0;
+//	long runClone = 0;
+//	long runUpdate = 0;
 	
 	public String toString(){
 		
@@ -2624,6 +2626,10 @@ public class BoardConfiguration {
 			return false;
 		}
 		
+		if(!u.army && !location.hasAnySeaBorders()){
+			return false;
+		}
+		
 		return true;
 	}
 	
@@ -2934,7 +2940,7 @@ public class BoardConfiguration {
 		return options;
 	}
 	
-	public Map<TerritorySquare, List<OrderValue>> getMovesForUnits(BoardState dynamicState, Heuristic heuristic) throws Exception{
+	public Map<TerritorySquare, List<OrderValue>> getMovesForUnits(BoardState dynamicState) throws Exception{
 		
 		if(dynamicState.getMovesForUnits() != null){
 			return dynamicState.getMovesForUnits();
@@ -2984,19 +2990,29 @@ public class BoardConfiguration {
 		//TODO cache a list of borders for a unit and for a fleet for each coast in the territory square
 		for(TerritorySquare tsquare: from.getBorders()){
 			
-			if(tsquare.hasMultipleCoasts()){
-				for(String s: tsquare.getCoasts()){
-					if(s.equals("NA")) continue;
+			if(!occupier.army){
+				if(tsquare.hasMultipleCoasts()){
+					for(String s: tsquare.getCoasts()){
+						if(s.equals("NA")) continue;
+						
+						if(canMove(boardState, occupier.belongsTo, from, tsquare, s)){
+							options.add(new TerritoryCoast(tsquare, s));
+						}
+					}
+				}else{
 					
-					if(canMove(boardState, occupier.belongsTo, from, tsquare, s)){
-						options.add(new TerritoryCoast(tsquare, s));
+					// only 1
+					for(String s: tsquare.getCoasts()){
+						if(canMove(boardState, occupier.belongsTo, from, tsquare, s)){
+							options.add(new TerritoryCoast(tsquare, s));
+						}
 					}
 				}
 			}else{
-				for(String s: tsquare.getCoasts()){
-					if(canMove(boardState, occupier.belongsTo, from, tsquare, s)){
-						options.add(new TerritoryCoast(tsquare, s));
-					}
+				
+				// only 1
+				if(canMove(boardState, occupier.belongsTo, from, tsquare, "NA")){
+					options.add(new TerritoryCoast(tsquare, "NA"));
 				}
 			}
 		}
@@ -3026,63 +3042,6 @@ public class BoardConfiguration {
 		return possibilities;
 	}
 	
-	//	ok this is a bit sketchy but necessary to deal with complexity.  
-	//	a relevant player is defined as a player whose units could tactically
-	//	affect
-	//	the success of yours in a turn.  That is, they border any of the 
-	//	territories you border
-	public Set<Player> getRelevantPlayers(BoardState bst, Player p){
-		
-		if(bst.getRelevantPlayers(p) != null){
-			return bst.getRelevantPlayers(p);
-		}
-		
-		Set<Player> foundPlayers = new HashSet<Player>();
-		Set<TerritorySquare> relevantTerritories = new HashSet<TerritorySquare>();
-		
-		foundPlayers.add(p);
-		
-		//	first layer: those in squares bordering your possessions
-		for(TerritorySquare tsquare: p.getControlledTerritories(bst)){
-			relevantTerritories.add(tsquare);
-			relevantTerritories.addAll(tsquare.getBorders());
-		}
-		for(TerritorySquare tsquare: p.getOccupiedTerritories(bst)){
-			relevantTerritories.add(tsquare);
-			relevantTerritories.addAll(tsquare.getBorders());
-		}
-		
-		//	need to worry about one more layer out, because those will be
-		//	moving into your squares
-		
-		Set<TerritorySquare> affectingTerritories = new HashSet<TerritorySquare>();
-		
-		for(TerritorySquare tsquare: relevantTerritories){
-			
-			affectingTerritories.add(tsquare);
-			affectingTerritories.addAll(tsquare.getBorders());
-		}
-		
-		//	in theory we eventually need to worry about one more layer out,
-		//	because these could cut the support of those moving into these...
-		//	only really relevant when we have allies
-		
-		for(TerritorySquare tsquare: affectingTerritories){
-			
-			if(tsquare.getOccupier(bst) != null){
-				foundPlayers.add(tsquare.getOccupier(bst).belongsTo);
-			}
-			
-			if(tsquare.getController(bst) != null){
-				foundPlayers.add(tsquare.getController(bst));
-			}
-		}
-		
-		bst.setRelevantPlayers(p, foundPlayers);
-		
-		return foundPlayers;
-	}
-	
 	public static class YearPhase{
 		
 		public final int year;
@@ -3093,6 +3052,24 @@ public class BoardConfiguration {
 			this.year = year;
 			this.phase = phase;
 			
+		}
+		
+		private static int phaseNum(Phase p){
+			if(p == Phase.SPR) return 0;
+			else if(p == Phase.SUM) return 1;
+			else if(p == Phase.FAL) return 2;
+			else if(p == Phase.AUT) return 3;
+			else if(p == Phase.WIN) return 4;
+			
+			return -1;
+		}
+		
+		public int movesUntil(YearPhase until){
+			
+			int thisPhase = phaseNum(phase);
+			int thatPhase = phaseNum(until.phase);
+			
+			return (5*(until.year-year))+(thatPhase-thisPhase);
 		}
 		
 		public boolean isAfter(YearPhase yp)

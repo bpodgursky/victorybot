@@ -1,7 +1,10 @@
 package gamesearch;
 
 import heuristic.Heuristic;
-import heuristic.NaiveHeuristic;
+import heuristic.NaiveOrderGeneration;
+import heuristic.NaivePruner;
+import heuristic.NaiveRelevance;
+import heuristic.NaiveScorer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,8 +41,6 @@ import state.dynamic.BoardState.RetreatSituation;
 // 	updated state, diplomatic changes, etc
 public abstract class GameSearch {
 
-	protected static final int MAX_PLAYER_MOVES = 50;
-	
 	//	keep this updated with the current best guess at orders
 	protected Collection<Order> currentOrders = new HashSet<Order>();
 	
@@ -67,20 +68,28 @@ public abstract class GameSearch {
 	protected final MoveGeneration gen;
 	
 	public GameSearch(Player player, BoardConfiguration state, DiplomaticState dipState, BeliefState beliefState){
-
-		this.relevantPlayer = player;
-		
-		this.gen = new MoveGeneration(state, relevantPlayer);
-		
-		this.searcher = new InternalSearch();
-		this.internalSearch = new Thread(searcher);
-		this.internalSearch.start();
 		
 		this.boardConfiguration = state;
 		this.dipState = dipState;
 		this.beliefState = beliefState;
 		
-		this.heuristic = new NaiveHeuristic(boardConfiguration);
+		this.relevantPlayer = player;
+		
+		this.heuristic = new Heuristic(boardConfiguration);
+		
+		this.heuristic.setMovePruningHeuristic(new NaivePruner(heuristic));
+		this.heuristic.setOrderGenerationHeuristic(new NaiveOrderGeneration(heuristic));
+		this.heuristic.setRelevanceHeuristic(new NaiveRelevance(heuristic));
+		this.heuristic.setScoreHeuristic(new NaiveScorer(heuristic));
+		
+		this.gen = new MoveGeneration(state, heuristic);
+		
+		this.searcher = new InternalSearch();
+		this.internalSearch = new Thread(searcher);
+		this.internalSearch.start();
+		
+
+
 		
 		boardState = state.getInitialState();
 	}
@@ -95,7 +104,6 @@ public abstract class GameSearch {
 		this.boardState = bst;
 		this.movesReady = false;
 		this.boardUpdate = true;
-
 		
 		internalSearch.interrupt();
 	}
@@ -201,8 +209,8 @@ public abstract class GameSearch {
 					int year = boardState.time.year;
 					
 					//	too slow for now.  don't consider winter for now
-					//Phase phase = boardState.time.phase == Phase.SPR ? Phase.SUM : Phase.WIN;
-					Phase phase = boardState.time.phase == Phase.SPR ? Phase.SUM : Phase.AUT;
+					Phase phase = boardState.time.phase == Phase.SPR ? Phase.SUM : Phase.WIN;
+					//Phase phase = boardState.time.phase == Phase.SPR ? Phase.SUM : Phase.AUT;
 					
 					YearPhase until = new YearPhase(year, phase);
 					currentOrders = moveSearch(boardState, until);
@@ -247,7 +255,8 @@ public abstract class GameSearch {
 					
 					int year = boardState.time.year;
 					
-					Phase phase = boardState.time.phase == Phase.SUM ? Phase.SUM : Phase.WIN;
+					//Phase phase = boardState.time.phase == Phase.SUM ? Phase.SUM : Phase.WIN;
+					Phase phase = boardState.time.phase == Phase.SUM ? Phase.FAL : Phase.SPR;
 					
 					YearPhase until = new YearPhase(year, phase);
 					currentOrders = moveSearch(boardState, until);
@@ -312,7 +321,9 @@ public abstract class GameSearch {
 										
 					currentOrders = orders;
 					
-					YearPhase until = new YearPhase(boardState.time.year, Phase.WIN);
+					//YearPhase until = new YearPhase(boardState.time.year, Phase.WIN);
+					YearPhase until = new YearPhase(boardState.time.year+1, Phase.SPR);
+					
 					currentOrders = moveSearch(boardState, until);
 					
 					System.out.println("Build orders submitted");

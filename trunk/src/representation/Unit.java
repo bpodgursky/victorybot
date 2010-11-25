@@ -16,4 +16,8 @@ public class Unit {
 	public String toString(){
 		return belongsTo.getName()+" "+(army?"AMY":"FLT");
 	}
+	
+	public int hashCode2(){
+		return belongsTo.hashCode()+(army?1:0);
+	}
 }
