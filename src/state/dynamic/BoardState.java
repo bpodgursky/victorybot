@@ -131,7 +131,7 @@ public class BoardState {
 		return retreats.values();
 	}
 	
-	public void updateHistory(int year, Phase phase, Set<Order> orders){
+	public void updateHistory(int year, Phase phase, Collection<Order> orders){
 		this.history.add(year, phase, orders);
 	}
 	
