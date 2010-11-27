@@ -20,7 +20,7 @@ import state.dynamic.DiplomaticState;
 
 public class MiniMaxSearch extends GameSearch{
 	
-	private static final int MAX_TOTAL_ENUM = 100000;
+	private static final int MAX_TOTAL_ENUM = 25000;
 	private int maxEnumTmp;
 	
 	public MiniMaxSearch(Player player, BoardConfiguration state, DiplomaticState dipState, BeliefState beliefState){

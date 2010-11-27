@@ -55,18 +55,7 @@ public class MoveGeneration {
 	public MovesValue[] generateOrderSets(Player player, BoardState dynamicState) throws Exception
 	{
 
-		List<Collection<Order>> allCombinations = new LinkedList<Collection<Order>>();
-		
-		
-		if(dynamicState.time.phase == Phase.SPR || dynamicState.time.phase == Phase.FAL){
-			allCombinations.addAll(heuristic.orderGenerator.generateMoveSets(player, dynamicState));
-		}
-		else if(dynamicState.time.phase == Phase.SUM || dynamicState.time.phase == Phase.AUT){
-			allCombinations.addAll(heuristic.orderGenerator.generateRetreatSets(player, dynamicState));
-		}
-		else if(dynamicState.time.phase == Phase.WIN){
-			allCombinations.addAll(heuristic.orderGenerator.generateBuildSets(player, dynamicState));
-		}
+		List<Collection<Order>> allCombinations = heuristic.orderGenerator.generateOrderSets(player, dynamicState);
 		
 		if(allCombinations.size() == 0){
 			throw new Exception("no orders generated for a player "+player.getName()+" in "+dynamicState.time);

@@ -1,6 +1,7 @@
 package heuristic;
 
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -10,6 +11,7 @@ import order.spring_fall.Move;
 import representation.Player;
 import state.constant.BoardConfiguration;
 import state.dynamic.BoardState;
+import state.dynamic.BoardState.Phase;
 
 public class Heuristic {
 	
@@ -32,13 +34,29 @@ public class Heuristic {
 		public OrderGenerationHeuristic(Heuristic baseHeuristic){
 			this.heuristic = baseHeuristic;
 		}
+		
+		public List<Collection<Order>> generateOrderSets(Player player, BoardState dynamicState) throws Exception{
+			List<Collection<Order>> allCombinations = new LinkedList<Collection<Order>>();
+			
+			if(dynamicState.time.phase == Phase.SPR || dynamicState.time.phase == Phase.FAL){
+				allCombinations.addAll(heuristic.orderGenerator.generateMoveSets(player, dynamicState));
+			}
+			else if(dynamicState.time.phase == Phase.SUM || dynamicState.time.phase == Phase.AUT){
+				allCombinations.addAll(heuristic.orderGenerator.generateRetreatSets(player, dynamicState));
+			}
+			else if(dynamicState.time.phase == Phase.WIN){
+				allCombinations.addAll(heuristic.orderGenerator.generateBuildSets(player, dynamicState));
+			}
+			
+			return allCombinations;
+		}
 	
 		//	Generates a set of moves for a player
-		public abstract Collection<Collection<Order>> generateMoveSets(Player player, BoardState dynamicState) throws Exception;
+		protected abstract Collection<Collection<Order>> generateMoveSets(Player player, BoardState dynamicState) throws Exception;
 		
-		public abstract Collection<Collection<Order>> generateRetreatSets(Player p, BoardState dynamicState) throws Exception;
+		protected abstract Collection<Collection<Order>> generateRetreatSets(Player p, BoardState dynamicState) throws Exception;
 		
-		public abstract Collection<Collection<Order>> generateBuildSets(Player p, BoardState dynamicState) throws Exception;
+		protected abstract Collection<Collection<Order>> generateBuildSets(Player p, BoardState dynamicState) throws Exception;
 	}
 	
 	public static abstract class MovePruningHeuristic{

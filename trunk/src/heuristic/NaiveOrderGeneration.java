@@ -53,7 +53,6 @@ public class NaiveOrderGeneration extends OrderGenerationHeuristic {
 	}
 
 	@Override
-	
 	public Collection<Collection<Order>> generateMoveSets(Player player, BoardState dynamicState) throws Exception{
 		List<Collection<Order>> allCombinations = new LinkedList<Collection<Order>>();
 		
@@ -334,13 +333,15 @@ public class NaiveOrderGeneration extends OrderGenerationHeuristic {
 			}
 
 			//	fleet if can
-			if(heuristic.staticBoard.canBuild(bst, p, new Unit(p, false), decide)){
-
-				List<Order> ordersWithFleet = new LinkedList<Order>(ordersSoFar);
-				ordersWithFleet.add(new Build(bst, p, new Unit(p, false), decide));
-
-				enumerateBuilds(bst, p, remainingCenters, moreBuilds-1, ordersWithFleet, allCombinations);
-					
+			for(String coast: decide.getCoasts()){
+				if(heuristic.staticBoard.canBuild(bst, p, new Unit(p, false), decide)){
+	
+					List<Order> ordersWithFleet = new LinkedList<Order>(ordersSoFar);
+					ordersWithFleet.add(new Build(bst, p, new Unit(p, false), decide, coast));
+	
+					enumerateBuilds(bst, p, remainingCenters, moreBuilds-1, ordersWithFleet, allCombinations);
+						
+				}
 			}
 			
 			//	and nothing

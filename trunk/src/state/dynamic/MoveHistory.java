@@ -1,6 +1,7 @@
 package state.dynamic;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +36,7 @@ public class MoveHistory {
 		return copy;
 	}
 	
-	public void add(int year, Phase phase, Set<Order>  orders){
+	public void add(int year, Phase phase, Collection<Order>  orders){
 		moveHistory.add(new OrderSet(year, phase, orders));
 	}
 	
@@ -133,7 +134,7 @@ public class MoveHistory {
 			return ordersTo.get(sqr);
 		}
 
-		public OrderSet(int year, Phase phase, Set<Order>  orders){
+		public OrderSet(int year, Phase phase, Collection<Order>  orders){
 					
 			this.year = year;
 			this.phase = phase;

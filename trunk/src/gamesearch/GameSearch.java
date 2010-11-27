@@ -1,5 +1,6 @@
 package gamesearch;
 
+import heuristic.FactorizedPruner;
 import heuristic.Heuristic;
 import heuristic.NaiveOrderGeneration;
 import heuristic.NaivePruner;
@@ -77,7 +78,7 @@ public abstract class GameSearch {
 		
 		this.heuristic = new Heuristic(boardConfiguration);
 		
-		this.heuristic.setMovePruningHeuristic(new NaivePruner(heuristic));
+		this.heuristic.setMovePruningHeuristic(new FactorizedPruner(heuristic));
 		this.heuristic.setOrderGenerationHeuristic(new NaiveOrderGeneration(heuristic));
 		this.heuristic.setRelevanceHeuristic(new NaiveRelevance(heuristic));
 		this.heuristic.setScoreHeuristic(new NaiveScorer(heuristic));
@@ -209,8 +210,9 @@ public abstract class GameSearch {
 					int year = boardState.time.year;
 					
 					//	too slow for now.  don't consider winter for now
-					Phase phase = boardState.time.phase == Phase.SPR ? Phase.SUM : Phase.WIN;
 					//Phase phase = boardState.time.phase == Phase.SPR ? Phase.SUM : Phase.AUT;
+					//Phase phase = boardState.time.phase == Phase.SPR ? Phase.SUM : Phase.AUT;
+					Phase phase = boardState.time.phase == Phase.SPR ? Phase.SPR : Phase.FAL;
 					
 					YearPhase until = new YearPhase(year, phase);
 					currentOrders = moveSearch(boardState, until);
@@ -255,8 +257,8 @@ public abstract class GameSearch {
 					
 					int year = boardState.time.year;
 					
-					//Phase phase = boardState.time.phase == Phase.SUM ? Phase.SUM : Phase.WIN;
-					Phase phase = boardState.time.phase == Phase.SUM ? Phase.FAL : Phase.SPR;
+					Phase phase = boardState.time.phase == Phase.SUM ? Phase.SUM : Phase.WIN;
+					//Phase phase = boardState.time.phase == Phase.SUM ? Phase.FAL : Phase.SPR;
 					
 					YearPhase until = new YearPhase(year, phase);
 					currentOrders = moveSearch(boardState, until);
@@ -321,8 +323,8 @@ public abstract class GameSearch {
 										
 					currentOrders = orders;
 					
-					//YearPhase until = new YearPhase(boardState.time.year, Phase.WIN);
-					YearPhase until = new YearPhase(boardState.time.year+1, Phase.SPR);
+					YearPhase until = new YearPhase(boardState.time.year, Phase.WIN);
+					//YearPhase until = new YearPhase(boardState.time.year+1, Phase.SPR);
 					
 					currentOrders = moveSearch(boardState, until);
 					

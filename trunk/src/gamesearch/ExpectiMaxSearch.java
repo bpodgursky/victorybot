@@ -24,7 +24,7 @@ public class ExpectiMaxSearch extends GameSearch{
 	//	how many moves to enumerate for each player.  hardcode for now
 	//private static final int MAX_ENUM = 4;
 	
-	private static final int MAX_TOTAL_ENUM = 100000;
+	private static final int MAX_TOTAL_ENUM = 25000;
 	private int maxEnumTmp;
 	
 	public ExpectiMaxSearch(Player player, BoardConfiguration state, DiplomaticState dipState, BeliefState beliefState){
@@ -33,6 +33,8 @@ public class ExpectiMaxSearch extends GameSearch{
 	
 	//	base case of search.  Returns the best set of moves for us
 	protected Collection<Order> moveSearch(BoardState bst, YearPhase until) throws Exception{
+		
+		System.out.println("Look ahead moves: "+bst.time.movesUntil(until));
 		
 		//	build sets of all moves for all relevant players
 	
@@ -91,18 +93,24 @@ public class ExpectiMaxSearch extends GameSearch{
 			List<Collection<Order>> orderList = new LinkedList<Collection<Order>>();
 			orderList.add(playerOrds.moves);
 		
+			//	in case it doesn't get through one (which would suck)
+			if(bestMoveSoFar == null){
+				currentOrders = playerOrds.moves;
+			}
+			
 			maxSetMoves[count] = new MovesValue(playerOrds.moves, expect(bst, until, playerOrds.moves, orderSetsByPlayer, playerArray));
 			
+			if(bestMoveSoFar == null){
+				bestMoveSoFar = maxSetMoves[count];
+				currentOrders = bestMoveSoFar.moves;
+			}
 			
 			if(this.boardUpdate){
 				System.out.println("Took too long, quitting...");
 				return null;
 			}
 			
-			if(bestMoveSoFar == null){
-				bestMoveSoFar = maxSetMoves[count];
-				currentOrders = bestMoveSoFar.moves;
-			}
+
 			
 			if(bestMoveSoFar.value < maxSetMoves[count].value){
 				bestMoveSoFar = maxSetMoves[count];

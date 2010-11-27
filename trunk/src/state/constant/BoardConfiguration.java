@@ -699,8 +699,8 @@ public class BoardConfiguration {
 		}
 	}
 	
-	private void calcMovesByDestination(Set<Order> moves, 
-			Map<TerritorySquare, Set<Order>> movesWantLocation,
+	private void calcMovesByDestination(Collection<Order> moves, 
+			Map<TerritorySquare, Collection<Order>> movesWantLocation,
 			Map<TerritorySquare, Order> moveOrigins){
 		
 		//if a unit is holding or convoying,
@@ -770,10 +770,10 @@ public class BoardConfiguration {
 		}
 	}
 	
-	private void calculateSupport(Set<Order> moves,
-			Map<TerritorySquare, Set<Order>> movesWantLocation,
+	private void calculateSupport(Collection<Order> moves,
+			Map<TerritorySquare, Collection<Order>> movesWantLocation,
 			Map<TerritorySquare, Order> moveOrigins,
-			Map<Order, Set<Order>> supportMoves,
+			Map<Order, Collection<Order>> supportMoves,
 			Map<Order, Order> supporters){
 		
 		for(Order order: moves){
@@ -781,7 +781,7 @@ public class BoardConfiguration {
 				SupportMove smov = (SupportMove)order;
 				
 				//find the order it is supporting
-				Set<Order> movesToSquare =  movesWantLocation.get(smov.supportInto);
+				Collection<Order> movesToSquare =  movesWantLocation.get(smov.supportInto);
 				
 				boolean foundOrder = false;
 				for(Order potentialSupport: movesToSquare){
@@ -808,7 +808,7 @@ public class BoardConfiguration {
 							foundOrder = true;
 							
 							//	make sure your support is not cut
-							Set<Order> supportCutters = movesWantLocation.get(smov.supportFrom);
+							Collection<Order> supportCutters = movesWantLocation.get(smov.supportFrom);
 							
 							boolean supportCut = false;
 							for(Order potentialCut: supportCutters){
@@ -862,7 +862,7 @@ public class BoardConfiguration {
 				SupportHold shol = (SupportHold)order;
 				
 				//find the order it is supporting
-				Set<Order> movesToSquare =  movesWantLocation.get(shol.supportTo);
+				Collection<Order> movesToSquare =  movesWantLocation.get(shol.supportTo);
 				
 				//TODO deal with this case
 				if(movesToSquare == null) continue;
@@ -909,7 +909,7 @@ public class BoardConfiguration {
 							
 							//then this is the order we are looking to support
 							//	make sure your support is not cut
-							Set<Order> supportCutters = movesWantLocation.get(shol.supportFrom);
+							Collection<Order> supportCutters = movesWantLocation.get(shol.supportFrom);
 							
 							boolean supportCut = false;
 							for(Order potentialCut: supportCutters){
@@ -957,10 +957,10 @@ public class BoardConfiguration {
 		}
 	}
 	
-	private void resolveDislodgedSupportMoves(Set<Order> moves,
-			Map<TerritorySquare, Set<Order>> movesWantLocation,
+	private void resolveDislodgedSupportMoves(Collection<Order> moves,
+			Map<TerritorySquare, Collection<Order>> movesWantLocation,
 			Map<TerritorySquare, Order> moveOrigins,
-			Map<Order, Set<Order>> supportMoves,
+			Map<Order, Collection<Order>> supportMoves,
 			Map<Order, Order> supporters){
 		//	resolve dislodged support move orders
 		
@@ -993,7 +993,7 @@ public class BoardConfiguration {
 							adversaryMoveSupport = supportMoves.get(fromIntoMove).size();
 						}
 						
-						Set<Order> allCompetitors = movesWantLocation.get(smov.supportFrom);
+						Collection<Order> allCompetitors = movesWantLocation.get(smov.supportFrom);
 						
 						boolean anotherEnemy = false;
 						int maxFriendlyIn = 0;
@@ -1030,7 +1030,7 @@ public class BoardConfiguration {
 		}
 	}
 	
-	private void findUnresolvedMoves(Set<Order> moves, Set<Order> unresolvedMoves){
+	private void findUnresolvedMoves(Collection<Order> moves, Collection<Order> unresolvedMoves){
 		for(Order ord: moves){
 			
 			if(ord.actionResult != Result.MAYBE) continue;
@@ -1046,10 +1046,10 @@ public class BoardConfiguration {
 	//	consider a move obliterated if it went head to head with another unit and got
 	//	dislodged.  It no longer blocks other units from moving into where it was trying
 	//	to go
-	private void resolveHeadOnHeadMoves(Set<Order> unresolvedMoves,
+	private void resolveHeadOnHeadMoves(Collection<Order> unresolvedMoves,
 			Map<TerritorySquare, Order> moveOrigins,
-			Map<Order, Set<Order>> supportMoves,
-			Set<Order> obliteratedMoves){
+			Map<Order, Collection<Order>> supportMoves,
+			Collection<Order> obliteratedMoves){
 		
 		//	resolve any moves trying to swap places
 		for(Order ord: unresolvedMoves.toArray(new Order[0])){
@@ -1132,14 +1132,14 @@ public class BoardConfiguration {
 	}
 	
 	private void calculateMostSupportForTerritories(
-			Map<TerritorySquare, Set<Order>> movesWantLocation,
-			Map<Order, Set<Order>> supportMoves,
-			Set<Order> obliteratedMoves,
+			Map<TerritorySquare, Collection<Order>> movesWantLocation,
+			Map<Order, Collection<Order>> supportMoves,
+			Collection<Order> obliteratedMoves,
 			Map<TerritorySquare, Order> mostSupportForTerritory){
 		
 		for(TerritorySquare terr: movesWantLocation.keySet()){
 			
-			Set<Order> competitors = movesWantLocation.get(terr);
+			Collection<Order> competitors = movesWantLocation.get(terr);
 			
 			Order mostSupported = null;
 			int mostSupports = -1;
@@ -1180,10 +1180,10 @@ public class BoardConfiguration {
 		}
 	}
 	
-	private void findConvoySets(Set<Order> moves,
+	private void findConvoySets(Collection<Order> moves,
 			Map<TerritorySquare, Order> moveOrigins,
 			Map<Convoy, MoveByConvoy> convoyToRelyingCto,
-			Map<MoveByConvoy, Set<Convoy>> ctoToConvoys
+			Map<MoveByConvoy, Collection<Convoy>> ctoToConvoys
 			){
 		for(Order ord: moves){
 			
@@ -1250,7 +1250,7 @@ public class BoardConfiguration {
 	private void dislodgeConvoys(
 			Map<TerritorySquare, Order> mostSupportForTerritory,
 			Map<Convoy, MoveByConvoy> convoyToRelyingCto,
-			Map<MoveByConvoy, Set<Convoy>> ctoToConvoys){
+			Map<MoveByConvoy, Collection<Convoy>> ctoToConvoys){
 		//	for each valid convoying fleet
 		for(Convoy cnv: convoyToRelyingCto.keySet()){
 			//		figure out if it is dislodged	:
@@ -1273,10 +1273,10 @@ public class BoardConfiguration {
 		}
 	}
 	
-	private void resolveBattles(Set<Order> unresolvedMoves, BoardState bst,
-			Map<Order, Set<Order>> supportMoves,
+	private void resolveBattles(Collection<Order> unresolvedMoves, BoardState bst,
+			Map<Order, Collection<Order>> supportMoves,
 			Map<TerritorySquare, Order> mostSupportForTerritory,
-			Map<TerritorySquare, Set<Order>> movesWantLocation,
+			Map<TerritorySquare, Collection<Order>> movesWantLocation,
 			Map<TerritorySquare, Order> moveOrigins) throws Exception{
 		
 		while(!unresolvedMoves.isEmpty()){
@@ -1308,7 +1308,7 @@ public class BoardConfiguration {
 					//	get the move with the most support into the destination territory
 					//	(if there is such a move)
 					Order successfulOrder = mostSupportForTerritory.get(moveDestination);
-					Set<Order> competitors = movesWantLocation.get(moveDestination);
+					Collection<Order> competitors = movesWantLocation.get(moveDestination);
 					
 					if(successfulOrder != null){
 						
@@ -1421,7 +1421,7 @@ public class BoardConfiguration {
 					//		else if the unit originally in the territory has successfully moved out
 					Order moveOut = moveOrigins.get(moveDestination);
 					Order successfulOrder = mostSupportForTerritory.get(moveDestination);
-					Set<Order> competitors = movesWantLocation.get(moveDestination);
+					Collection<Order> competitors = movesWantLocation.get(moveDestination);
 					
 					if(successfulOrder == null){
 						for(Order attempt: competitors){
@@ -1566,7 +1566,7 @@ public class BoardConfiguration {
 		}
 	}
 	
-	private void mapSuccessfulMoves(Set<Order> moves, Map<TerritorySquare, Order> successfulMoves){
+	private void mapSuccessfulMoves(Collection<Order> moves, Map<TerritorySquare, Order> successfulMoves){
 		for(Order order: moves){
 			if(order.actionResult == Result.SUC){
 				if(order.getClass() == Move.class){
@@ -1583,7 +1583,7 @@ public class BoardConfiguration {
 		}
 	}
 	
-	private void resolveRetreats(Set<Order> moves){
+	private void resolveRetreats(Collection<Order> moves){
 		Map<TerritorySquare, Set<Order>> retreatTo = new HashMap<TerritorySquare, Set<Order>>();
 		
 		for(Order ord:moves){
@@ -1615,7 +1615,7 @@ public class BoardConfiguration {
 		}
 	}
 	
-	private void setRetreats(Set<Order> moves, Map<TerritorySquare, Order> successfulMoves){
+	private void setRetreats(Collection<Order> moves, Map<TerritorySquare, Order> successfulMoves){
 		for(Order ord: moves){
 
 			if(ord.actionResult == Result.MAYBE){
@@ -1767,7 +1767,7 @@ public class BoardConfiguration {
 	//	check indicates whether this is an update from the server that we are just verifying
 	//	(to test our own code)
 	
-	private void resolve(BoardState bst, Set<Order> moves, boolean check) throws Exception{
+	private void resolve(BoardState bst, Collection<Order> moves, boolean check) throws Exception{
 
 		Map<Order, Result> actualResults = new HashMap<Order, Result>();
 		Map<Order, RetreatState> actualRetreats = new HashMap<Order, RetreatState>();
@@ -1783,8 +1783,8 @@ public class BoardConfiguration {
 		}
 		
 		//moves which want a location
-		Map<TerritorySquare, Set<Order>> movesWantLocation = 
-			new HashMap<TerritorySquare, Set<Order>>();
+		Map<TerritorySquare, Collection<Order>> movesWantLocation = 
+			new HashMap<TerritorySquare, Collection<Order>>();
 			
 		//where moves come from
 		Map<TerritorySquare, Order> moveOrigins = 
@@ -1794,8 +1794,8 @@ public class BoardConfiguration {
 		calcMovesByDestination(moves, movesWantLocation, moveOrigins);
 		
 		//from the order to the orders which support it
-		Map<Order, Set<Order>> supportMoves = 
-			new HashMap<Order, Set<Order>>();
+		Map<Order, Collection<Order>> supportMoves = 
+			new HashMap<Order, Collection<Order>>();
 		
 		//from the support order to the order it supports
 		Map<Order, Order> supporters =
@@ -1813,12 +1813,12 @@ public class BoardConfiguration {
 		//	if a unit is dislodged by the unit it is support moving into, the support is cut
 		resolveDislodgedSupportMoves(moves, movesWantLocation, moveOrigins, supportMoves, supporters);
 		
-		Set<Order> unresolvedMoves = new HashSet<Order>();
+		Collection<Order> unresolvedMoves = new HashSet<Order>();
 		
 		//	populate the moves that have not been resolved yet
 		findUnresolvedMoves(moves, unresolvedMoves);
 
-		Set<Order> obliteratedMoves = new HashSet<Order>();
+		Collection<Order> obliteratedMoves = new HashSet<Order>();
 		
 		//	consider a move obliterated if it went head to head with another unit and got
 		//	dislodged.  It no longer blocks other units from moving into where it was trying to go
@@ -1834,7 +1834,7 @@ public class BoardConfiguration {
 		Map<Convoy, MoveByConvoy> convoyToRelyingCto = new HashMap<Convoy, MoveByConvoy>(); 
 		
 		//	map from a convoying unit to all those supporting it
-		Map<MoveByConvoy, Set<Convoy>> ctoToConvoys = new HashMap<MoveByConvoy, Set<Convoy>>();
+		Map<MoveByConvoy, Collection<Convoy>> ctoToConvoys = new HashMap<MoveByConvoy, Collection<Convoy>>();
 
 		//	populate those two structures with all the consistent convoys
 		findConvoySets(moves, moveOrigins, convoyToRelyingCto, ctoToConvoys);
@@ -1956,7 +1956,7 @@ public class BoardConfiguration {
 		}
 	}
 	
-	public BoardState update(YearPhase time, BoardState orig, Set<Order> moves, boolean fromServer) throws Exception{
+	public BoardState update(YearPhase time, BoardState orig, Collection<Order> moves, boolean fromServer) throws Exception{
 
 		long tStart = System.nanoTime();
 		
@@ -3069,7 +3069,7 @@ public class BoardConfiguration {
 			int thisPhase = phaseNum(phase);
 			int thatPhase = phaseNum(until.phase);
 			
-			return (5*(until.year-year))+(thatPhase-thisPhase);
+			return (5*(until.year-year))+(thatPhase-thisPhase)+1;
 		}
 		
 		public boolean isAfter(YearPhase yp)
