@@ -24,7 +24,7 @@ public class ExpectiMaxSearch extends GameSearch{
 	//	how many moves to enumerate for each player.  hardcode for now
 	//private static final int MAX_ENUM = 4;
 	
-	private static final int MAX_TOTAL_ENUM = 25000;
+	private static final int MAX_TOTAL_ENUM = 15000;
 	private int maxEnumTmp;
 	
 	public ExpectiMaxSearch(Player player, BoardConfiguration state, DiplomaticState dipState, BeliefState beliefState){
