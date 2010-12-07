@@ -11,9 +11,16 @@ package ai;
 import gamesearch.GameSearch;
 import gamesearch.MiniMaxSearch;
 import gamesearch.ExpectiMaxSearch;
+import heuristic.FactorizedPruner;
+import heuristic.Heuristic;
+import heuristic.NaiveMoveEnumeration;
+import heuristic.NaivePruner;
+import heuristic.NaiveRelevance;
+import heuristic.NaiveScorer;
 
 import java.net.InetAddress;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 import order.Order;
@@ -45,6 +52,8 @@ public class Bot{
 	public final static boolean DEBUG = false;
 	public final static boolean ASSERTS = false;
 	
+	public final static boolean LOGGING = false;
+	
 	public final String name;
 	private final Server serv;
 	boolean atPrompt;
@@ -52,6 +61,8 @@ public class Bot{
 	private final BoardConfiguration board;
 	private final DiplomaticState diplomaticState;
 	private final BeliefState beliefs;
+	
+	private final Heuristic heuristic;
 	
 	private BoardState boardState;
 	
@@ -62,6 +73,7 @@ public class Bot{
 	private final BotMessageHandler botMessageHandler;
 
 	private final OrderFactory orderFactory;
+
 	
 	void printMsg(String who, String[] message) {
 		StringBuffer sbuf = new StringBuffer();
@@ -81,7 +93,7 @@ public class Bot{
 			System.out.println();
 			atPrompt = false;
 		}
-		System.out.println("<" + who + ">: " + sbuf.toString());
+		if(LOGGING) System.out.println("<" + who + ">: " + sbuf.toString());
 	}
 	
 	String cleanMsg(String[] message){
@@ -102,12 +114,28 @@ public class Bot{
 		return sbuf.toString();
 	}
 
-	public Bot(InetAddress ip, int port, String name) throws Exception {
+	public Bot(InetAddress ip, int port, String name, boolean factorizedPruner, boolean expectiMax) throws Exception {
 		this.name = name;
 
 		board = new BoardConfiguration();
 		diplomaticState = new DiplomaticState();
 		beliefs = new BeliefState();
+		
+		heuristic = new Heuristic(board);
+		
+		if(factorizedPruner)
+			this.heuristic.setMovePruningHeuristic(new FactorizedPruner(heuristic));
+		else
+			this.heuristic.setMovePruningHeuristic(new NaivePruner(heuristic));
+		
+		this.heuristic.setOrderGenerationHeuristic(new NaiveMoveEnumeration(heuristic));
+		this.heuristic.setRelevanceHeuristic(new NaiveRelevance(heuristic));
+		this.heuristic.setScoreHeuristic(new NaiveScorer(heuristic));
+		
+		if(expectiMax)
+			search = new ExpectiMaxSearch(heuristic, board, diplomaticState, beliefs);
+		else
+			search = new MiniMaxSearch(heuristic, board, diplomaticState, beliefs);
 		
 		boardState = board.getInitialState();
 		
@@ -159,19 +187,19 @@ public class Bot{
 							(!(search==null) && search.isReady() && !submitted)){
 						
 						if(nextOrders != -1 && currentTime + SUBMISSION_BUFFER > nextOrders && !submitted){
-							System.out.println("Move time is up, submitting orders:");
+							if(Bot.LOGGING) System.out.println("Move time is up, submitting orders:");
 						
-							System.out.println("Moves will be: ");
+							if(Bot.LOGGING) System.out.println("Moves will be: ");
 							for(Order ord: search.currentOrders()){
-								System.out.println("\t"+ord.toOrder(boardState));
+								if(Bot.LOGGING) System.out.println("\t"+ord.toOrder(boardState));
 							}
 						}
 						
 						if((!(search==null) && search.isReady() && !submitted)){
-							System.out.println("Search is  ready, submitting orders:");
+							if(LOGGING) System.out.println("Search is  ready, submitting orders:");
 							
 							for(Order ord: search.currentOrders()){
-								System.out.println("\t"+ord.toOrder(boardState));
+								if(LOGGING) System.out.println("\t"+ord.toOrder(boardState));
 							}
 						}
 						
@@ -287,8 +315,7 @@ public class Bot{
 					}
 					
 					settings = new GameSettings(power, password, lvl, mtl, rtl, btl, dsd, aoa);
-					search = new ExpectiMaxSearch(board.getPlayer(power), board, diplomaticState, beliefs);
-
+					search.setPlayer(board.getPlayer(power));
 				}
 				else if(message[0].equals("NOW")){
 					
@@ -325,9 +352,20 @@ public class Bot{
 					//	the NOW message means all orders have been received, so go ahead
 					//	and update the state
 					
+					BoardState oldBoard = boardState;
 					boardState = board.update(new YearPhase(Integer.parseInt(message[3]), Phase.valueOf(message[2])), boardState, receivedOrders, true);
+					
+					
 					diplomaticState.update(receivedOrders);
 					beliefs.update(receivedOrders);
+					
+					if(boardState.getSupplyCenters(search.getPlayer()).size() == 0 && oldBoard.getSupplyCenters(search.getPlayer()).size() != 0){
+						System.out.println("eliminated\t"+name);
+					}
+					
+					if(boardState.getSupplyCenters(search.getPlayer()).size() >= 18){
+						System.out.println("win\t"+name);
+					}
 					
 					receivedOrders.clear();
 					
@@ -353,14 +391,35 @@ public class Bot{
 
 	///////////////////////////////////////////////////////////////////////////////////////
 	// Main class for launching bot
+	///////////////////////////////////////////////////////////////////////////////////////
 	
-	public final static int LAUNCH_BOTS = 1;
+	public final static int LAUNCH_BOTS = 7;
 	
 	public static void main(String[] args) throws InterruptedException {
 
+		System.out.println("GAME_START");
+		
+		Random r = new Random();
 		Thread[] bots = new Thread[LAUNCH_BOTS];
 		for(int i = 0; i < LAUNCH_BOTS; i++){
-			bots[i] = new Thread(new BotLauncher(args));
+			
+			int type = r.nextInt(4);
+			
+			switch(type){
+			case 0:
+				bots[i] = new Thread(new BotLauncher(args, "MinMaxNaive", false, false));
+				break;
+			case 1:
+				bots[i] = new Thread(new BotLauncher(args, "ExpectiNaive", false, true));
+				break;
+			case 2:
+				bots[i] = new Thread(new BotLauncher(args, "MinMaxFactored", true, false));
+				break;
+			case 3:
+				bots[i] = new Thread(new BotLauncher(args, "ExpectiFactored", true, true));
+				break;
+			}
+			
 			bots[i].start();
 		}
 		
@@ -377,14 +436,25 @@ public class Bot{
 		
 		String[] args;
 		
-		public BotLauncher(String[] args){
+		boolean factorized;
+		boolean expecti;
+		
+		String name;
+		
+		public BotLauncher(String[] args, String name, boolean factorized, boolean expecti){
 			this.args = args;
+			
+			this.factorized = factorized;
+			this.expecti = expecti;
+			this.name = name;
+			
+			System.out.println("start\t"+name);
 		}
 		
 		public void run(){
 			try {
 				Bot victoryBot = new Bot(InetAddress.getByName(args[0]), Integer
-						.parseInt(args[1]), args[2]);
+						.parseInt(args[1]), name, factorized, expecti);
 				while (true) {
 					Thread.sleep(1000);
 				}

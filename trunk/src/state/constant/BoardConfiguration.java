@@ -1886,14 +1886,16 @@ public class BoardConfiguration {
 				RetreatState calculatedRetreat = ord.retreatState;
 				RetreatState realRetreat = actualRetreats.get(ord);
 				
-				if(calculatedResult != realResult){
-					System.out.println("Found discrepency: ");
-					System.err.println("\tresult of order "+ord.toOrder(bst)+" should have resolved as "+realResult+ " but was resolved as "+calculatedResult);
-				}
-				
-				if(calculatedRetreat != realRetreat){
-					System.out.println("Found discrepency: ");
-					System.err.println("\tretreat for order "+ord.toOrder(bst)+" should have resolved as "+realRetreat+ " but was resolved as "+calculatedRetreat);
+				if(Bot.LOGGING){
+					if(calculatedResult != realResult){
+						System.out.println("Found discrepency: ");
+						System.err.println("\tresult of order "+ord.toOrder(bst)+" should have resolved as "+realResult+ " but was resolved as "+calculatedResult);
+					}
+					
+					if(calculatedRetreat != realRetreat){
+						System.out.println("Found discrepency: ");
+						System.err.println("\tretreat for order "+ord.toOrder(bst)+" should have resolved as "+realRetreat+ " but was resolved as "+calculatedRetreat);
+					}
 				}
 				
 				//	if things were resolved differently we have to go with the server's version, after printing out 
