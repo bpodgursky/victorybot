@@ -1,6 +1,8 @@
 package gamesearch;
 
 
+import heuristic.Heuristic;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -9,6 +11,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import ai.Bot;
 
 import order.Order;
 import order.Order.MovesValue;
@@ -27,14 +31,14 @@ public class ExpectiMaxSearch extends GameSearch{
 	private static final int MAX_TOTAL_ENUM = 15000;
 	private int maxEnumTmp;
 	
-	public ExpectiMaxSearch(Player player, BoardConfiguration state, DiplomaticState dipState, BeliefState beliefState){
-		super(player, state, dipState, beliefState);
+	public ExpectiMaxSearch(Heuristic h, BoardConfiguration state, DiplomaticState dipState, BeliefState beliefState){
+		super(h, state, dipState, beliefState);
 	}
 	
 	//	base case of search.  Returns the best set of moves for us
 	protected Collection<Order> moveSearch(BoardState bst, YearPhase until) throws Exception{
 		
-		System.out.println("Look ahead moves: "+bst.time.movesUntil(until));
+		if(Bot.LOGGING) System.out.println("Look ahead moves: "+bst.time.movesUntil(until));
 		
 		//	build sets of all moves for all relevant players
 	
@@ -43,14 +47,14 @@ public class ExpectiMaxSearch extends GameSearch{
 		
 		Collection<Player> relevantPlayers = heuristic.relevance.getRelevantPlayers(bst, relevantPlayer);
 		
-		System.out.println("Building possible order sets for players: ");
+		if(Bot.LOGGING) System.out.println("Building possible order sets for players: ");
 		//	for each player, generate the a priori likely moves
 		List<Player> otherPlayers = new LinkedList<Player>();
 		for(Player p: boardConfiguration.getPlayers()){
 			
-			System.out.println("\t"+p.getName()+"...");
+			if(Bot.LOGGING) System.out.println("\t"+p.getName()+"...");
 			if(this.boardUpdate){
-				System.out.println("Took too long, quitting in generation...");
+				if(Bot.LOGGING) System.out.println("Took too long, quitting in generation...");
 				return null;
 			}
 			
@@ -67,7 +71,7 @@ public class ExpectiMaxSearch extends GameSearch{
 				otherPlayers.add(p);
 			}
 			
-			System.out.println("\t"+p.getName()+" done");
+			if(Bot.LOGGING) System.out.println("\t"+p.getName()+" done");
 		}
 		
 		
@@ -75,14 +79,16 @@ public class ExpectiMaxSearch extends GameSearch{
 		int movesUntil = bst.time.movesUntil(until);
 		maxEnumTmp = (int)Math.pow(MAX_TOTAL_ENUM, 1.0/(movesUntil*relevantPlayerCount));
 		
-		System.out.println("Enumerating per player: "+maxEnumTmp);
-		
-		System.out.println("Generated orders for each player:");
-		for(Player p: orderSetsByPlayer.keySet()){
-			System.out.println("\t"+orderSetsByPlayer.get(p).length);
+		if(Bot.LOGGING) {
+			System.out.println("Enumerating per player: "+maxEnumTmp);
+			System.out.println("Generated orders for each player:");
+			for(Player p: orderSetsByPlayer.keySet()){
+				System.out.println("\t"+orderSetsByPlayer.get(p).length);
+			}
+			System.out.println("Enumerating combinations for our "+ orderSetsByPlayer.get(relevantPlayer).length+ " moves..");
 		}
 		
-		System.out.println("Enumerating combinations for our "+ orderSetsByPlayer.get(relevantPlayer).length+ " moves..");
+		
 		Player[] playerArray = otherPlayers.toArray(new Player[0]);	
 		MovesValue [] maxSetMoves = new MovesValue[orderSetsByPlayer.get(relevantPlayer).length];
 		int count = 0;
@@ -106,7 +112,7 @@ public class ExpectiMaxSearch extends GameSearch{
 			}
 			
 			if(this.boardUpdate){
-				System.out.println("Took too long, quitting...");
+				if(Bot.LOGGING) System.out.println("Took too long, quitting...");
 				return null;
 			}
 			
@@ -118,13 +124,15 @@ public class ExpectiMaxSearch extends GameSearch{
 			}
 			count++;
 			
-			System.out.println(maxSetMoves[count-1].value);
-			for(Order ord: playerOrds.moves){
-				System.out.println("\t"+ord.toOrder(boardState));
+			if(Bot.LOGGING) {
+				System.out.println(maxSetMoves[count-1].value);
+				for(Order ord: playerOrds.moves){
+					System.out.println("\t"+ord.toOrder(boardState));
+				}
 			}
 		
 		}
-		System.out.println("Done enumerating");
+		if(Bot.LOGGING) System.out.println("Done enumerating");
 		
 		Arrays.sort(maxSetMoves);
 		
@@ -156,7 +164,7 @@ public class ExpectiMaxSearch extends GameSearch{
 		enumerateMoves(bst, orderList, 1.0, orderSetsByPlayer, playerArray, 0, moveProbabilities);
 		
 		if(boardUpdate){
-			System.out.println("Took too long, quitting...");
+			if(Bot.LOGGING) System.out.println("Took too long, quitting...");
 			return -1;
 		}
 		
@@ -168,7 +176,7 @@ public class ExpectiMaxSearch extends GameSearch{
 			double probability = moveProbabilities.get(fullMoveSet);
 			
 			if(boardUpdate){
-				System.out.println("Took too long, quitting...");
+				if(Bot.LOGGING) System.out.println("Took too long, quitting...");
 				return -1;
 			}
 			
@@ -234,9 +242,6 @@ public class ExpectiMaxSearch extends GameSearch{
 			List<Collection<Order>> orderList = new LinkedList<Collection<Order>>();
 			orderList.add(playerOrds.moves);
 			
-			//int year = bst.time.year;
-			//Phase phase = bst.time.phase == Phase.SPR ? Phase.SUM : Phase.WIN;
-			//YearPhase until = new YearPhase(year, phase);
 			maxSetMoves[count] = new MovesValue(playerOrds.moves, expect(bst, until, playerOrds.moves, orderSetsByPlayer, playerArray));
 			count++;
 		}
@@ -257,7 +262,7 @@ public class ExpectiMaxSearch extends GameSearch{
 			Map<List<Collection<Order>>, Double> moveAndLikelihood) throws Exception{
 		
 		if(boardUpdate){
-			System.out.println("Took too long, quitting...");
+			if(Bot.LOGGING) System.out.println("Took too long, quitting...");
 			return;
 		}
 		

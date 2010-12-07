@@ -26,7 +26,7 @@ public class BoardState {
 	public final YearPhase time;
 	
 	public BoardState(YearPhase time, BoardConfiguration config){
-//		
+
 		this.time = time;
 		this.configuration = config;
 		

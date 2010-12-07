@@ -2,7 +2,7 @@ package gamesearch;
 
 import heuristic.FactorizedPruner;
 import heuristic.Heuristic;
-import heuristic.NaiveOrderGeneration;
+import heuristic.NaiveMoveEnumeration;
 import heuristic.NaivePruner;
 import heuristic.NaiveRelevance;
 import heuristic.NaiveScorer;
@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+
+import ai.Bot;
 
 import order.Order;
 import order.builds.Build;
@@ -56,7 +58,7 @@ public abstract class GameSearch {
 	private final Thread internalSearch;
 	private final InternalSearch searcher;
 	
-	protected final Player relevantPlayer;
+	protected Player relevantPlayer;
 	
 	protected boolean boardUpdate;
 	protected boolean dipUpdate;
@@ -66,24 +68,25 @@ public abstract class GameSearch {
 	
 	protected final Heuristic heuristic;
 	
-	protected final MoveGeneration gen;
+	protected final MoveGenerator gen;
 	
-	public GameSearch(Player player, BoardConfiguration state, DiplomaticState dipState, BeliefState beliefState){
+	public GameSearch(Heuristic h, BoardConfiguration state, DiplomaticState dipState, BeliefState beliefState){
 		
 		this.boardConfiguration = state;
 		this.dipState = dipState;
 		this.beliefState = beliefState;
 		
-		this.relevantPlayer = player;
 		
-		this.heuristic = new Heuristic(boardConfiguration);
+		this.heuristic = h;
 		
-		this.heuristic.setMovePruningHeuristic(new FactorizedPruner(heuristic));
-		this.heuristic.setOrderGenerationHeuristic(new NaiveOrderGeneration(heuristic));
-		this.heuristic.setRelevanceHeuristic(new NaiveRelevance(heuristic));
-		this.heuristic.setScoreHeuristic(new NaiveScorer(heuristic));
+//		this.heuristic = new Heuristic(boardConfiguration);
 		
-		this.gen = new MoveGeneration(state, heuristic);
+//		this.heuristic.setMovePruningHeuristic(new FactorizedPruner(heuristic));
+//		this.heuristic.setOrderGenerationHeuristic(new NaiveMoveEnumeration(heuristic));
+//		this.heuristic.setRelevanceHeuristic(new NaiveRelevance(heuristic));
+//		this.heuristic.setScoreHeuristic(new NaiveScorer(heuristic));
+		
+		this.gen = new MoveGenerator(state, heuristic);
 		
 		this.searcher = new InternalSearch();
 		this.internalSearch = new Thread(searcher);
@@ -93,6 +96,10 @@ public abstract class GameSearch {
 
 		
 		boardState = state.getInitialState();
+	}
+	
+	public Player getPlayer(){
+		return this.relevantPlayer;
 	}
 	
 	protected abstract Collection<Order> moveSearch(BoardState bst, YearPhase until) throws Exception;
@@ -135,6 +142,10 @@ public abstract class GameSearch {
 	}
 
 	
+	public void setPlayer(Player p){
+		this.relevantPlayer = p;
+	}
+	
 	Random r = new Random();
 	
 	
@@ -162,7 +173,7 @@ public abstract class GameSearch {
 				if( boardState.time.phase == Phase.SPR || 
 					boardState.time.phase == Phase.FAL){
 					
-					System.out.println("Starting to process movements...");
+					if(Bot.LOGGING) System.out.println("Starting to process movements...");
 					
 					//	put down something dumb at first so we have orders at least
 					
@@ -204,7 +215,7 @@ public abstract class GameSearch {
 						}
 					}
 					
-					System.out.println("Done with basic search, starting intelligent search...");
+					if(Bot.LOGGING) System.out.println("Done with basic search, starting intelligent search...");
 					
 					currentOrders = orders;
 					int year = boardState.time.year;
@@ -223,7 +234,7 @@ public abstract class GameSearch {
 				else if(boardState.time.phase == Phase.SUM ||
 						 boardState.time.phase == Phase.AUT){
 					
-					System.out.println("Starting to process retreat...");
+					if(Bot.LOGGING) System.out.println("Starting to process retreat...");
 					
 					//	just a dumb first guess
 					
@@ -263,13 +274,13 @@ public abstract class GameSearch {
 					YearPhase until = new YearPhase(year, phase);
 					currentOrders = moveSearch(boardState, until);
 					
-					System.out.println("Retreat order submitted.");
+					if(Bot.LOGGING) System.out.println("Retreat order submitted.");
 				}
 				
 				//	build/disband time 
 				else if(boardState.time.phase == Phase.WIN){
 					
-					System.out.println("Starting to process builds...");
+					if(Bot.LOGGING) System.out.println("Starting to process builds...");
 					
 					int equalize = boardConfiguration.getRequiredBuilds(boardState, relevantPlayer);
 					
@@ -328,14 +339,16 @@ public abstract class GameSearch {
 					
 					currentOrders = moveSearch(boardState, until);
 					
-					System.out.println("Build orders submitted");
+					if(Bot.LOGGING) System.out.println("Build orders submitted");
 				}
 				
 				if(!boardUpdate){
-					System.out.println("Done with move search!");
-					System.out.println("Moves will be: ");
-					for(Order ord: currentOrders){
-						System.out.println("\t"+ord.toOrder(boardState));
+					if(Bot.LOGGING) {
+						System.out.println("Done with move search!");
+						System.out.println("Moves will be: ");
+						for(Order ord: currentOrders){
+							System.out.println("\t"+ord.toOrder(boardState));
+						}
 					}
 
 					movesReady = true;

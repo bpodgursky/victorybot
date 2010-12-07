@@ -28,10 +28,10 @@ public class Heuristic {
 		public abstract Collection<Player> getRelevantPlayers(BoardState bst, Player p) throws Exception;
 	}
 	
-	public static abstract class OrderGenerationHeuristic{
+	public static abstract class MoveEnumeration{
 		protected final Heuristic heuristic;
 		
-		public OrderGenerationHeuristic(Heuristic baseHeuristic){
+		public MoveEnumeration(Heuristic baseHeuristic){
 			this.heuristic = baseHeuristic;
 		}
 		
@@ -85,7 +85,7 @@ public class Heuristic {
 	}
 	
 	public RelevanceHeuristic relevance;
-	public OrderGenerationHeuristic orderGenerator;
+	public MoveEnumeration orderGenerator;
 	public MovePruningHeuristic movePruning;
 	public ScoreHeuristic scorer;
 	
@@ -93,7 +93,7 @@ public class Heuristic {
 		this.relevance = relevance;
 	}
 	
-	public void setOrderGenerationHeuristic(OrderGenerationHeuristic orderGenerator){
+	public void setOrderGenerationHeuristic(MoveEnumeration orderGenerator){
 		this.orderGenerator = orderGenerator;
 	}
 	
